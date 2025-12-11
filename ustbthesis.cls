@@ -486,9 +486,9 @@ University of Science and Technology Beijing
     \begin{center}\zihao{4}\linespread{2}
     \bfseries
 \noindent \begin{CJKfilltwosides}{8em}指导教师：\end{CJKfilltwosides}\ 
-\wideunderline[4em]{}\hfill
-单位：\wideunderline[6em]{}\hfill
-职称：\wideunderline[3em]{}
+\wideunderline[4em]{孙昌爱}\hfill
+单位：\wideunderline[6em]{北京科技大学}\hfill
+职称：\wideunderline[3em]{教授}
 
 \noindent \begin{CJKfilltwosides}{8em}指导小组成员：\end{CJKfilltwosides}\ 
 \wideunderline[4em]{}\hfill
