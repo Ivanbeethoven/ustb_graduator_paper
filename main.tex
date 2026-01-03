@@ -4,6 +4,7 @@
 \usepackage{tabularx}
 \usepackage{amsmath}
 \usepackage{subfig} % 去掉caption相关选项，避免与类冲突
+\usepackage{subfiles}
 \newcommand{\figref}[1]{~\ref{#1}~}
 \newcommand{\tabref}[1]{~\ref{#1}~}
 \newcommand{\thickhline}{\noalign{\hrule height 0.9pt}}
@@ -59,7 +60,7 @@
 \ThirdPage
 
 \pagestyle{fancy}
-
+\include{report}
 %% 中英文摘要
 \include{contents/abstract}
 %% 序言
