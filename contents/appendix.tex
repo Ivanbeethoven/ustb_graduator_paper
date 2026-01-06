@@ -74,3 +74,94 @@
 \bottomrule
 \end{tabular}
 \end{table}
+
+
+\chapter{补充实验图表}\label{app:plots}
+
+本附录集中给出正文未展开的细粒度图表，便于复核与对照。正文第\ref{chap:experiment}章在“有效性优先”的叙事下保留了更关键的对照图组；其余按维度分类如下。
+
+\section{有效性：补充图表}\label{app:plots-effectiveness}
+
+\subsection{不同生成模型下的评审差异（按评审者拆分）}
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Qwen3}\label{fig:app-eff-generator-by-judge-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/ali-qwen/generator_bar_by_judge_ali-qwen_有效性.png}}\\
+	 \subfloat[\texttt{DeepSeek}\label{fig:app-eff-generator-by-judge-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/deepseek/generator_bar_by_judge_deepseek_有效性.png}}\\
+	 \subfloat[\texttt{GPT-5}\label{fig:app-eff-generator-by-judge-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/gpt5/generator_bar_by_judge_gpt5_有效性.png}}}
+	\caption{有效性维度下，不同生成模型在各评审模型下的排名式评分对照（I）。}\label{fig:app-eff-generator-by-judge}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Grok}\label{fig:app-eff-generator-by-judge-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/grok4/generator_bar_by_judge_grok4_有效性.png}}\\
+	 \subfloat[\texttt{GLM-4.6}\label{fig:app-eff-generator-by-judge-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/glm4.5/generator_bar_by_judge_glm4.5_有效性.png}}}
+	\caption{有效性维度下，不同生成模型在各评审模型下的排名式评分对照（II）。}\label{fig:app-eff-generator-by-judge-cont}
+\end{figure}
+
+\subsection{不同生成模型的结构性对照（热力图）}
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Qwen3}\label{fig:app-eff-heatmap-generator-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/ali-qwen/heatmap_generator_ali-qwen_有效性.png}}\\
+	 \subfloat[\texttt{DeepSeek}\label{fig:app-eff-heatmap-generator-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/deepseek/heatmap_generator_deepseek_有效性.png}}\\
+	 \subfloat[\texttt{GPT-5}\label{fig:app-eff-heatmap-generator-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/gpt5/heatmap_generator_gpt5_有效性.png}}}
+	\caption{有效性维度下，不同生成模型的结构性热力图对照（I）。}\label{fig:app-eff-heatmap-generator}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Grok}\label{fig:app-eff-heatmap-generator-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/grok4/heatmap_generator_grok4_有效性.png}}\\
+	 \subfloat[\texttt{GLM-4.6}\label{fig:app-eff-heatmap-generator-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/glm4.5/heatmap_generator_glm4.5_有效性.png}}}
+	\caption{有效性维度下，不同生成模型的结构性热力图对照（II）。}\label{fig:app-eff-heatmap-generator-cont}
+\end{figure}
+
+\section{可部署性：补充图表}\label{app:plots-deployability}
+
+\subsection{按生成模型拆分的热力图（评审偏好结构）}
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Qwen3}\label{fig:app-deploy-heatmap-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/ali-qwen/heatmap_ali-qwen_可部署性.png}}\\
+	 \subfloat[\texttt{DeepSeek}\label{fig:app-deploy-heatmap-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/deepseek/heatmap_deepseek_可部署性.png}}\\
+	 \subfloat[\texttt{GPT-5}\label{fig:app-deploy-heatmap-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/gpt5/heatmap_gpt5_可部署性.png}}}
+	\caption{可部署性维度下，不同评审模型的偏好结构热力图对照（I）。}\label{fig:app-deploy-heatmap}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Grok}\label{fig:app-deploy-heatmap-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/grok4/heatmap_grok4_可部署性.png}}\\
+	 \subfloat[\texttt{GLM-4.6}\label{fig:app-deploy-heatmap-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/glm4.5/heatmap_glm4.5_可部署性.png}}}
+	\caption{可部署性维度下，不同评审模型的偏好结构热力图对照（II）。}\label{fig:app-deploy-heatmap-cont}
+\end{figure}
+
+\section{无干扰性：补充图表}\label{app:plots-interference}
+
+\subsection{按生成模型拆分的热力图（评审偏好结构）}
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Qwen3}\label{fig:app-interf-heatmap-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/ali-qwen/heatmap_ali-qwen_无干扰性.png}}\\
+	 \subfloat[\texttt{DeepSeek}\label{fig:app-interf-heatmap-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/deepseek/heatmap_deepseek_无干扰性.png}}\\
+	 \subfloat[\texttt{GPT-5}\label{fig:app-interf-heatmap-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/gpt5/heatmap_gpt5_无干扰性.png}}}
+	\caption{无干扰性维度下，不同评审模型的偏好结构热力图对照（I）。}\label{fig:app-interf-heatmap}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Grok}\label{fig:app-interf-heatmap-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/grok4/heatmap_grok4_无干扰性.png}}\\
+	 \subfloat[\texttt{GLM-4.6}\label{fig:app-interf-heatmap-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/glm4.5/heatmap_glm4.5_无干扰性.png}}}
+	\caption{无干扰性维度下，不同评审模型的偏好结构热力图对照（II）。}\label{fig:app-interf-heatmap-cont}
+\end{figure}

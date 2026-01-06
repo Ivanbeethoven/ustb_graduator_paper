@@ -1,113 +1,48 @@
-\chapter{研究结果}
+\chapter{漏洞防控系统}\label{chap:system}
 
-自行确定是否使用四级标题。论文中出现英文时需要使用Times New Roman字体。这个结构可以根据自己论文需要进行调整。
+本章给出第\ref{chap:method}章技术方案的系统化落地形态，重点说明模块划分、数据流与运行流程，使后续实现与复现实验具备清晰的工程参照。
 
-如图\figref{fig1}，是这里插图的样式示例，以下不再重复，根据论文实际情况添加即可。
+\section{系统架构}
 
-\begin{figure}[htb]
-	\centering
-	\subfloat[示意图1]
-	{\includegraphics[width=0.65\textwidth]{images/image1.png}\label{fig1:subfig1}}\\
-	\subfloat[示意图2]
-	{\includegraphics[width=0.65\textwidth]{images/image1.png}\label{fig1:subfig2}}\\
-	\bicaption{非线性构形状态转移过程示意图}{Schematic diagram of nonlinear configuration state transition process.}
-	\vspace{0.3em}
-	{\centering (资料来源：XXXXXXXXXXXXXXXXXXX)\par}
-	\label{fig1}
-\end{figure}
+系统采用“数据准备—推理生成—评价筛选—发布回滚”的分层架构，可抽象为三类平面：
+\begin{itemize}
+	\item \textbf{数据平面}：负责多源数据采集、分块、去重、向量化与索引维护，提供可追溯的上下文检索能力。
+	\item \textbf{控制平面}：负责任务编排与流程控制（RAG→CoT→Feedback→Evaluation），统一 schema 校验、重试策略、日志与结果落盘。
+	\item \textbf{发布平面}：对通过门槛的策略进行发布、验证、灰度与回滚，并与集群变更流程（CI/CD 或运维流程）对接。
+\end{itemize}
 
-续图示例：
+\section{核心模块}
 
-\begin{figure}[htb]
-	\centering
-	\subfloat[示意图1]
-	{\includegraphics[width=0.6\textwidth]{images/image1.png}
-		\label{fig2:subfig1}}
-	\centering\bicaption{数据图}{Data Graph}
-	\label{fig2}
-\end{figure}
+\subsection{证据与知识库服务}
+该模块面向“证据可追溯”目标，完成应用仓库与安全材料的收集、分块、索引与元数据维护，输出带来源标注的证据集合 $c=\{(t_i,\text{src}_i)\}$，并提供检索接口支持 RAG。
 
-\begin{figure}[htb]
-\ContinuedFloat
-\addtocounter{subfigure}{-1}
-\centering
-\subfloat[示意图2]
-{\includegraphics[width=0.6\textwidth]{images/image1.png}
-	\label{fig2:subfig2}}
-\bicaption{续}{Cont}
-\end{figure}
+\subsection{策略生成与优化服务}
+该模块以漏洞实例 $v$ 与上下文 $c$ 为输入，执行分阶段推导并输出候选策略集合 $\Pi_v$：
+\begin{itemize}
+	\item \textbf{RAG}：检索并汇聚与漏洞相关的证据片段，进行裁剪与去噪，保留来源标识。
+	\item \textbf{CoT}：先输出结构化漏洞分析（类型、攻击向量、影响范围、风险类别），再在 \texttt{layer/method/actions} 约束下生成动作序列。
+	\item \textbf{Feedback}：对候选进行评审，依据“缺失信息—前置条件—副作用—回滚边界”反馈进行二次优化。
+\end{itemize}
+同时集成 JSON/schema 合法性校验，确保产物可用于后续自动化处理。
 
-如表\tabref{label:tab1}，是这里表格的样式示例，以下不再重复，根据论文实际情况添加即可。
+\subsection{质量评价与审阅}
+该模块实现门槛评分 $s(\pi)$ 与三维质量向量 $q(\pi)=(E,I,D)$ 的规则化检查，并在三个维度上生成排名 $R(\Pi_v,\text{dim})$。评价结论同时输出理由、证据来源与缺失信息清单，支持 human-in-the-loop 复核与决策。
 
-\begin{table}[htb]
-    \centering\bicaption{线性五杆结构各自由度随机反应数值特征}{Numerical characteristics of random response of linear five-bar structure with various degrees of freedom}
-\label{label:tab1}
-\noindent\renewcommand{\arraystretch}{0.9}
-\begin{tabular}{P{5.25em}P{5.25em}P{4.5em}P{4.5em}P{4.5em}P{4.5em}P{4.5em}}
-\toprule
-\multirow{2}{*}{\centering $x_1$/m} & \multicolumn{3}{c}{$F_x$} & \multicolumn{3}{c}{$x_2$}\\
-\cline{2-7} & 均值/N & 标准差/N & 变异系数 & 均值/m & 标准差/m & 变异系数\\
-\hline
-0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000\\
-0.000100 & 206.006806 & 150.245905 & 0.729325 & 0.000024 & 0.000013 & 0.541667\\
-0.000200 & 412.013613 & 215.100090 & 0.522070&
-0.000049 & 0.000018 & 0.367347\\
-0.000300 & 618.020419 & 266.613296& 0.431399	& 0.000073 & 0.000022 & 0.301370\\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{策略发布与回滚}
+该模块将最终策略映射到可执行的控制手段（如准入策略、NetworkPolicy、运行时检测规则等），并提供“验证—灰度—回滚”的发布流程：上线前对配置语法、目标资源范围与冲突策略进行检查；上线后结合告警与观测数据评估副作用，必要时按预设边界回滚。
 
-续表示例：
-\begin{table}[h!]
-    \centering\bicaption{国际单位制中具有专门名称的导出单位}{Export units of special name in International System of Units}
-    \label{label:tab2}
-    \noindent\renewcommand{\arraystretch}{0.9}
-    \begin{tabular}{P{12em}P{6em}P{6em}P{8em}}
-        \toprule
-        量的名称 & 单位名称 & 单位符号 & 其他表示示例 \\\midrule
-        频率  & 赫[兹] & Hz & $\mathrm{s}^{-1}$ \\
-        力；重力 & 牛[顿] & N & $\mathrm{kg}\cdot\mathrm{m}/\mathrm{s}^2$ \\
-        压力，压强；应力 & 帕[斯卡] & Pa & $\mathrm{N}/\mathrm{m}^2$ \\
-        能量；功；热 & 焦[耳] & J & $\mathrm{N}\cdot\mathrm{m}$ \\
-        		功率；辐射通量&	瓦［特］	& W	 &J/s\\
-        电荷量&	库［仑］	& C	& A·s\\
-        电位；电压；电动势&	伏［特］&	V	& W/A\\
-        		电容&	法[拉]&	F&C/V\\
-        				电阻&	欧［姆］&	Ω&	V/A\\
-        \bottomrule
-    \end{tabular}
-\end{table}
+\section{工作流程}
 
-\begin{table}[h!]
-	\ContinuedFloat
-	\centering
-	\bicaption{续}{Cont}
-	\noindent\renewcommand{\arraystretch}{0.9}
-	\begin{tabular}{P{12em}P{6em}P{6em}P{8em}}
-		\toprule
-		量的名称 & 单位名称 & 单位符号 & 其他表示示例 \\\midrule  
-		电导&	西［门子］&	S&	A/V\\    
-		磁通量	& 韦［伯］&	Wb&	V·s\\
-		磁通量密度，磁感应强度	& 特［斯拉］&	T	& $\mathrm{Wb}/\mathrm{m}^2$\\
-		电感	& 亨［利］&	H&	$\mathrm{Wb}/\mathrm{A}$\\
-		摄氏温度&	摄氏度	& ℃	&\\
-		光通量&	流明	& lm	& $\mathrm{cd}·\mathrm{sr}$\\
-		光照度&	勒［克斯］&	lx&	$\mathrm{lm}/\mathrm{m}^2$\\
-		放射性活度&	贝可［勒尔］&	Bq&$\mathrm{s}^{-1}$\\
-		吸收剂量&	戈［瑞］&	Gy&	$\mathrm{J}/\mathrm{kg}$\\
-		剂量当量&	希［沃特］&	Sv&	$\mathrm{J}/\mathrm{kg}$\\
-		\bottomrule
-	\end{tabular}
-\end{table}
+端到端流程如下：
+\begin{enumerate}
+	\item 输入漏洞实例 $v$（CVE 描述与元数据），触发上下文检索构建 $c$。
+	\item 基于 $v$ 与 $c$ 并行生成多份候选策略形成 $\Pi_v$，并进行 schema 校验与规范化。
+	\item 对 $\Pi_v$ 执行门槛评分与三维评价，过滤未达标候选并对达标候选进行维度排名。
+	\item 评价报告作为反馈约束触发候选优化；达标策略进入人工复核与发布决策。
+	\item 发布到集群并执行验证与观测；若出现副作用或误报，按回滚边界撤销或调整策略。
+\end{enumerate}
 
-这里公式的样式示例，以下不再重复，根据论文实际情况添加即可。
+\section{部署与运行}
 
-将剩余的试样分成两份后放入烘箱中，分别测量放入前和烘完后的质量，并对土体的含水率进行计算，密度取两份的平均值，计算公式为：
-\begin{equation}
-\label{eq:04:01}
-    w = \frac{m_{water}}{m_2} = \frac{m_1-m_2}{m_2}\times 100\%
-\end{equation}
-式中：$w$为含水率；$m_1$为放之前的质量；$m_2$为烘完之后的质量；$m_{water}$为试样的含水量。
-
-说明1：根据实际情况占用1行或多行，编号右端对齐，表达式与编号之间可用“…”连接，如有两个以上的表达式，应用从“1”开始的阿拉伯数字进行编号，并将编号置于圆括号内；表达式较多时，可分章编号，如 \eqref{eq:04:01} 表示第四章第一个表达式。
+系统运行依赖包括：向量索引存储（FAISS 及元数据文件）、大模型调用接口与密钥管理、以及与集群交互的凭据与权限控制。为保证可运维性，建议记录每次生成的输入、检索证据摘要、候选策略、评分与排名结果，并对关键失败点（检索为空、schema 不合法、部署失败、回滚触发）进行可观测化告警。
 
