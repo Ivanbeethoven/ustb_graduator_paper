@@ -20,7 +20,18 @@ Kubernetes 通过身份与授权机制实现对资源的访问控制，其中 RB
     \label{fig:vulnerability-taxonomy}
 \end{figure}
 
-\textbf{1. 配置缺陷}：应用或基础设施的配置不当导致的安全漏洞，包括：
+为保证分类研究建立在充分的实证语料之上，本文针对 CVE 官方库与 NVD 数据集开展定向抓取：结合“Container/Kubernetes”“privilege escalation”等关键词，并追加常见系统组件与第三方插件名称，对 2018--2024 年披露的 CVE 进行批量检索；随后以公告原文、厂商通告与社区讨论为佐证，对候选条目进行人工复核，剔除重复或与权限提升无关的记录，并补全攻击前提、影响面与缓解建议信息。该结构化漏洞样本成为后续归纳常见攻击路径与策略控制域的事实基础。
+
+CWE（Common Weakness Enumeration）为跨平台的软件弱点统一编目，可将具体 CVE 映射到更加抽象的根因。本文依据 MITRE 发布的最新映射关系，将整理得到的 CVE 样本标注到对应的 CWE 条目，并统计不同弱点类型的出现频次，以刻画 Kubernetes 权限提升漏洞在根因层面的分布特征。统计结果如图\ref{fig:cwe-distribution} 所示，该饼图展示了各类弱点的占比，便于识别需要优先治理的成因类别。
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{images/cwe_distribution_pie.png}
+    \caption{Kubernetes 权限提升 CVE 对应的 CWE 类型占比}
+    \label{fig:cwe-distribution}
+\end{figure}
+
+	\textbf{1. 配置缺陷}：应用或基础设施的配置不当导致的安全漏洞，包括：
 \begin{itemize}
     \item 过度权限配置：Kubernetes RBAC 配置不当、Role/ClusterRole 规则范围过宽或绑定关系不合理等，使低权限主体获得超出其职责的资源访问与高危操作能力。该类问题在第三方应用接入场景中尤为常见，并已被证明可被用于接管集群关键资源\cite{o1995redundant,yang2023take}。
     \item 网络隔离不足：容器、Pod或服务间缺乏网络隔离，导致攻击者可以横向移动获取其他权限上下文。

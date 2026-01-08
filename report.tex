@@ -10,6 +10,57 @@ Kubernetes 系统凭借其自动化管理与弹性伸缩能力，已成为容器
 
 \subsection{权限提升漏洞的分类}
 
+权限提升漏洞是指攻击者利用应用或系统中的安全缺陷，获得超过其当前权限级别的访问能力，从而实施越权操作或扩大攻击影响。针对 Kubernetes 容器化应用的权限提升攻击方式与威胁模型呈现多元化。为便于将漏洞特征映射到可实施的控制域（例如身份与权限、网络隔离、运行时检测与审计），本文采用基于根本成因的分类视角，对常见路径进行归纳总结，如图\ref{fig:vulnerability-taxonomy} 所示。
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{images/vulnerability_taxonomy.png}
+    \caption{Kubernetes 容器化应用权限提升攻击方式分类}
+    \label{fig:vulnerability-taxonomy}
+\end{figure}
+
+\textbf{1. 配置缺陷}：应用或基础设施的配置不当导致的安全漏洞，包括：
+\begin{itemize}
+    \item 过度权限配置：Kubernetes RBAC 配置不当、IAM 策略范围过宽等，使低权限主体获得超出其职责的资源访问与高危操作能力。
+    \item 网络隔离不足：容器、Pod或服务间缺乏网络隔离，导致攻击者可以横向移动获取其他权限上下文。
+\end{itemize}
+
+\textbf{2. 安全逻辑缺陷}：应用代码中的安全机制设计或实现不当，包括：
+\begin{itemize}
+    \item 访问控制缺陷：应用的权限检查不完全或存在逻辑漏洞，允许绕过权限验证；
+    \item 身份验证绕过：认证机制设计缺陷，攻击者可以冒充他人身份或跳过认证步骤；
+    \item 授权验证不完善：权限检查在某些操作路径或边界条件下缺失。
+\end{itemize}
+
+\textbf{3. 敏感信息泄露}：重要的身份、密钥或权限信息意外暴露，包括：
+\begin{itemize}
+    \item API端口暴露：管理接口、内部API或调试端口未受保护暴露在网络上；
+    \item 日志泄露：日志文件包含敏感信息（如token、密钥、命令历史）；
+    \item 配置文件泄露：配置文件包含硬编码的凭证或密钥。
+\end{itemize}
+
+\textbf{4. 代码注入}：应用对用户输入的处理不当，允许注入恶意代码，包括：
+\begin{itemize}
+    \item 命令注入：应用直接执行用户提供或可控的命令，攻击者可以执行任意系统命令；
+    \item 路径遍历：应用文件访问检查不完整，攻击者可以访问系统其他部分的文件。
+\end{itemize}
+
+
+\subsection{动机与挑战}
+
+在云原生场景下，漏洞补丁的发布与升级往往存在时间差；同时，生产环境的组件组合与权限边界具有显著异构性。对于权限提升类漏洞而言，这意味着处置流程通常需要在“补丁尚不可用或难以及时部署”的阶段，先采取\textbf{临时防控}措施以降低风险暴露面。基于这一现实需求，本文将动机聚焦于可动态下发的安全控制域，通过准入控制、网络隔离与运行时检测等手段，对攻击链中的关键环节施加约束，实现可快速部署、可验证、可回滚的风险缓解。
+
+为便于将上述动机具体化，本文将常见动态控制与工具能力归纳为如下可落地控制点：
+\begin{itemize}
+    \item \textbf{准入与策略约束}：基于 \texttt{OPA/Gatekeeper} 或 \texttt{Kyverno} 等准入策略，对特权容器、宿主机路径挂载、高风险 Linux \texttt{capabilities}、过宽 RBAC 绑定等高风险资源进行阻断或强制修正；
+    \item \textbf{网络隔离与最小连通}：基于 \texttt{NetworkPolicy} 对命名空间与工作负载间通信进行白名单化，限制横向移动与数据外传路径；
+    \item \textbf{运行时检测与响应}：基于 \texttt{Falco} 等运行时安全工具，监测异常系统调用、提权相关行为与逃逸迹象，并结合告警、隔离等处置流程降低影响扩散；
+    \item \textbf{安全基线与最小权限}：结合 Pod 安全基线（如 \texttt{Pod Security Standards}）与账户/令牌治理，压缩默认配置下的权限暴露面。
+\end{itemize}
+
+面向权限提升漏洞的临时防控，自动化生成的方案需要同时满足三个要求：\textbf{可解释}（能够说明措施与风险点的对应关系）、\textbf{可执行}（给出可落地步骤，并明确验证与回滚边界）、\textbf{可复核}（关键结论可回溯到证据与环境假设）。然而，漏洞描述与运行环境信息往往存在噪声与缺失，不同控制手段对业务的副作用也存在差异，使得“生成—筛选—交付”难以依靠单一的启发式规则完成。为此，本文采用结构化产物、证据来源追踪与规则化质量评价相结合的方式，将策略生成过程约束到可检查的中间结果上，降低不确定性对交付质量的影响。
+
+在上述约束下，引入大模型的核心动因在于提升对漏洞信息理解与策略生成的效率与覆盖度。面对公告、代码、讨论材料等多源非结构化证据，大模型可在检索增强上下文的支持下归纳漏洞成因，梳理权限边界与可控点，并生成多种候选的临时防控方案。与此同时，本文通过结构化字段设计、动作序列规范与门槛评价机制，将生成结果转化为可检查、可复核的交付产物，使其更契合 CVE 快速缓解与防控流程，并与必要的验证与审计环节保持一致。此外，本文在交付闭环中引入 human-in-the-loop（人工在环）机制：由安全工程师在门槛评价通过后对关键假设、证据引用、潜在业务副作用与回滚边界进行复核，并对安全策略部署决策作出最终确认。同时策略生成的每一步都可以人工检验中间结论与证据来源，并进行上下文操作和prompt优化等。
 
 
 针对云原生权限提升漏洞的临时防控需求，本文构建了一套自动化策略生成流程。该流程以证据约束、结构化产物与质量评价为核心，分为三个阶段实施。
@@ -216,21 +267,7 @@ R(\Pi_v,\;\text{dim})\rightarrow(\pi_{(1)},\pi_{(2)},\ldots,\pi_{(k)})
 
 评价结论决定策略是否可交付或需要进一步优化。当最高分候选仍低于阈值或关键维度存在缺陷时，评价报告转化为修订约束触发下一轮反馈优化；当候选达标时，按维度排名并输出支撑证据。
 
-% \section{LLM 生成的可靠性控制}
 
-% 在以生成模型辅助策略构建的场景中，输出质量主要受三类因素影响：生成过程的随机性、输入证据的不完整性，以及对约束条件理解不一致带来的偏差。为提高结果的可复核性与可维护性，本文采用如下机制对输出进行“可检查化”约束：
-
-% \begin{enumerate}
-%     \item \textbf{结构化产物与字段检查}：将策略固定为（layer、method、actions）三字段对象；对字段完整性、格式一致性与动作序列可执行性进行规则化检查。
-    
-%     \item \textbf{证据来源追踪}：对关键判断与关键配置项保留来源标识（文件路径、链接或片段 ID 等），使“结论—证据”可回溯。
-    
-%     \item \textbf{分阶段输出与差异记录}：将推导过程拆分为可验证的中间输出，并在迭代修订时记录修改原因与变化点，便于定位问题来源。
-    
-%     \item \textbf{多维评价与门槛控制}：通过门槛评分过滤明显不可部署的候选，再以质量向量进行排序，从而将主观判断转化为可比较的检查结果。
-% \end{enumerate}
-
-% 上述机制的目标并非“消除不确定性”，而是将不确定性限定在可定位、可复核的范围内，使策略选择与交付过程具有一致的检查依据。
 
 \section{实验与评估}
 
@@ -258,9 +295,12 @@ R(\Pi_v,\;\text{dim})\rightarrow(\pi_{(1)},\pi_{(2)},\ldots,\pi_{(k)})
     \centering
     {\setlength{\abovecaptionskip}{2pt}%
      \setlength{\belowcaptionskip}{0pt}%
-     \subfloat[可部署性]{\includegraphics[width=1\textwidth]{images/plots/可部署性/summary/single_dim_by_judge_可部署性.png}\label{fig:single-dim-deployability}}\\
-     \subfloat[无干扰性]{\includegraphics[width=1\textwidth]{images/plots/无干扰性/summary/single_dim_by_judge_无干扰性.png}\label{fig:single-dim-interference}}\\
-     \subfloat[有效性]{\includegraphics[width=1\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}\label{fig:single-dim-effectiveness}}}
+     \setlength{\subfigtopskip}{0pt}%
+     \setlength{\subfigcapskip}{2pt}%
+     \setlength{\subfigbottomskip}{0pt}%
+     \subfloat[可部署性]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/summary/single_dim_by_judge_可部署性.png}\label{fig:single-dim-deployability}}\par\vspace{-0.8em}
+     \subfloat[无干扰性]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/summary/single_dim_by_judge_无干扰性.png}\label{fig:single-dim-interference}}\par\vspace{-0.8em}
+     \subfloat[有效性]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}\label{fig:single-dim-effectiveness}}}
     \caption{不同评审模型下的单维度排名式评分结果。}
 \end{figure}
 
