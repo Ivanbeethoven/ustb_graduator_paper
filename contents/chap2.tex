@@ -2,60 +2,62 @@
 
 \section{相关概念与技术}
 
-\subsection{容器与云原生基础}
-容器通过镜像、分层文件系统与隔离命名空间提供轻量级运行环境，结合编排与弹性能力构成云原生基础设施。镜像可复用、快速部署，但也可能携带过期依赖与弱默认配置，为权限滥用留下入口。
+\subsection{容器}
+容器（Container）是一种以\textbf{镜像（Image）}为交付单元、以操作系统内核能力为隔离基础的轻量级运行环境。与传统虚拟机通过虚拟化硬件来隔离不同，容器更强调\textbf{进程级隔离}与\textbf{环境一致性}：应用及其依赖以镜像形式打包交付，运行时由容器引擎创建隔离的进程视图与资源配额，再启动容器内的目标进程。
+
+从实现机制看，容器的关键能力主要来自三类内核与运行时支撑：
+	\textbf{（1）命名空间（Namespace）隔离}，将进程、网络、挂载点、IPC、用户等资源视图隔离开来，使容器内进程“看见”的系统环境与宿主机相互独立；
+    \textbf{（2）控制组（cgroup）资源管控}，对 CPU、内存、I/O 等资源进行限制与统计，防止单个工作负载挤占宿主机资源；
+    \textbf{（3）镜像与分层文件系统}，将应用与依赖固化为可复用的只读层，并基于OverlayFS技术叠加读写层形成运行时文件系统，从而同时实现复用、缓存与快速分发。
+
+在工程实践中，容器镜像的可复用性与快速分发构成云原生交付的关键能力，但亦伴随若干显著的安全隐患。首先，镜像可能包含过期依赖或不当默认配置。长期未更新的基础镜像会导致已知漏洞残留；容器若以 root 身份运行，或在镜像中嵌入调试工具与敏感凭据，则会扩大被利用的风险。其次，容器的隔离能力取决于宿主机内核与运行时配置。启用特权模式、挂载宿主机路径、放宽 Linux capabilities，或禁用 seccomp 与 AppArmor 等安全机制，均会削弱容器与宿主机之间的隔离，从而使攻击面从容器内部向宿主机乃至整个集群扩展。鉴于上述风险，容器安全治理应覆盖镜像构建阶段的依赖管理与基线加固、制品交付环节的制品管理与签名，以及运行时的权限最小化与最小暴露等生命周期环节，并在各阶段引入自动化检测与策略约束以降低总体风险。
+
+\subsection{Kubernetes：架构与工作原理}
+Kubernetes 是面向容器工作负载的编排系统，其核心思想是以\textbf{声明式 API}描述期望状态（desired state），再由控制平面持续驱动实际状态（actual state）向期望状态收敛\cite{kubernetes2024}。这一“\textbf{控制回路（reconcile loop）}”使得部署、扩缩容、故障自愈与滚动升级等运维动作可以自动化、可重复且具备可观测性。
+
+从整体架构看，Kubernetes 由\textbf{控制平面（Control Plane）}与\textbf{工作节点（Worker Node）}两部分构成。控制平面负责提供 API、调度与集群控制逻辑，其中：\textbf{API Server}是所有资源访问与状态变更的统一入口，承担认证、授权、准入与资源对象持久化等关键职责；\textbf{调度器（Scheduler）}根据资源请求、亲和/反亲和、污点与容忍等约束为待调度 Pod 选择节点；各类\textbf{控制器（Controller）}（如 Deployment/ReplicaSet、Job、Node、Endpoint 等控制器）基于资源对象的当前状态触发协调动作，形成“观察—决策—执行”的闭环。工作节点侧，\textbf{kubelet}负责与 API Server 通信并将 Pod 规格落实到本机运行时，\textbf{容器运行时（Container Runtime）}负责拉取镜像、创建容器并管理生命周期，\textbf{kube-proxy}（或由 CNI/eBPF 方案替代）负责服务转发与网络规则的实现。
+
+围绕上述组件，Kubernetes 进一步抽象出一组核心对象以承载不同层面的运维语义：\textbf{Pod}是最小调度单元，包含一个或多个共享网络与存储命名空间的容器；\textbf{Deployment/StatefulSet/DaemonSet}分别面向无状态、有状态与节点守护型工作负载提供期望副本与更新策略；\textbf{Service}与\textbf{Endpoint/EndpointSlice}提供稳定的服务发现与负载均衡抽象；\textbf{Ingress}（或 Gateway API）面向南北向流量提供入口控制；\textbf{ConfigMap/Secret}用于配置与敏感信息的声明式注入；\textbf{Volume/PV/PVC}则提供存储生命周期与绑定关系的抽象。
+
+Kubernetes 的工作原理可以概括为“\textbf{资源对象驱动的状态机}”。当用户提交 YAML 清单或通过控制器创建资源对象时，请求首先进入 API Server：经过认证、授权与准入控制后，资源对象被持久化并成为集群事实状态。随后，控制器与调度器通过监听资源变化（watch）获取事件：调度器为 Pending 的 Pod 选择节点并写回绑定结果；对应节点上的 kubelet 读取 PodSpec，调用容器运行时拉取镜像、创建容器，配置网络与挂载卷，并持续上报状态与探针结果。一旦发生节点故障、容器退出或副本数变化，控制器会再次触发协调动作，保证系统最终收敛到期望状态。
+
+为便于理解控制平面与工作节点之间的职责划分与交互关系，如图\ref{fig:k8s-arch}所示给出了 Kubernetes 的体系结构示意。
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/k8s.png}
+    \caption{Kubernetes 体系结构示意}\label{fig:k8s-arch}
+\end{figure}
 
 \subsection{Kubernetes 权限模型}
-Kubernetes 通过身份与授权机制实现对资源的访问控制，其中 RBAC（Role-Based Access Control）是最核心的授权模型之一\cite{ferraiolo1995role,kubernetes2024}。在典型流程中，工作负载（Pod）以 ServiceAccount 作为身份主体；权限以 Role/ClusterRole 的形式被抽象为若干规则（rules），规则通常以“资源类型（resources）—操作动词（verbs）—作用域（namespace/cluster）”等维度描述允许的操作集合；随后通过 RoleBinding/ClusterRoleBinding 将主体与角色绑定，使得主体获得对特定资源的访问能力。与之配合，Namespace 用于隔离租户与资源域，NetworkPolicy 等机制用于收敛网络可达性并减少横向移动空间。
+Kubernetes 将“资源访问”统一收敛到 API Server，使得安全治理的关键落在\textbf{身份（Authentication）}与\textbf{授权（Authorization）}链路之上。其中，RBAC（Role-Based Access Control）是最核心的授权模型之一\cite{ferraiolo1995role,kubernetes2024}。在典型流程中，工作负载（Pod）以 ServiceAccount 作为身份主体；权限以 Role/ClusterRole 的形式被抽象为若干规则（rules），规则通常以“API 组与资源类型（apiGroups/resources）—操作动词（verbs）—作用域（namespace/cluster）”等维度描述允许的操作集合；随后通过 RoleBinding/ClusterRoleBinding 将主体与角色绑定，使得主体获得对特定资源的访问能力。与之配合，Namespace 用于隔离租户与资源域，NetworkPolicy 等机制用于收敛网络可达性并减少横向移动空间。
 
-在工程实践中，第三方组件（如 Prometheus、Jenkins、Istio 等）接入往往需要访问多类资源与 API，对权限配置的依赖更强；一旦存在过宽的 RBAC 绑定或错误的身份边界，便可能形成权限滥用与权限提升的入口。因此，理解权限模型的组成要素与授权链路，是后续分析权限提升漏洞成因与制定可落地防控措施的基础。
+在落地层面，RBAC 通常以 YAML 清单进行声明式配置：通过编写 Role/ClusterRole 的规则集合，再以（Cluster）RoleBinding 将其授予 ServiceAccount 等主体。图\ref{fig:k8s-rbac-yaml}给出了权限配置（YAML）的示意，用于直观展示“规则—绑定—主体”的授权链路。
 
-\subsection{权限提升漏洞与常见路径}
-云原生场景的权限提升通常由多类成因叠加。权限提升漏洞是指攻击者利用应用或系统中的安全缺陷，获得超过其当前权限级别的访问能力，从而实施越权操作或扩大攻击影响。针对 Kubernetes 容器化应用的权限提升攻击方式与威胁模型呈现多元化。为便于将漏洞特征映射到可实施的控制域（例如身份与权限、网络隔离、运行时检测与审计），本文采用基于根本成因的分类视角，对常见路径进行归纳总结，如图\ref{fig:vulnerability-taxonomy} 所示。
-
-\begin{figure}[h]
+\begin{figure}[tbp]
     \centering
-    \includegraphics[width=1\textwidth]{images/vulnerability_taxonomy.png}
-    \caption{Kubernetes 容器化应用权限提升攻击方式分类}
-    \label{fig:vulnerability-taxonomy}
+    \includegraphics[width=0.95\textwidth]{images/yaml.png}
+    \caption{Kubernetes RBAC 权限配置（YAML）示意\cite{kubeguard_icws2025}}\label{fig:k8s-rbac-yaml}
 \end{figure}
 
-为保证分类研究建立在充分的实证语料之上，本文针对 CVE 官方库与 NVD 数据集开展定向抓取：结合“Container/Kubernetes”“privilege escalation”等关键词，并追加常见系统组件与第三方插件名称，对 2018--2024 年披露的 CVE 进行批量检索；随后以公告原文、厂商通告与社区讨论为佐证，对候选条目进行人工复核，剔除重复或与权限提升无关的记录，并补全攻击前提、影响面与缓解建议信息。该结构化漏洞样本成为后续归纳常见攻击路径与策略控制域的事实基础。
+在工程实践中，第三方组件（如 Prometheus、Jenkins、Istio 等）接入往往需要访问多类资源与 API，对权限配置的依赖更强；一旦存在\textbf{过宽的 RBAC 绑定}或\textbf{错误的身份边界}（例如将集群级角色绑定到不必要的 ServiceAccount），便可能形成权限滥用与权限提升的入口。因此，理解从“主体—绑定—角色规则—资源对象”的授权链路，以及其与命名空间隔离、网络可达性的耦合关系，是后续分析权限提升漏洞成因与制定可落地防控措施的基础。
 
-CWE（Common Weakness Enumeration）为跨平台的软件弱点统一编目，可将具体 CVE 映射到更加抽象的根因。本文依据 MITRE 发布的最新映射关系，将整理得到的 CVE 样本标注到对应的 CWE 条目，并统计不同弱点类型的出现频次，以刻画 Kubernetes 权限提升漏洞在根因层面的分布特征。统计结果如图\ref{fig:cwe-distribution} 所示，该饼图展示了各类弱点的占比，便于识别需要优先治理的成因类别。
+\subsection{Kubernetes 权限提升漏洞}
 
-\begin{figure}[h]
+权限提升（Privilege Escalation）指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置，将自身权限提升到更高等级的过程。在 Kubernetes 场景下，权限提升既可能表现为授权范围扩大（例如能够访问更多 Kubernetes API，这通常由 RBAC 规则决定），也可能表现为节点侧系统权限提升（例如获得节点上的 root 权限），从而对更大范围的资源与工作负载产生影响。
+
+在云原生环境中，权限提升的危害往往具有更强的放大效应。一方面，单个节点通常承载多个 Pod，节点侧提权成功后，攻击者可能对同节点上的多个工作负载实施窃取敏感信息、篡改运行环境或注入恶意组件等行为。另一方面，Kubernetes 的资源对象与运维动作高度集中且自动化；当攻击者获得更高权限后，可能进一步读取 Secret、创建高权限工作负载、修改网络策略或部署守护进程，进而将影响从单一应用扩展到集群层面的安全与稳定。因此，权限提升漏洞不仅是单点缺陷，还可能引发平台级安全事件与隔离失效。
+
+为说明节点侧提权在云原生场景中的现实危害，图\ref{fig:cve-2024-33522}给出了\texttt{CVE-\allowbreak2024-\allowbreak33522}的示例。该漏洞影响 Calico 的 CNI 安装程序：在部分易受影响版本中，安装二进制的 SUID（Set User ID）位配置不当，同时允许攻击者控制输入二进制。在攻击者已具备 Kubernetes 节点本地访问的前提下，攻击者可诱导安装过程以更高权限执行任意二进制，从而实现节点侧权限提升。虽然该漏洞的利用前提包含节点本地访问，但在真实环境中，这一前提可能由其他入侵路径满足（例如节点服务暴露、弱口令、供应链投毒，或通过其他漏洞获得节点执行能力）。一旦节点侧权限提升成功，攻击者可能读取或篡改节点关键数据（如容器运行时目录、配置与日志），窃取工作负载凭据与令牌，干扰网络组件行为，并进一步扩大影响范围，从而显著加剧集群整体风险。
+
+\begin{figure}[tbp]
     \centering
-    \includegraphics[width=1\textwidth]{images/cwe_distribution_pie.png}
-    \caption{Kubernetes 权限提升 CVE 对应的 CWE 类型占比}
-    \label{fig:cwe-distribution}
+    \includegraphics[width=0.95\textwidth]{images/cve_example.png}
+    \caption{\texttt{CVE-\allowbreak2024-\allowbreak33522}（Calico）节点侧权限提升漏洞报告ISSUE}\label{fig:cve-2024-33522}
 \end{figure}
 
-	\textbf{1. 配置缺陷}：应用或基础设施的配置不当导致的安全漏洞，包括：
-\begin{itemize}
-    \item 过度权限配置：Kubernetes RBAC 配置不当、Role/ClusterRole 规则范围过宽或绑定关系不合理等，使低权限主体获得超出其职责的资源访问与高危操作能力。该类问题在第三方应用接入场景中尤为常见，并已被证明可被用于接管集群关键资源\cite{o1995redundant,yang2023take}。
-    \item 网络隔离不足：容器、Pod或服务间缺乏网络隔离，导致攻击者可以横向移动获取其他权限上下文。
-\end{itemize}
 
-\textbf{2. 安全逻辑缺陷}：应用代码中的安全机制设计或实现不当，包括：
-\begin{itemize}
-    \item 访问控制缺陷：应用的权限检查不完全或存在逻辑漏洞，允许绕过权限验证；
-    \item 身份验证绕过：认证机制设计缺陷，攻击者可以冒充他人身份或跳过认证步骤；
-    \item 授权验证不完善：权限检查在某些操作路径或边界条件下缺失。
-\end{itemize}
 
-\textbf{3. 敏感信息泄露}：重要的身份、密钥或权限信息意外暴露，包括：
-\begin{itemize}
-    \item API端口暴露：管理接口、内部API或调试端口未受保护暴露在网络上；
-    \item 日志泄露：日志文件包含敏感信息（如token、密钥、命令历史）；
-    \item 配置文件泄露：配置文件包含硬编码的凭证或密钥。
-\end{itemize}
-
-\textbf{4. 代码注入}：应用对用户输入的处理不当，允许注入恶意代码，包括：
-\begin{itemize}
-    \item 命令注入：应用直接执行用户提供或可控的命令，攻击者可以执行任意系统命令；
-    \item 路径遍历：应用文件访问检查不完整，攻击者可以访问系统其他部分的文件。
-\end{itemize}
 
 
 \section{云原生安全工具}
@@ -101,6 +103,12 @@ Falco 的监测机制建立在对 Linux 系统调用的动态捕获之上，其�
 （3）\textbf{权限提升与运行时攻击场景建模/检测}。权限提升不仅来源于静态配置本身，也与 DevOps 流水线、运行时 API 调用与权限链条有关。既有研究总结了 Kubernetes 权限提升的典型路径与攻击链条，并给出可复现的攻击场景与对抗视角\cite{yang2023take,pecka2022privilege}。该方向强调对“攻击如何发生”的机制理解，但将研究结论转化为补丁窗口期可直接采用的缓解策略，仍需要进一步解决“策略可部署/可回滚”“副作用可评估”“证据可追溯”等交付层问题。
 
 在上述研究基础上，课题组工作 KubeGuard（ICWS 2025）面向权限风险给出系统化检测框架，覆盖过度权限、权限提升与敏感信息泄露三类风险，并分别提出最小权限集构建、规则化审计与敏感词监测等机制\cite{kubeguard_icws2025}。本文进一步聚焦于\textbf{权限提升类漏洞的补丁窗口期动态防控}：将多源证据组织为可追溯上下文，生成并筛选满足“可解释、可执行、可复核”的临时防控策略，以补足现有研究从“风险识别/机制分析”到“可交付缓解方案”的关键缺口。
+
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/KGF.png}
+    \caption{KubeGuard 框架示意\cite{kubeguard_icws2025}}\label{fig:kgf}
+\end{figure}
 
 
 
