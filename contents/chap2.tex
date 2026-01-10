@@ -12,22 +12,22 @@
 
 在工程实践中，容器镜像的可复用性与快速分发构成云原生交付的关键能力，但亦伴随若干显著的安全隐患。首先，镜像可能包含过期依赖或不当默认配置。长期未更新的基础镜像会导致已知漏洞残留；容器若以 root 身份运行，或在镜像中嵌入调试工具与敏感凭据，则会扩大被利用的风险。其次，容器的隔离能力取决于宿主机内核与运行时配置。启用特权模式、挂载宿主机路径、放宽 Linux capabilities，或禁用 seccomp 与 AppArmor 等安全机制，均会削弱容器与宿主机之间的隔离，从而使攻击面从容器内部向宿主机乃至整个集群扩展。鉴于上述风险，容器安全治理应覆盖镜像构建阶段的依赖管理与基线加固、制品交付环节的制品管理与签名，以及运行时的权限最小化与最小暴露等生命周期环节，并在各阶段引入自动化检测与策略约束以降低总体风险。
 
-\subsection{Kubernetes：架构与工作原理}
+\subsection{Kubernetes架构与工作原理}
 Kubernetes 是面向容器工作负载的编排系统，其核心思想是以\textbf{声明式 API}描述期望状态（desired state），再由控制平面持续驱动实际状态（actual state）向期望状态收敛\cite{kubernetes2024}。这一“\textbf{控制回路（reconcile loop）}”使得部署、扩缩容、故障自愈与滚动升级等运维动作可以自动化、可重复且具备可观测性。
 
-从整体架构看，Kubernetes 由\textbf{控制平面（Control Plane）}与\textbf{工作节点（Worker Node）}两部分构成。控制平面负责提供 API、调度与集群控制逻辑，其中：\textbf{API Server}是所有资源访问与状态变更的统一入口，承担认证、授权、准入与资源对象持久化等关键职责；\textbf{调度器（Scheduler）}根据资源请求、亲和/反亲和、污点与容忍等约束为待调度 Pod 选择节点；各类\textbf{控制器（Controller）}（如 Deployment/ReplicaSet、Job、Node、Endpoint 等控制器）基于资源对象的当前状态触发协调动作，形成“观察—决策—执行”的闭环。工作节点侧，\textbf{kubelet}负责与 API Server 通信并将 Pod 规格落实到本机运行时，\textbf{容器运行时（Container Runtime）}负责拉取镜像、创建容器并管理生命周期，\textbf{kube-proxy}（或由 CNI/eBPF 方案替代）负责服务转发与网络规则的实现。
+从整体架构看，Kubernetes 由\textbf{控制平面（Control Plane）}与\textbf{工作节点（Worker Node）}两部分构成。控制平面负责提供 API、调度与集群控制逻辑，其中：\textbf{API Server}是所有资源访问与状态变更的统一入口，承担认证、授权、准入与资源对象持久化等关键职责；\textbf{调度器（Scheduler）}根据资源请求、亲和/反亲和、污点与容忍等约束为待调度 Pod 选择节点；各类\textbf{控制器（Controller）}（如 Deployment/ReplicaSet、Job、Node、Endpoint 等控制器）基于资源对象的当前状态触发协调动作，形成“观察—决策—执行”的闭环。工作节点侧，\textbf{kubelet}负责与 API Server 通信并将 Pod 规格落实到本机运行时，\textbf{容器运行时（Container Runtime）}负责拉取镜像、创建容器并管理生命周期，\textbf{kube-proxy}（或由 CNI/eBPF 方案替代）负责服务转发与网络规则的实现。如图\ref{fig:k8s-arch}所示给出了 Kubernetes 的体系结构示意。
+\begin{figure}[tbp]
+    \centering
+    \includegraphics[width=1\textwidth]{images/k8s.png}
+    \caption{Kubernetes 体系结构示意}\label{fig:k8s-arch}
+\end{figure}
+
 
 围绕上述组件，Kubernetes 进一步抽象出一组核心对象以承载不同层面的运维语义：\textbf{Pod}是最小调度单元，包含一个或多个共享网络与存储命名空间的容器；\textbf{Deployment/StatefulSet/DaemonSet}分别面向无状态、有状态与节点守护型工作负载提供期望副本与更新策略；\textbf{Service}与\textbf{Endpoint/EndpointSlice}提供稳定的服务发现与负载均衡抽象；\textbf{Ingress}（或 Gateway API）面向南北向流量提供入口控制；\textbf{ConfigMap/Secret}用于配置与敏感信息的声明式注入；\textbf{Volume/PV/PVC}则提供存储生命周期与绑定关系的抽象。
 
 Kubernetes 的工作原理可以概括为“\textbf{资源对象驱动的状态机}”。当用户提交 YAML 清单或通过控制器创建资源对象时，请求首先进入 API Server：经过认证、授权与准入控制后，资源对象被持久化并成为集群事实状态。随后，控制器与调度器通过监听资源变化（watch）获取事件：调度器为 Pending 的 Pod 选择节点并写回绑定结果；对应节点上的 kubelet 读取 PodSpec，调用容器运行时拉取镜像、创建容器，配置网络与挂载卷，并持续上报状态与探针结果。一旦发生节点故障、容器退出或副本数变化，控制器会再次触发协调动作，保证系统最终收敛到期望状态。
 
-为便于理解控制平面与工作节点之间的职责划分与交互关系，如图\ref{fig:k8s-arch}所示给出了 Kubernetes 的体系结构示意。
 
-\begin{figure}[tbp]
-    \centering
-    \includegraphics[width=0.95\textwidth]{images/k8s.png}
-    \caption{Kubernetes 体系结构示意}\label{fig:k8s-arch}
-\end{figure}
 
 \subsection{Kubernetes 权限模型}
 Kubernetes 将“资源访问”统一收敛到 API Server，使得安全治理的关键落在\textbf{身份（Authentication）}与\textbf{授权（Authorization）}链路之上。其中，RBAC（Role-Based Access Control）是最核心的授权模型之一\cite{ferraiolo1995role,kubernetes2024}。在典型流程中，工作负载（Pod）以 ServiceAccount 作为身份主体；权限以 Role/ClusterRole 的形式被抽象为若干规则（rules），规则通常以“API 组与资源类型（apiGroups/resources）—操作动词（verbs）—作用域（namespace/cluster）”等维度描述允许的操作集合；随后通过 RoleBinding/ClusterRoleBinding 将主体与角色绑定，使得主体获得对特定资源的访问能力。与之配合，Namespace 用于隔离租户与资源域，NetworkPolicy 等机制用于收敛网络可达性并减少横向移动空间。
@@ -52,7 +52,7 @@ Kubernetes 将“资源访问”统一收敛到 API Server，使得安全治理�
 
 \begin{figure}[tbp]
     \centering
-    \includegraphics[width=0.95\textwidth]{images/cve_example.png}
+    \includegraphics[width=1\textwidth]{images/cve_example.png}
     \caption{\texttt{CVE-\allowbreak2024-\allowbreak33522}（Calico）节点侧权限提升漏洞报告ISSUE}\label{fig:cve-2024-33522}
 \end{figure}
 
@@ -63,33 +63,60 @@ Kubernetes 将“资源访问”统一收敛到 API Server，使得安全治理�
 \section{云原生安全工具}
 在补丁未就绪或难以及时升级的阶段，生产环境往往需要依赖可快速下发、可验证且可回滚的控制手段来降低风险暴露面。从“上线前治理”到“运行时防护”的完整链路来看，云原生安全工具通常覆盖四个互补层面：\textbf{（1）运行时检测与审计}（在不中断业务的前提下对异常行为进行告警与取证）；\textbf{（2）准入与策略约束}（在资源进入集群前阻断高风险配置）；\textbf{（3）网络隔离与最小连通}（收敛工作负载间可达性以抑制横向移动）；\textbf{（4）静态扫描与配置审计}（在构建与交付阶段发现已知漏洞与弱配置）。下文分别介绍运行时检测工具 Falco、准入控制工具 OPA/Gatekeeper 与 Kyverno、网络隔离机制 NetworkPolicy，以及静态扫描与配置审计类工具。
 
-\subsection{容器安全技术：Falco}
+\subsection{容器运行时安全监控工具：Falco}
 在容器技术与云原生基础设施广泛部署的背景下，传统基于主机或网络的入侵监测系统（IDS）逐渐暴露出适应性不足、粒度较粗以及缺乏云原生上下文语义等问题。为满足容器化环境对运行时安全的实时性与上下文感知需求，开源项目 Falco 应运而生。Falco 最初由 Sysdig 公司开发，并于 2018 年捐赠给云原生计算基金会（CNCF），成为较早面向容器运行时的行为监测系统之一。其核心思想是在\textbf{系统调用}层进行透明监控，并通过规则语言定义安全策略，从而在不中断业务的前提下实现精细化威胁监测与审计。
 
-Falco 的监测机制建立在对 Linux 系统调用的动态捕获之上，其中\textbf{eBPF} 是其能力落地的关键支撑之一。eBPF（extended Berkeley Packet Filter）允许在\textbf{内核态}运行经过验证的字节码程序，并以受控方式访问内核提供的上下文与辅助函数；eBPF 程序可动态挂载到系统调用入口/退出点、内核跟踪点（tracepoint）、kprobe 以及网络相关钩子等位置，从而以较低侵入性捕获安全相关事件。相较于传统内核模块方案，eBPF 通过验证器与隔离执行机制降低了对内核稳定性的影响，并在性能与可观测性之间提供更可控的权衡，适合用于容器运行时的持续监测。
+Falco 的监测机制基于\textbf{eBPF}技术对Linux系统调用的动态捕获与分析。eBPF（extended Berkeley Packet Filter）允许在\textbf{内核态}运行经过验证的字节码程序，并以受控方式访问内核提供的上下文与辅助函数；eBPF 程序可动态挂载到系统调用入口/退出点、内核跟踪点（tracepoint）、kprobe 以及网络相关钩子等位置，从而以较低侵入性捕获安全相关事件。相较于传统内核模块方案，eBPF 通过验证器与隔离执行机制降低了对内核稳定性的影响，并在性能与可观测性之间提供更可控的权衡，适合用于容器运行时的持续监测。
 
-在事件捕获之后，Falco 在用户空间对 eBPF 输出的事件进行解析，并结合容器运行时与编排元信息，补齐云原生上下文（如容器 ID、Pod/Namespace、进程命令、文件路径等），最终形成高语义的行为事件流并触发告警/审计输出。该设计使 Falco 能够从“系统调用级信号”上升到“云原生对象级语义”，更贴近安全运营对定位与处置的需求。
+基于高语义的行为数据流，Falco利用面向安全运维的领域特定语言（DSL）构建声明式规则引擎。与依赖统计特征或黑盒模型的检测方法不同，Falco允许管理员针对特定威胁场景定义确定性的逻辑约束。例如图\ref{fig:falco}展示了监测“在容器内启动交互式 shell 进程”的Falco规则，一旦检测到会产生日志/告警。这种白盒化的检测方式不仅具备极强的可解释性，便于合规审计与取证分析，还能确保告警信息直接关联至具体的云原生实体，显著降低了安全运营的定位成本。然而，该机制在工程应用中仍存在局限性：一方面，基于规则的检测高度依赖专家经验与知识库的持续更新，对未知攻击或变种攻击的泛化检测能力较弱；另一方面，Falco 的观测视野局限于系统调用层，对应用层协议滥用或纯内存型攻击的感知能力有限。
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/falco.png}
+    \caption{Falco 运行时监控与规则示意}
+    \label{fig:falco}
+\end{figure}
 
-规则系统是 Falco 的另一核心组成部分。不同于依赖模型训练或特征匹配的黑盒监测方法，Falco 采用面向安全运维的领域特定语言（DSL）来定义规则：每条规则通常由触发条件、约束表达式与输出字段组成。例如，可定义规则监控容器中是否出现交互式 Shell、是否访问关键系统文件、是否执行未经授权的二进制程序等。规则驱动方式便于安全团队结合业务场景进行定制，且可解释性强，便于合规审计与取证分析。得益于与 Kubernetes 元信息的集成，Falco 的告警也能够关联到 Pod、Namespace、ServiceAccount 等云原生语义实体，降低“只见系统调用、不见业务对象”的分析成本。
+\subsection{准入控制与策略约束工具}
+准入控制（Admission Control）作为云原生安全的\textbf{事前防护}机制，通过拦截 API Server 请求，在资源对象持久化之前对其进行校验（Validation）或变更（Mutation），从而从源头阻断不合规配置进入集群。在这一领域，OPA (Open Policy Agent) 及其 Kubernetes 实现 Gatekeeper 提供了通用的策略引擎支持，但其依赖 Rego 语言的特性在一定程度上提高了使用门槛。
 
-需要指出的是，Falco 仍存在一定局限性：其规则库的维护较依赖经验，难以覆盖未知攻击或高度隐蔽的行为模式；同时其主要面向系统调用层，对应用层协议滥用或内存空间攻击等的可观测性有限。因此，在工程实践中，Falco 往往与准入控制、网络隔离与最小权限治理等手段组合使用，以形成覆盖“配置—通信—运行时”的分层防线。
+相比之下，\textbf{Kyverno} 作为 Kubernetes 原生策略引擎，通过以 YAML 定义策略降低复杂度。Kyverno 不仅支持对 Pod 安全标准（PSS）、镜像签名及供应链安全的校验，还具备对资源进行自动修正（Mutate）与基于触发器生成配置（Generate）的能力，能够将安全基线与平台治理要求固化为可复用的声明式规则。如图 \ref{fig:kyverno-demo} 所示，该策略展示了一个典型的 Kyverno 应用场景：强制要求所有 Pod 必须携带 \texttt{owner} 标签。通过定义 \texttt{validationFailureAction: enforce}，任何缺失该元数据的 Pod 创建请求都将被准入控制器直接拒绝。这种声明式的策略管理方式不仅实现了“所见即所得”的治理效果，更确保了集群内所有工作负载具备可追溯的权属标识。
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/kyverno.png}
+    \caption{Kyverno 策略示例：强制要求 Pod 包含 owner 标签}
+    \label{fig:kyverno-demo}
+\end{figure}
+在漏洞补丁尚不可用时，此类准入策略尤其适用于\textbf{快速止血}（Virtual Patching）：通过强制最小权限、限制高危特性（如 \texttt{privileged} 容器）与收敛敏感对象访问边界，可显著压缩攻击面。同时，准入策略的发布与回滚成本较低，便于安全团队在不同业务环境中进行灰度验证与影响评估，构建起灵活且坚固的配置安全防线。
 
-\subsection{准入控制与策略约束：OPA/Gatekeeper 与 Kyverno}
-准入控制（Admission Control）属于\textbf{事前防护}机制，用于在资源对象写入 API Server 之前对其进行校验或变更，从源头阻断高风险配置进入集群。OPA（Open Policy Agent）是通用策略引擎，Gatekeeper 作为其在 Kubernetes 中的实现形态之一，支持以约束（Constraint）与模板（ConstraintTemplate）的方式将策略下发到集群；策略可覆盖特权容器、宿主机路径挂载、危险 Linux capabilities、镜像来源与签名、RBAC 绑定范围过宽等高风险项。Kyverno 则强调“以 YAML 写策略”的可用性，除校验外也支持对资源进行变更（mutate）与生成（generate），适合将安全基线与平台治理要求固化为可复用规则。
-
-在漏洞补丁尚不可用时，准入策略尤其适用于\textbf{快速止血}：通过强制最小权限、限制高危特性与对敏感对象的访问边界，可显著压缩攻击者可利用的配置入口。同时，准入策略的发布与回滚成本较低，便于在不同业务环境中进行灰度验证与影响评估。
-
-\subsection{网络隔离与最小连通：NetworkPolicy}
+\subsection{网络隔离工具：NetworkPolicy}
 网络隔离用于降低横向移动与数据外传风险，是云原生环境中与身份权限控制互补的关键手段。Kubernetes 的 NetworkPolicy 为声明式策略，允许以 Pod/Namespace 选择器与端口规则的形式，定义\textbf{入站（Ingress）/出站（Egress）}通信的允许集合，从而将网络访问从“默认全通”收敛到“默认拒绝+按需放通”。在多租户或微服务体系中，合理的 NetworkPolicy 可将控制域落到命名空间与工作负载级别，减少单点被攻破后对整个集群的扩散影响。
 
 需要注意的是，NetworkPolicy 的效果依赖底层网络插件（CNI）对策略的实现能力。常见 CNI（如 Calico、Cilium、Antrea 等）均可提供对 NetworkPolicy 的支持；其中部分实现还可在标准三/四层策略之外，扩展更细粒度能力（例如基于 eBPF 的高性能转发与可观测性、面向应用协议的七层策略等）。工程实践中通常结合业务依赖关系梳理通信图谱，先对关键命名空间与高价值服务进行最小连通收敛，再逐步扩展覆盖范围，并配合观测与告警机制验证策略变更带来的连通性影响。
 
-\subsection{静态扫描与配置审计：镜像、依赖与 IaC}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/networkpolicy.png}
+    \caption{NetworkPolicy 示例：限制数据库仅允许前端服务访问}
+    \label{fig:networkpolicy-demo}
+\end{figure}
+
+如图 \ref{fig:networkpolicy-demo} 所示，该策略定义了一个典型的微服务网络隔离场景：针对带有 \texttt{role: db} 标签的数据库工作负载，仅允许来自 \texttt{role: frontend} 前端服务的流量通过 TCP 5432 端口访问。这种基于标签选择器（Label Selector）的白名单机制有效地构建了\textbf{微隔离（Micro-segmentation）}边界，确保即使集群内其他容器（如被入侵的非关联服务）试图横向移动访问数据库，也会在网络层被 CNI 插件直接阻断，从而显著提升了核心数据资产的安全性。
+
+\subsection{静态扫描与配置审计工具：镜像、依赖与 IaC}
 与运行时检测相对，静态扫描更偏向\textbf{事前发现与持续治理}：在镜像构建、交付与部署前，通过自动化检查提前识别已知漏洞、弱配置与合规风险，避免高风险对象进入集群。
 
 第一类是\textbf{镜像与依赖漏洞扫描}。该类工具通常解析镜像分层文件系统与软件包清单，基于公开漏洞库对已知 CVE 进行匹配，并输出风险等级、受影响版本与修复建议。代表性工具包括 Trivy\cite{trivy2025}、Grype/Anchore\cite{grype2025} 等；其中，Syft\cite{syft2025} 等工具可生成软件物料清单（SBOM），用于提升漏洞告警的可追溯性与供应链治理能力。在工程实践中，镜像扫描往往与 CI 流水线结合，在构建阶段阻断高危漏洞或不合规组件进入制品仓库。
 
 第二类是\textbf{Kubernetes 清单与基础设施即代码（IaC）扫描}。此类工具面向 YAML/Helm/Terraform 等配置，检查特权容器、宿主机路径挂载、过宽权限、明文密钥、缺失资源限制等常见风险，并可作为代码评审与准入策略的前置门禁。例如，kubelinter\cite{kubelinter2025}、kubescape\cite{kubescape2025}、kube-score\cite{kubescore2025}、kubesec\cite{kubesec2025}、Polaris\cite{polaris2025} 等可对工作负载清单进行规则化检查；Checkov\cite{checkov2025} 等可对 Terraform 等 IaC 模板进行安全基线与合规性验证。静态扫描的优势在于易于规模化推广与持续运行，但也可能因业务差异产生误报，因此通常需要结合组织基线与例外机制、以及准入与运行时告警进行闭环。
+
+\subsection{AI Agent技术}
+AI Agent（智能体）是以大语言模型为核心、能够\textbf{面向任务进行分解与规划}并通过\textbf{调用外部工具/系统}完成闭环执行的智能系统形态。与仅进行对话式问答的模型不同，Agent 更强调“\textbf{感知—决策—执行—反馈}”的迭代过程：其输出不仅包括自然语言解释，也可包含结构化计划、可执行命令、配置片段或对外部 API 的调用，从而在复杂场景中实现可复用的自动化能力。
+
+从实现要素看，AI Agent 往往由以下模块组合构成：\textbf{（1）任务规划与状态管理}，将目标拆分为若干可验证步骤，并在执行过程中维护中间状态与失败回退；\textbf{（2）记忆与知识增强}，通过短期记忆记录上下文，通过长期记忆或外部知识库（如检索增强生成，RAG）获取领域知识与证据；\textbf{（3）工具调用与执行器}，将模型推理结果转化为对外部工具的调用（例如代码生成、静态分析、配置校验、查询检索等），并把工具输出反馈给模型以驱动下一轮修正；\textbf{（4）安全与约束机制}，对可执行操作施加权限边界、审计记录与输出格式约束，以降低误操作风险。
+
+在工程实践中，工具调用通常以标准化协议或接口实现，以便将不同能力（如配置语法检查、依赖扫描、策略验证、日志查询等）以插件形式集成到 Agent 的执行链路中。本文后续方法中所涉及的 MCP（Model Context Protocol）可视为此类“工具接入与上下文交互”的一种工程化形态：通过统一的接口组织工具能力与返回结果，使得 Agent 能够在受控条件下进行检索、分析、生成与校验的闭环迭代。
+
+在云原生安全场景下，AI Agent 的价值主要体现在：其一，面对漏洞公告、代码仓库与运维配置等多源异构证据，可借助检索与工具链实现更高效的上下文汇聚与复核；其二，将策略生成与验证过程结构化（如固定的 JSON 结构规范、配置片段语法检查、部署前置条件核对），可提高安全策略的可部署性与一致性；其三，通过人工在环（human-in-the-loop）与审计记录机制，使自动化生成与安全合规要求保持一致，提升最终交付的可控性。
 
 \section{国内外研究现状}
 
@@ -102,12 +129,11 @@ Falco 的监测机制建立在对 Linux 系统调用的动态捕获之上，其�
 
 （3）\textbf{权限提升与运行时攻击场景建模/检测}。权限提升不仅来源于静态配置本身，也与 DevOps 流水线、运行时 API 调用与权限链条有关。既有研究总结了 Kubernetes 权限提升的典型路径与攻击链条，并给出可复现的攻击场景与对抗视角\cite{yang2023take,pecka2022privilege}。该方向强调对“攻击如何发生”的机制理解，但将研究结论转化为补丁窗口期可直接采用的缓解策略，仍需要进一步解决“策略可部署/可回滚”“副作用可评估”“证据可追溯”等交付层问题。
 
-在上述研究基础上，课题组工作 KubeGuard（ICWS 2025）面向权限风险给出系统化检测框架，覆盖过度权限、权限提升与敏感信息泄露三类风险，并分别提出最小权限集构建、规则化审计与敏感词监测等机制\cite{kubeguard_icws2025}。本文进一步聚焦于\textbf{权限提升类漏洞的补丁窗口期动态防控}：将多源证据组织为可追溯上下文，生成并筛选满足“可解释、可执行、可复核”的临时防控策略，以补足现有研究从“风险识别/机制分析”到“可交付缓解方案”的关键缺口。
-
+在上述研究基础上，课题组工作提出了面向权限风险的系统化检测框架 KubeGuard，覆盖过度权限、权限提升与敏感信息泄露三类风险，并分别提出最小权限集构建、规则化审计与敏感词监测等机制\cite{kubeguard_icws2025}。该工作一方面，基于NLP技术识别应用的最小权限集来判定权限配置中是否存在过度授权；另一方面，采用动态的规则化审计机制检测多类权限提升风险；同时，通过监测 Pod 间消息传输并进行关键词匹配，对涉及敏感资源的内容触发告警，从而降低敏感信息泄露风险。进一步地，课题组实现了原型系统 KubeGuarder，并在开源 Kubernetes 应用与模拟场景上开展实验评估；结果表明，该框架在过度权限检测方面相较静态基线方法更为有效且更精确，并能够同时发现多类型的权限提升与敏感资源泄露风险\cite{kubeguard_icws2025}。
 \begin{figure}[tbp]
     \centering
     \includegraphics[width=0.95\textwidth]{images/KGF.png}
-    \caption{KubeGuard 框架示意\cite{kubeguard_icws2025}}\label{fig:kgf}
+    \caption{KubeGuard 方法框架图\cite{kubeguard_icws2025}}\label{fig:kgf}
 \end{figure}
 
 

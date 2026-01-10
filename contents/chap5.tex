@@ -1,157 +1,41 @@
 \chapter{实验研究}\label{chap:experiment}
 
+
+\section{研究问题}
+
+本章实验旨在验证所提方法在权限提升漏洞实时防控场景下的有效性与适用性，具体围绕以下研究问题展开：
+
+\paragraph{RQ1：防控技术工作流整体优势}
+在权限提升漏洞的临时防控场景下，本文工作流在 $E/I/D$ 三个维度上能否稳定优于消融设置与基线方法。该问题进一步考察工作流关键环节的贡献，包括检索增强、分阶段推导与基于评审反馈的迭代优化，分析其增益是否在不同漏洞样本上保持一致，以说明整体流程设计的必要性。
+
+\paragraph{RQ2：跨模型稳健性}
+本文工作流的相对优势是否对不同生成模型与不同评审模型稳健，是否存在系统性的能力分层或偏好差异。该问题用于检验实验结论在异构模型条件下的可复现性，避免结果由单一模型的偶然表现所主导。
+
+\paragraph{RQ3：评价一致性与可信度}
+在多评审模型参与的排名式评价中，不同评审模型给出的相对次序是否具有一致性，从而支撑跨评审聚合、方法对比与反馈闭环，并为候选筛选提供可靠的约束信号。该问题从评价侧验证多智能体评价体系的稳定性与可信度。
+
+\paragraph{RQ4：静态扫描的处置价值}
+传统静态扫描工具输出的风险与合规报告，能否为具体 CVE 的临时防控提供有效线索，主要体现在能否指向与漏洞路径相关的配置点，以及能否给出可落地、可验证、可回滚的修正建议。该问题强调处置视角，关注工具输出能否直接转化为补丁窗口期可执行的控制动作，而非仅提供通用的基线加固提示。
+
+\paragraph{RQ5：token cost 成本}
+在保证防控质量的前提下，本文工作流的 token cost 是否可控，且其开销主要由哪些环节贡献。该问题以端到端调用成本为约束，比较 all 与消融设置在生成、评审与反馈迭代中的 token 使用差异，并分析成本与 $E/I/D$ 收益之间的权衡关系，以评估方法在资源受限场景下的可用性。
+
 \section{实验设置}
 
-实验以 55 个权限提升漏洞实例为对象，在统一的提示与输出 schema 下对五个大模型（\texttt{Qwen3}、\texttt{DeepSeek}、\texttt{GPT-5}、\texttt{Grok}、\texttt{GLM-4.6}）生成候选策略集合 $\Pi_v$。为验证关键模块的贡献，设置三项消融：移除检索增强（\texttt{w/o\_rag}）、移除思维链分阶段推导（\texttt{w/o\_cot}）、移除基于评审反馈的迭代优化（\texttt{w/o\_feedback}），其余流程保持一致。
+实验以 55 个权限提升漏洞实例为对象，在统一的提示与输出结构规范下对五个大模型（\texttt{Qwen3}、\texttt{DeepSeek}、\texttt{GPT-5}、\texttt{Grok}、\texttt{GLM-4.6}）生成候选策略集合 $\Pi_v$。为验证关键模块的贡献，设置三项消融：移除检索增强（\texttt{w/o\_rag}）、移除思维链分阶段推导（\texttt{w/o\_cot}）、移除基于评审反馈的迭代优化（\texttt{w/o\_feedback}），其余流程保持一致。
 
-为对比传统静态安全工具，选取 \texttt{kubelinter}、\texttt{kubescape} 与 \texttt{kubesec} 作为基线，输出风险/合规报告后人工评估其对策略生成的启发性（能否指向与漏洞路径相关的高风险配置、是否给出可落地的修正建议）。
+评审阶段将上述五个模型作为评审模型，对 $\Pi_v$ 进行排名式评价。评价指标采用三维质量向量 $q(\pi)=(E(\pi),I(\pi),D(\pi))$，分别对应有效性、无干扰性与可部署性。为降低不同评审模型评分尺度差异带来的影响，本文以相对排序作为主要统计口径。
 
-评审阶段由上述五个模型同时作为“评审者”对 $\Pi_v$ 进行排名式评分。评价指标采用三维质量向量 $q(\pi)=(E(\pi),I(\pi),D(\pi))$，分别对应有效性、无干扰性与可部署性；优先使用相对排序降低不同模型打分尺度差异带来的偏差。
+为回答 token cost 相关问题，本文在生成与评审阶段记录每次调用的输入与输出 token 数，并按漏洞样本（CVE）聚合统计端到端 token 开销；对于包含反馈迭代的配置，累计其多轮调用成本。
 
-\section{评价流程与指标}
+为对比传统静态安全工具，选取 \texttt{kubelinter}、\texttt{kubescape}、\texttt{kubesec} 和 \texttt{SLI-Kube} 作为基线，输出风险/合规报告后人工评估其对策略生成的启发性，例如能否指向与漏洞路径相关的高风险配置、是否给出可落地的修正建议等。
 
-候选策略先通过门槛评分 $s(\pi)$ 的完整性与可部署性检查，再进入三维度评分与排名：
-\begin{itemize}
-	\item 完整性：关键字段与证据引用是否齐全，缺失信息是否显式标注。
-	\item 可部署性：是否给出具体步骤、验证方式与回滚边界，JSON/YAML 语法是否符合 schema。
-	\item 一致性：结论是否与安全上下文匹配，是否存在无依据断言。
-	\item 干扰性与副作用：对业务运维的影响、误报风险与额外复杂度。
-\end{itemize}
+\section{RQ1：防控技术工作流整体优势}
 
-通过阈值后，对 $E/I/D$ 三个维度分别排序生成 $R(\Pi_v,\text{dim})$，并附带关键优缺点与支撑证据以便复核。
+本章结果部分按研究问题组织。除非特别说明，统计结果均在 55 个漏洞样本上汇总，评审侧采用排名式结果作为主要口径。
 
-\section{结果与观察}
-
-本节优先从不同方法配置（含消融）出发，聚焦“有效性”维度说明全量方法（all）的提升与稳定性；随后给出生成模型分层差异；再讨论评审模型偏好差异；最后补充三维度（$E/I/D$）的整体对照。
-
-\subsection{有效性：消融验证与 all 方法优势}
-
-图\ref{fig:effectiveness-method-avg} 给出跨评审者汇总后的方法配置平均排名：全量方法（all）在有效性上整体领先，且与消融版本拉开稳定差距。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_method_avg_有效性.png}}
-	\caption{有效性维度下，不同方法配置的平均排名式评分结果（跨评审者汇总）。}\label{fig:effectiveness-method-avg}
-\end{figure}
-
-为进一步检验 all 方法优势是否对评审者与生成模型稳健，分别从“评审视角聚合”和“生成视角聚合”给出消融对比，如图\ref{fig:effectiveness-ablation-by-judge} 与图\ref{fig:effectiveness-ablation-by-generator} 所示。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[all\label{fig:effectiveness-ablation-by-judge-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/method_bar_by_judge_all_有效性.png}}\hfill
-	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-by-judge-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_rag/method_bar_by_judge_no_rag_有效性.png}}\\
-	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-by-judge-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_cot/method_bar_by_judge_no_cot_有效性.png}}\hfill
-	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-by-judge-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_feedback/method_bar_by_judge_no_feedback_有效性.png}}}
-	\caption{有效性维度下，按评审模型聚合的消融对比（2×2 网格）。}\label{fig:effectiveness-ablation-by-judge}
-\end{figure}
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[all\label{fig:effectiveness-ablation-by-generator-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/method_bar_by_generator_all_有效性.png}}\hfill
-	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-by-generator-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_rag/method_bar_by_generator_no_rag_有效性.png}}\\
-	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-by-generator-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_cot/method_bar_by_generator_no_cot_有效性.png}}\hfill
-	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-by-generator-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_feedback/method_bar_by_generator_no_feedback_有效性.png}}}
-	\caption{有效性维度下，按生成模型聚合的消融对比（2×2 网格）。}\label{fig:effectiveness-ablation-by-generator}
-\end{figure}
-
-在更细粒度的结构层面，热力图可直观看到不同配置下的“结构性差异”与离群现象。图\ref{fig:effectiveness-ablation-heatmap} 给出四种方法配置在有效性维度的热力图对照。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[all\label{fig:effectiveness-ablation-heatmap-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/heatmap_method_all_有效性.png}}\hfill
-	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-heatmap-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_rag/heatmap_method_no_rag_有效性.png}}\\
-	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-heatmap-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_cot/heatmap_method_no_cot_有效性.png}}\hfill
-	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-heatmap-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/no_feedback/heatmap_method_no_feedback_有效性.png}}}
-	\caption{有效性维度下，四种方法配置的热力图对照（2×2 网格）。}\label{fig:effectiveness-ablation-heatmap}
-\end{figure}
-
-\subsection{有效性：生成模型分层（profile）}
-
-在确认 all 方法有效性优势后，进一步关注“生成模型能力差异”是否导致分层现象。图\ref{fig:effectiveness-profile-avg} 给出不同生成模型在有效性维度的平均排名式评分结果（跨评审者汇总）。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_profile_avg_有效性.png}}
-	\caption{有效性维度下，不同生成模型的平均排名式评分结果（跨评审者汇总）。}\label{fig:effectiveness-profile-avg}
-\end{figure}
-
-为比较不同生成模型在“方法配置贡献结构”上的差异，图\ref{fig:effectiveness-generator-by-method} 将五个生成模型的结果以 3+2 网格并列展示（图题中统一采用论文表述的模型名称）。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[\texttt{Qwen3}\label{fig:effectiveness-generator-by-method-qwen3}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/ali-qwen/generator_bar_by_method_ali-qwen_有效性.png}}\hfill
-	 \subfloat[\texttt{DeepSeek}\label{fig:effectiveness-generator-by-method-deepseek}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/deepseek/generator_bar_by_method_deepseek_有效性.png}}\hfill
-	 \subfloat[\texttt{GPT-5}\label{fig:effectiveness-generator-by-method-gpt5}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/gpt5/generator_bar_by_method_gpt5_有效性.png}}\\
-	 \subfloat[\texttt{Grok}\label{fig:effectiveness-generator-by-method-grok}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/grok4/generator_bar_by_method_grok4_有效性.png}}\hfill
-	 \subfloat[\texttt{GLM-4.6}\label{fig:effectiveness-generator-by-method-glm46}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/glm4.5/generator_bar_by_method_glm4.5_有效性.png}}}
-	\caption{有效性维度下，不同生成模型的“方法配置贡献结构”对照（3+2 网格）。}\label{fig:effectiveness-generator-by-method}
-\end{figure}
-
-图\ref{fig:effectiveness-generator-grouped} 进一步给出更紧凑的分组条形图对照，便于快速横向扫读不同生成模型下的相对差距。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[\texttt{Qwen3}\label{fig:effectiveness-generator-grouped-qwen3}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/ali-qwen/grouped_bar_ali-qwen_有效性.png}}\hfill
-	 \subfloat[\texttt{DeepSeek}\label{fig:effectiveness-generator-grouped-deepseek}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/deepseek/grouped_bar_deepseek_有效性.png}}\hfill
-	 \subfloat[\texttt{GPT-5}\label{fig:effectiveness-generator-grouped-gpt5}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/gpt5/grouped_bar_gpt5_有效性.png}}\\
-	 \subfloat[\texttt{Grok}\label{fig:effectiveness-generator-grouped-grok}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/grok4/grouped_bar_grok4_有效性.png}}\hfill
-	 \subfloat[\texttt{GLM-4.6}\label{fig:effectiveness-generator-grouped-glm46}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/glm4.5/grouped_bar_glm4.5_有效性.png}}}
-	\caption{有效性维度下，不同生成模型的分组条形图对照（3+2 网格）。}\label{fig:effectiveness-generator-grouped}
-\end{figure}
-
-\subsection{有效性：评审模型偏好差异}
-
-评审模型之间存在偏好差异。图\ref{fig:effectiveness-by-judge-summary} 先给出有效性维度下“按评审者拆分”的汇总结果。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}
-	\caption{有效性维度下，不同评审模型的排名式评分汇总。}\label{fig:effectiveness-by-judge-summary}
-\end{figure}
-
-为更直观地观察评审偏好结构，图\ref{fig:effectiveness-judge-heatmap} 给出五个评审模型对应的热力图并列对照。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[\texttt{Qwen3}\label{fig:effectiveness-judge-heatmap-qwen3}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/ali-qwen/heatmap_ali-qwen_有效性.png}}\hfill
-	 \subfloat[\texttt{DeepSeek}\label{fig:effectiveness-judge-heatmap-deepseek}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/deepseek/heatmap_deepseek_有效性.png}}\hfill
-	 \subfloat[\texttt{GPT-5}\label{fig:effectiveness-judge-heatmap-gpt5}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/gpt5/heatmap_gpt5_有效性.png}}\\
-	 \subfloat[\texttt{Grok}\label{fig:effectiveness-judge-heatmap-grok}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/grok4/heatmap_grok4_有效性.png}}\hfill
-	 \subfloat[\texttt{GLM-4.6}\label{fig:effectiveness-judge-heatmap-glm46}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/glm4.5/heatmap_glm4.5_有效性.png}}}
-	\caption{有效性维度下，不同评审模型的偏好结构热力图对照（3+2 网格）。}\label{fig:effectiveness-judge-heatmap}
-\end{figure}
-
-\subsection{三维度总览：有效性、无干扰性与可部署性}
-
-在“有效性优先”的分析后，本小节补充三维度（$E/I/D$）的整体对照，以便观察方法配置与生成模型的潜在权衡关系。
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[可部署性\label{fig:single-dim-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/summary/single_dim_by_judge_可部署性.png}}\hfill
-	 \subfloat[无干扰性\label{fig:single-dim-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/summary/single_dim_by_judge_无干扰性.png}}\hfill
-	 \subfloat[有效性\label{fig:single-dim-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}}
-	\caption{不同评审模型下的单维度排名式评分结果（三维度并列）。}\label{fig:single-dim-by-judge-3d}
-\end{figure}
+\subsection{三维度总体表现}
+图\ref{fig:single-dim-method-avg} 给出不同方法配置在 $E/I/D$ 三个维度上的平均排名式结果。整体上，全量工作流（all）在有效性维度保持领先，同时在无干扰性与可部署性维度呈现出与有效性不同的取舍结构。为刻画样本层面的差异分布，图\ref{fig:heatmap-method-all} 进一步给出 all 配置在三个维度上的热力图总览。
 
 \begin{figure}[!ht]
 	\centering
@@ -167,30 +51,227 @@
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
 	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[可部署性\label{fig:single-dim-profile-avg-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/summary/single_dim_profile_avg_可部署性.png}}\hfill
-	 \subfloat[无干扰性\label{fig:single-dim-profile-avg-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/summary/single_dim_profile_avg_无干扰性.png}}\hfill
-	 \subfloat[有效性\label{fig:single-dim-profile-avg-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/summary/single_dim_profile_avg_有效性.png}}}
-	\caption{不同生成模型在三个维度上的平均排名式评分结果（跨评审者汇总，三维度并列）。}\label{fig:single-dim-profile-avg}
-\end{figure}
-
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
 	 \subfloat[可部署性\label{fig:heatmap-method-all-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/method/all/heatmap_method_all_可部署性.png}}\hfill
 	 \subfloat[无干扰性\label{fig:heatmap-method-all-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/method/all/heatmap_method_all_无干扰性.png}}\hfill
 	 \subfloat[有效性\label{fig:heatmap-method-all-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/method/all/heatmap_method_all_有效性.png}}}
 	\caption{全量方法配置（all）下三个维度的热力图总览（三维度并列）。}\label{fig:heatmap-method-all}
 \end{figure}
 
-\paragraph{小结}~
-\begin{itemize}
-	\item 有效性维度上，all 方法在跨评审者汇总与多种聚合视角下均保持领先（图\ref{fig:effectiveness-method-avg}--图\ref{fig:effectiveness-ablation-heatmap}），表明 RAG、CoT 与 Feedback 的组合对“策略能否真正命中漏洞路径”具有稳定增益。
-	\item 不同生成模型存在能力分层与偏好差异，但 all 方法的提升在各 profile 下整体可复现（图\ref{fig:effectiveness-profile-avg}--图\ref{fig:effectiveness-generator-grouped}）。
-	\item 评审模型之间存在偏好差异（图\ref{fig:effectiveness-by-judge-summary}--图\ref{fig:effectiveness-judge-heatmap}），使用相对排序与跨评审聚合可降低尺度不一致的影响，适合作为反馈闭环触发的约束信号。
-	\item 三维度总览显示：方法与生成模型在 $E/I/D$ 上存在权衡关系，需在可部署性与干扰性约束下进一步筛选与复核（图\ref{fig:single-dim-by-judge-3d}--图\ref{fig:heatmap-method-all}）。
-\end{itemize}
+\subsection{有效性维度的消融贡献与稳定性}
+为更直接回答工作流设置对漏洞路径覆盖的贡献，本文以有效性维度作为核心观察对象。图\ref{fig:effectiveness-method-avg} 给出跨评审汇总后的方法配置平均排名，全量方法在有效性上整体领先。图\ref{fig:effectiveness-ablation-by-judge} 与图\ref{fig:effectiveness-ablation-by-generator} 分别从评审聚合与生成聚合两个视角展示消融差异，用于检验提升是否对评审模型与生成模型稳健。
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_method_avg_有效性.png}}
+	\caption{有效性维度下，不同方法配置的平均排名式评分结果（跨评审者汇总）。}\label{fig:effectiveness-method-avg}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[all\label{fig:effectiveness-ablation-by-judge-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/method_bar_by_judge_all_有效性.png}}\hfill
+	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-by-judge-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_rag/method_bar_by_judge_w_o_rag_有效性.png}}\\
+	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-by-judge-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_cot/method_bar_by_judge_w_o_cot_有效性.png}}\hfill
+	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-by-judge-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_feedback/method_bar_by_judge_w_o_feedback_有效性.png}}}
+	\caption{有效性维度下，按评审模型聚合的消融对比（2×2 网格）。}\label{fig:effectiveness-ablation-by-judge}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[all\label{fig:effectiveness-ablation-by-generator-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/method_bar_by_generator_all_有效性.png}}\hfill
+	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-by-generator-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_rag/method_bar_by_generator_w_o_rag_有效性.png}}\\
+	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-by-generator-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_cot/method_bar_by_generator_w_o_cot_有效性.png}}\hfill
+	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-by-generator-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_feedback/method_bar_by_generator_w_o_feedback_有效性.png}}}
+	\caption{有效性维度下，按生成模型聚合的消融对比（2×2 网格）。}\label{fig:effectiveness-ablation-by-generator}
+\end{figure}
+
+\subsection{样本层面差异与离群}
+为检验提升是否在样本层面保持一致，并识别离群漏洞，图\ref{fig:effectiveness-ablation-heatmap} 给出四种方法配置在有效性维度上的热力图对照。
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[all\label{fig:effectiveness-ablation-heatmap-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/heatmap_method_all_有效性.png}}\hfill
+	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-heatmap-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_rag/heatmap_method_w_o_rag_有效性.png}}\\
+	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-heatmap-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_cot/heatmap_method_w_o_cot_有效性.png}}\hfill
+	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-heatmap-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_feedback/heatmap_method_w_o_feedback_有效性.png}}}
+	\caption{有效性维度下，四种方法配置的热力图对照（2×2 网格）。}\label{fig:effectiveness-ablation-heatmap}
+\end{figure}
+
+% TODO(图)：建议补充“胜率/优势幅度”类统计图，增强RQ1的定量说服力
+\begin{figure}[!ht]
+	\centering
+	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ1）}\par
+	建议图型：all 相对各消融的胜率（55个CVE上 all 排名优于对照的比例）与排名差值分布（箱线图）。\par
+	建议数据口径：按CVE聚合，维度分别为 $E/I/D$；评审侧可取5个评审模型的平均秩或多数表决秩。}}
+	\caption{全量工作流相对消融设置的胜率与优势幅度统计（待补图）。}\label{fig:rq1-winrate-delta-todo}
+\end{figure}
+
+\section{RQ2：跨模型稳健性}
+
+\subsection{生成模型分层}
+图\ref{fig:effectiveness-profile-avg} 给出不同生成模型在有效性维度的平均排名式结果，用于刻画生成模型能力分层现象。图\ref{fig:effectiveness-generator-by-method} 与图\ref{fig:effectiveness-generator-grouped} 进一步从生成模型视角展开方法配置贡献结构，以验证 all 的相对优势是否在不同生成模型条件下保持一致。
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_profile_avg_有效性.png}}
+	\caption{有效性维度下，不同生成模型的平均排名式评分结果（跨评审者汇总）。}\label{fig:effectiveness-profile-avg}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Qwen3}\label{fig:effectiveness-generator-by-method-qwen3}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/ali-qwen/generator_bar_by_method_ali-qwen_有效性.png}}\hfill
+	 \subfloat[\texttt{DeepSeek}\label{fig:effectiveness-generator-by-method-deepseek}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/deepseek/generator_bar_by_method_deepseek_有效性.png}}\hfill
+	 \subfloat[\texttt{GPT-5}\label{fig:effectiveness-generator-by-method-gpt5}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/gpt5/generator_bar_by_method_gpt5_有效性.png}}\\
+	 \subfloat[\texttt{Grok}\label{fig:effectiveness-generator-by-method-grok}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/grok4/generator_bar_by_method_grok4_有效性.png}}\hfill
+	 \subfloat[\texttt{GLM-4.6}\label{fig:effectiveness-generator-by-method-glm46}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/glm4.5/generator_bar_by_method_glm4.5_有效性.png}}}
+	\caption{有效性维度下，不同生成模型的工作流贡献结构对照（3+2 网格）。}\label{fig:effectiveness-generator-by-method}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Qwen3}\label{fig:effectiveness-generator-grouped-qwen3}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/ali-qwen/grouped_bar_ali-qwen_有效性.png}}\hfill
+	 \subfloat[\texttt{DeepSeek}\label{fig:effectiveness-generator-grouped-deepseek}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/deepseek/grouped_bar_deepseek_有效性.png}}\hfill
+	 \subfloat[\texttt{GPT-5}\label{fig:effectiveness-generator-grouped-gpt5}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/gpt5/grouped_bar_gpt5_有效性.png}}\\
+	 \subfloat[\texttt{Grok}\label{fig:effectiveness-generator-grouped-grok}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/grok4/grouped_bar_grok4_有效性.png}}\hfill
+	 \subfloat[\texttt{GLM-4.6}\label{fig:effectiveness-generator-grouped-glm46}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/generator/glm4.5/grouped_bar_glm4.5_有效性.png}}}
+	\caption{有效性维度下，不同生成模型的分组条形图对照（3+2 网格）。}\label{fig:effectiveness-generator-grouped}
+\end{figure}
+
+\subsection{评审模型与三维权衡}
+图\ref{fig:single-dim-by-judge-3d} 展示不同评审模型下的单维度排名式结果，反映评审模型之间的尺度差异与偏好结构。图\ref{fig:single-dim-profile-avg} 则从生成模型角度给出三维度总体表现，用于观察生成模型在 $E/I/D$ 上的系统性取舍。
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[可部署性\label{fig:single-dim-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/summary/single_dim_by_judge_可部署性.png}}\hfill
+	 \subfloat[无干扰性\label{fig:single-dim-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/summary/single_dim_by_judge_无干扰性.png}}\hfill
+	 \subfloat[有效性\label{fig:single-dim-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}}
+	\caption{不同评审模型下的单维度排名式评分结果（三维度并列）。}\label{fig:single-dim-by-judge-3d}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[可部署性\label{fig:single-dim-profile-avg-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/summary/single_dim_profile_avg_可部署性.png}}\hfill
+	 \subfloat[无干扰性\label{fig:single-dim-profile-avg-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/summary/single_dim_profile_avg_无干扰性.png}}\hfill
+	 \subfloat[有效性\label{fig:single-dim-profile-avg-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/summary/single_dim_profile_avg_有效性.png}}}
+	\caption{不同生成模型在三个维度上的平均排名式评分结果（跨评审者汇总，三维度并列）。}\label{fig:single-dim-profile-avg}
+\end{figure}
+
+\section{RQ3：评价一致性与可信度}
+
+图\ref{fig:effectiveness-by-judge-summary} 给出有效性维度下按评审模型拆分的汇总结果，图\ref{fig:effectiveness-judge-heatmap} 进一步展示评审偏好结构。为将一致性讨论落到可计算的量化指标，本文计划补充评审间相关性统计与分布图，用于度量不同评审模型在候选排序上的一致性程度。
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}
+	\caption{有效性维度下，不同评审模型的排名式评分汇总。}\label{fig:effectiveness-by-judge-summary}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	{\setlength{\abovecaptionskip}{2pt}%
+	 \setlength{\belowcaptionskip}{0pt}%
+	 \subfloat[\texttt{Qwen3}\label{fig:effectiveness-judge-heatmap-qwen3}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/ali-qwen/heatmap_ali-qwen_有效性.png}}\hfill
+	 \subfloat[\texttt{DeepSeek}\label{fig:effectiveness-judge-heatmap-deepseek}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/deepseek/heatmap_deepseek_有效性.png}}\hfill
+	 \subfloat[\texttt{GPT-5}\label{fig:effectiveness-judge-heatmap-gpt5}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/gpt5/heatmap_gpt5_有效性.png}}\\
+	 \subfloat[\texttt{Grok}\label{fig:effectiveness-judge-heatmap-grok}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/grok4/heatmap_grok4_有效性.png}}\hfill
+	 \subfloat[\texttt{GLM-4.6}\label{fig:effectiveness-judge-heatmap-glm46}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/glm4.5/heatmap_glm4.5_有效性.png}}}
+	\caption{有效性维度下，不同评审模型的偏好结构热力图对照（3+2 网格）。}\label{fig:effectiveness-judge-heatmap}
+\end{figure}
+
+% TODO(图)：评审间一致性量化（相关性/一致性系数）
+\begin{figure}[!ht]
+	\centering
+	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ3）}\par
+	建议图型：评审模型两两一致性热力图（Kendall's $\tau$ 或 Spearman $\rho$），分别对 $E/I/D$ 计算。\par
+	建议口径：对每个CVE的候选排序，先得到评审间相关，再在55个CVE上取均值或中位数。}}
+	\caption{评审模型两两一致性统计热力图（待补图）。}\label{fig:rq3-judge-agreement-heatmap-todo}
+\end{figure}
+
+% TODO(图)：一致性分布，用于显示离群CVE
+\begin{figure}[!ht]
+	\centering
+	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ3）}\par
+	建议图型：每个CVE的一致性分数分布（箱线图/直方图），并标注一致性最低的若干样本用于案例解释。}}
+	\caption{按漏洞样本统计的评审一致性分布（待补图）。}\label{fig:rq3-judge-agreement-dist-todo}
+\end{figure}
+
+\section{RQ4：静态扫描的处置价值}
+
+为评估静态扫描工具对临时防控决策的支撑程度，本文选取 \texttt{kubescape}、\texttt{kubesec} 与 \texttt{kubelinter} 作为代表性基线，并纳入 \texttt{SLI-Kube} 作为对照，在同一批 Kubernetes 清单上对报告条目按统一风险类型口径归并统计，结果如表\ref{tab:risk-summary-four-tools} 所示。静态工具的报告更集中于资源基线与通用加固项，适合用于日常治理与基线巡检；但从 CVE 处置视角看，报告通常难以直接指向漏洞路径与触发前置条件，也难以形成包含验证与回滚边界的可执行动作序列，因此对补丁窗口期的直接支撑作用较弱。
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+风险类型 & Kubescape& Kubesec & Kubelinter& SLI-Kube\\
+\midrule
+资源配置缺失（CPU/Memory requests/limits） & 110 & 47 & 73 & 0 \\
+非 Root 运行（runAsNonRoot / UID/GID） & 54 & 53 & 51 & 0 \\
+只读根文件系统 / 不可变文件系统 & 39 & 34 & 59 & 0 \\
+网络隔离（NetworkPolicy / Ingress/Egress） & 132 & 0 & 0 & 15 \\
+特权与提权（privileged / allowPrivilegeEscalation） & 39 & 0 & 12 & 0 \\
+主机级暴露（hostNetwork/host* / hostPath / docker.sock） & 30 & 0 & 9 & 3 \\
+身份与密钥（ServiceAccount / Secret） & 192 & 58 & 0 & 2 \\
+系统调用隔离（Seccomp / AppArmor） & 0 & 58 & 0 & 1 \\
+探针配置（liveness/readiness/startup） & 92 & 0 & 15 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{四种静态扫描工具在统一风险类型上的报告数量统计}
+\label{tab:risk-summary-four-tools}
+\end{table}
+
+% TODO(表)：用少量代表性CVE样本补充“可转化性弱”的证据
+\begin{table}[t]
+\centering
+\small
+\fbox{\parbox{0.94\linewidth}{\textbf{TODO：待补表（RQ4）}\par
+建议内容：选取2\textasciitilde3个代表性CVE样本，列出静态工具命中的规则项，与漏洞路径的对应关系，以及是否能导出可验证、可回滚的临时防控动作。\par
+建议列：CVE；关键漏洞路径/前置条件；静态报告命中项；是否指向路径；是否给出可执行动作；结论。}}
+\caption{静态扫描报告到临时防控动作的可转化性对照（待补表）。}\label{tab:rq4-actionability-todo}
+\end{table}
+
+\section{RQ5：token cost 成本}
+
+token cost 直接影响方法在补丁窗口期与资源受限环境中的可用性。本文将端到端 token 开销分解为生成阶段（提示、检索证据与候选输出）、评审阶段（评审提示与排序输出）以及反馈迭代阶段（额外轮次调用）三部分，比较 all 与三种消融设置的成本差异，并与 $E/I/D$ 的收益共同分析。
+
+% TODO(图)：端到端 token cost 对比
+\begin{figure}[!ht]
+	\centering
+	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ5）}\par
+	建议图型：不同方法配置（all、w/o\_rag、w/o\_cot、w/o\_feedback）的端到端 token cost（按CVE聚合的均值/中位数+置信区间）。\par
+	建议拆分：生成、评审、反馈三段堆叠柱状图，便于展示成本来源。}}
+	\caption{不同方法配置的端到端 token cost 及其来源分解（待补图）。}\label{fig:rq5-token-cost-breakdown-todo}
+\end{figure}
+
+% TODO(表)：成本-收益权衡
+\begin{table}[t]
+\centering
+\small
+\fbox{\parbox{0.94\linewidth}{\textbf{TODO：待补表（RQ5）}\par
+建议内容：列出各方法配置的 token cost（均值/中位数）与 $E/I/D$ 三维平均排名（或提升幅度），给出成本-收益比的简单指标（例如每提升一个名次所需token）。}}
+\caption{token cost 与 $E/I/D$ 收益的权衡对照（待补表）。}\label{tab:rq5-cost-benefit-todo}
+\end{table}
 
 \section{讨论}
 
-结果表明：在证据约束与结构化 schema 下，大模型可稳定产出可复核的候选策略；同时，分阶段推导与反馈优化对降低噪声、补全前置条件与回滚方案尤为关键。与传统静态工具相比，生成式流程能更快给出跨控制域的操作序列，但仍需结合工具扫描结果与人工复核以确保落地可行性。未来可结合运行时验证与自动化回归测试，将评价闭环前移到部署前的模拟环境。
+结果表明：在证据约束与结构化约束下，大模型可稳定产出可复核的候选策略；同时，分阶段推导与反馈优化对降低噪声、补全前置条件与回滚方案尤为关键。与传统静态工具相比，生成式流程能更快给出跨控制域的操作序列，但仍需结合工具扫描结果与人工复核以确保落地可行性。未来可结合运行时验证与自动化回归测试，将评价闭环前移到部署前的模拟环境。

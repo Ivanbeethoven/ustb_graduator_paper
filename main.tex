@@ -5,6 +5,27 @@
 \usepackage{amsmath}
 \usepackage{subfig} % 去掉caption相关选项，避免与类冲突
 \usepackage{subfiles}
+
+
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{fvextra}
+\newtcolorbox{PromptBox}[2][]{
+	enhanced,
+	breakable,
+	colback=gray!3,
+	colframe=gray!55,
+	boxrule=0.4pt,
+	arc=1mm,
+	left=1.2mm,
+	right=1.2mm,
+	top=0.8mm,
+	bottom=0.8mm,
+	title={#2},
+	fonttitle=\bfseries,
+	coltitle=black,
+	#1
+}
 \newcommand{\figref}[1]{~\ref{#1}~}
 \newcommand{\tabref}[1]{~\ref{#1}~}
 \newcommand{\thickhline}{\noalign{\hrule height 0.9pt}}
@@ -71,8 +92,8 @@
 %% 中英文摘要
 \include{contents/abstract}
 %% 序言
-% \include{contents/preclude}
-% \tableofcontents
+\include{contents/preclude}
+\tableofcontents
 
 % \include{contents/list}
 % \include{contents/list-sym}
