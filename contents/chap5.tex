@@ -17,8 +17,8 @@
 \paragraph{RQ4：静态扫描的处置价值}
 传统静态扫描工具输出的风险与合规报告，能否为具体 CVE 的临时防控提供有效线索，主要体现在能否指向与漏洞路径相关的配置点，以及能否给出可落地、可验证、可回滚的修正建议。该问题强调处置视角，关注工具输出能否直接转化为补丁窗口期可执行的控制动作，而非仅提供通用的基线加固提示。
 
-\paragraph{RQ5：token cost 成本}
-在保证防控质量的前提下，本文工作流的 token cost 是否可控，且其开销主要由哪些环节贡献。该问题以端到端调用成本为约束，比较 all 与消融设置在生成、评审与反馈迭代中的 token 使用差异，并分析成本与 $E/I/D$ 收益之间的权衡关系，以评估方法在资源受限场景下的可用性。
+\paragraph{RQ5：端到端资源消耗与效率评估（令牌消耗）}
+在保证防控质量的前提下，本文工作流的端到端令牌消耗是否可控，且其消耗主要由哪些环节贡献。该问题以端到端令牌消耗为约束，比较 all 与消融设置在生成、评审与反馈迭代中的令牌使用差异，并分析令牌消耗与 $E/I/D$ 收益之间的权衡关系，以评估方法在资源受限场景下的可用性。
 
 \section{实验设置}
 
@@ -26,7 +26,7 @@
 
 评审阶段将上述五个模型作为评审模型，对 $\Pi_v$ 进行排名式评价。评价指标采用三维质量向量 $q(\pi)=(E(\pi),I(\pi),D(\pi))$，分别对应有效性、无干扰性与可部署性。为降低不同评审模型评分尺度差异带来的影响，本文以相对排序作为主要统计口径。
 
-为回答 token cost 相关问题，本文在生成与评审阶段记录每次调用的输入与输出 token 数，并按漏洞样本（CVE）聚合统计端到端 token 开销；对于包含反馈迭代的配置，累计其多轮调用成本。
+为回答有关端到端令牌消耗与大模型调用成本的问题，本文在生成与评审阶段记录每次调用的输入与输出的令牌数，并按漏洞样本（CVE）聚合统计端到端令牌消耗；对于包含反馈迭代的配置，累计其多轮调用的令牌消耗。
 
 为对比传统静态安全工具，选取 \texttt{kubelinter}、\texttt{kubescape}、\texttt{kubesec} 和 \texttt{SLI-Kube} 作为基线，输出风险/合规报告后人工评估其对策略生成的启发性，例如能否指向与漏洞路径相关的高风险配置、是否给出可落地的修正建议等。
 
@@ -221,57 +221,63 @@
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{lrrrr}
+% 定义居中对齐的自动宽列格式 Y
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
+% 将表格宽度设置为 \linewidth，第一列左对齐(l)，其余列均匀分布并居中(Y)
+\begin{tabularx}{\linewidth}{l Y Y Y Y}
 \toprule
-风险类型 & Kubescape& Kubesec & Kubelinter& SLI-Kube\\
+风险类型 & Kubescape & Kubesec & Kubelinter& SLI-Kube\\
 \midrule
-资源配置缺失（CPU/Memory requests/limits） & 110 & 47 & 73 & 0 \\
-非 Root 运行（runAsNonRoot / UID/GID） & 54 & 53 & 51 & 0 \\
-只读根文件系统 / 不可变文件系统 & 39 & 34 & 59 & 0 \\
-网络隔离（NetworkPolicy / Ingress/Egress） & 132 & 0 & 0 & 15 \\
-特权与提权（privileged / allowPrivilegeEscalation） & 39 & 0 & 12 & 0 \\
-主机级暴露（hostNetwork/host* / hostPath / docker.sock） & 30 & 0 & 9 & 3 \\
-身份与密钥（ServiceAccount / Secret） & 192 & 58 & 0 & 2 \\
-系统调用隔离（Seccomp / AppArmor） & 0 & 58 & 0 & 1 \\
-探针配置（liveness/readiness/startup） & 92 & 0 & 15 & 0 \\
+资源配置缺失 & 110 & 47 & 73 & 0 \\
+非 Root 运行 & 54 & 53 & 51 & 0 \\
+根文件系统非只读 & 39 & 34 & 59 & 0 \\
+网络隔离 & 132 & 0 & 0 & 15 \\
+特权与提权 & 39 & 0 & 12 & 0 \\
+主机级暴露 & 30 & 0 & 9 & 3 \\
+身份与密钥 & 192 & 58 & 0 & 2 \\
+系统调用隔离 & 0 & 58 & 0 & 1 \\
+探针配置 & 92 & 0 & 15 & 0 \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \caption{四种静态扫描工具在统一风险类型上的报告数量统计}
 \label{tab:risk-summary-four-tools}
 \end{table}
 
-% TODO(表)：用少量代表性CVE样本补充“可转化性弱”的证据
-\begin{table}[t]
-\centering
-\small
-\fbox{\parbox{0.94\linewidth}{\textbf{TODO：待补表（RQ4）}\par
-建议内容：选取2\textasciitilde3个代表性CVE样本，列出静态工具命中的规则项，与漏洞路径的对应关系，以及是否能导出可验证、可回滚的临时防控动作。\par
-建议列：CVE；关键漏洞路径/前置条件；静态报告命中项；是否指向路径；是否给出可执行动作；结论。}}
-\caption{静态扫描报告到临时防控动作的可转化性对照（待补表）。}\label{tab:rq4-actionability-todo}
+\section{RQ5：端到端资源消耗与效率评估（令牌消耗）}
+
+令牌消耗（token usage）作为衡量生成式工作流在计算与通信资源上开销的代理量，对评估方法在补丁窗口期及受限部署环境中的可用性具有实际意义。本节旨在以严谨的计量口径刻画不同方法配置下的资源消耗结构，并通过成本-收益分析判断在给定资源预算下的最优折衷。
+
+度量与分析设计如下：
+
+\begin{table}[htb]
+    \centering
+    % 定义一个新的列格式 Y，基于 X 列格式但内容居中
+    \newcolumntype{Y}{>{\centering\arraybackslash}X}
+    
+    \bicaption{不同数据集与大模型下的平均Token消耗对比}{Comparison of average token usage across datasets and LLMs}
+    \label{tab:token_usage_wide}
+    
+    % 设置行高
+    \noindent\renewcommand{\arraystretch}{1.3}
+    
+    % 将宽度设为 \linewidth
+    \begin{tabularx}{\linewidth}{l Y Y Y Y Y Y}
+    \toprule
+    \multirow{2}{*}{\textbf{方法}} & \multicolumn{6}{c}{\textbf{单个CVE的平均Token输出消耗}} \\
+    \cmidrule(lr){2-7}
+    & Qwen3-max & DeepSeek & GLM-4.5 & GPT-5 & Grok-4 & \textbf{均值} \\
+    \midrule
+    All         & 2382.88 & 4606.87 & 2902.54 & 8874.71 & 2631.29 & \textbf{4279.65} \\
+    w/o CoT      & 1713.28 & 4048.21 & 2507.39 & 7571.79 & 2025.02 & \textbf{3573.14} \\
+    w/o Feedback & 1554.30 & 3578.10 & 2478.98 & 6547.50 & 1859.59 & \textbf{3203.69} \\
+    w/o RAG      & 2063.49 & 4359.79 & 2557.12 & 8411.06 & 2393.32 & \textbf{3956.95} \\
+    \textbf{均值} & \textbf{1928.74} & \textbf{4148.24} & \textbf{2611.51} & \textbf{7851.26} & \textbf{2227.31} & \textbf{3753.36} \\
+	\midrule
+	每千耗费(元)     & 0.0128 & 0.003 & 0.002 & 0.07 & 0.06  & \textbf{--} \\
+	输出花费均值(元) & 0.03 & 0.014 & 0.006 & 0.62 & 0.158 & \textbf{--} \\
+    \bottomrule
+    \end{tabularx}
 \end{table}
 
-\section{RQ5：token cost 成本}
-
-token cost 直接影响方法在补丁窗口期与资源受限环境中的可用性。本文将端到端 token 开销分解为生成阶段（提示、检索证据与候选输出）、评审阶段（评审提示与排序输出）以及反馈迭代阶段（额外轮次调用）三部分，比较 all 与三种消融设置的成本差异，并与 $E/I/D$ 的收益共同分析。
-
-% TODO(图)：端到端 token cost 对比
-\begin{figure}[!ht]
-	\centering
-	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ5）}\par
-	建议图型：不同方法配置（all、w/o\_rag、w/o\_cot、w/o\_feedback）的端到端 token cost（按CVE聚合的均值/中位数+置信区间）。\par
-	建议拆分：生成、评审、反馈三段堆叠柱状图，便于展示成本来源。}}
-	\caption{不同方法配置的端到端 token cost 及其来源分解（待补图）。}\label{fig:rq5-token-cost-breakdown-todo}
-\end{figure}
-
-% TODO(表)：成本-收益权衡
-\begin{table}[t]
-\centering
-\small
-\fbox{\parbox{0.94\linewidth}{\textbf{TODO：待补表（RQ5）}\par
-建议内容：列出各方法配置的 token cost（均值/中位数）与 $E/I/D$ 三维平均排名（或提升幅度），给出成本-收益比的简单指标（例如每提升一个名次所需token）。}}
-\caption{token cost 与 $E/I/D$ 收益的权衡对照（待补表）。}\label{tab:rq5-cost-benefit-todo}
-\end{table}
-
-\section{讨论}
-
-结果表明：在证据约束与结构化约束下，大模型可稳定产出可复核的候选策略；同时，分阶段推导与反馈优化对降低噪声、补全前置条件与回滚方案尤为关键。与传统静态工具相比，生成式流程能更快给出跨控制域的操作序列，但仍需结合工具扫描结果与人工复核以确保落地可行性。未来可结合运行时验证与自动化回归测试，将评价闭环前移到部署前的模拟环境。
+在实现层面，本文记录的令牌数不包括人工复核的人工工时成本，也未直接折算为云服务计费（可按厂商计费模型另行转换）。下列图表与表格为基于上述口径的结果占位，后续将以实测统计替换占位内容。
