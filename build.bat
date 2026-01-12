@@ -1,5 +1,5 @@
 @echo off
-REM build_main.bat - Compile LaTeX main file with XeLaTeX x2 (no BibTeX)
+REM build_main.bat - Compile LaTeX main file with XeLaTeX + BibTeX
 REM Usage: build_main.bat [main.tex]
 
 set "MAIN=%~1"
@@ -11,7 +11,7 @@ if not exist "%MAIN%" (
 )
 
 echo ================================
-echo Building "%MAIN%" with XeLaTeX x2 (no BibTeX)
+echo Building "%MAIN%" with XeLaTeX + BibTeX
 echo ================================
 
 for %%F in ("%MAIN%") do set "BASENAME=%%~nF"
@@ -23,10 +23,24 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo bibtex...
+bibtex "%BASENAME%"
+if errorlevel 1 (
+    echo bibtex failed. See "%BASENAME%.blg".
+    exit /b 1
+)
+
 echo xelatex pass 2...
 xelatex -synctex=1 -interaction=nonstopmode -file-line-error "%MAIN%"
 if errorlevel 1 (
     echo xelatex pass 2 failed. See "%BASENAME%.log".
+    exit /b 1
+)
+
+echo xelatex pass 3...
+xelatex -synctex=1 -interaction=nonstopmode -file-line-error "%MAIN%"
+if errorlevel 1 (
+    echo xelatex pass 3 failed. See "%BASENAME%.log".
     exit /b 1
 )
 

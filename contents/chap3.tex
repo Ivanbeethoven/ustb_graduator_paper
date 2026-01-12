@@ -78,7 +78,7 @@ s_{\delta}:\Pi\to[0,1]
 
 \csname textbf\endcsname{（1）云原生应用清单与仓库映射}。以 Kubernetes 及其生态开源应用为研究对象，首先从 CNCF Landscape 获取云原生应用清单，并对清单进行快照固化以保证可复现性。随后将条目名称映射到其官方代码仓库，形成后续漏洞关联与证据收集的目标集合。
 
-\csname textbf\endcsname{（2）漏洞收集与筛选}。在数据源选择上，综合使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}，检索 Kubernetes 及其生态组件中与权限提升相关的高风险漏洞。筛选规则以“权限提升/越权/逃逸相关漏洞”为主，主要包括：
+\csname textbf\endcsname{（2）漏洞收集与筛选}。在数据源选择上，综合使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}，检索 Kubernetes 及其生态应用中与权限提升相关的高风险漏洞。具体收集策略包括：
 \begin{itemize}
     \item \textbf{关键词约束}：在 CVE 描述与参考链接中匹配 Privilege Escalation、Authorization Bypass、Improper Access Control、RBAC、ServiceAccount、ClusterRole、Container Escape/Sandbox Escape/Breakout 等关键词；
     \item \textbf{严重性阈值}：采用 CVSS v3.x 评分，并以 $\geq 5.0$ 的高危与严重漏洞为主要对象；

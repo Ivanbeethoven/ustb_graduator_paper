@@ -76,92 +76,839 @@
 \end{table}
 
 
-% \chapter{补充实验图表}\label{app:plots}
+\chapter{CVE-2022-24768 复现步骤与策略清单}\label{app:cve-2022-24768}
 
-% 本附录集中给出正文未展开的细粒度图表，便于复核与对照。正文第\ref{chap:experiment}章在“有效性优先”的叙事下保留了更关键的对照图组；其余按维度分类如下。
+本附录给出案例一（CVE-2022-24768）的\textbf{复现详细步骤}与\textbf{纵深防御策略代码清单}，用于复核与工程复现。为降低对生产环境的风险，建议仅在隔离测试集群中执行。
 
-% \section{有效性：补充图表}\label{app:plots-effectiveness}
+\section{漏洞复现详细步骤}\label{app:cve-2022-24768-repro}
 
-% \subsection{不同生成模型下的评审差异（按评审者拆分）}
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Qwen3}\label{fig:app-eff-generator-by-judge-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/ali-qwen/generator_bar_by_judge_ali-qwen_有效性.png}}\\
-% 	 \subfloat[\texttt{DeepSeek}\label{fig:app-eff-generator-by-judge-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/deepseek/generator_bar_by_judge_deepseek_有效性.png}}\\
-% 	 \subfloat[\texttt{GPT-5}\label{fig:app-eff-generator-by-judge-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/gpt5/generator_bar_by_judge_gpt5_有效性.png}}}
-% 	\caption{有效性维度下，不同生成模型在各评审模型下的排名式评分对照（I）。}\label{fig:app-eff-generator-by-judge}
-% \end{figure}
+\textbf{步骤 1：部署漏洞版本 Argo CD（v2.3.1）}
+\begin{Verbatim}[breaklines,breakanywhere]
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.3.1/manifests/install.yaml
+kubectl rollout status deployment/argocd-server -n argocd
+\end{Verbatim}
 
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Grok}\label{fig:app-eff-generator-by-judge-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/grok4/generator_bar_by_judge_grok4_有效性.png}}\\
-% 	 \subfloat[\texttt{GLM-4.6}\label{fig:app-eff-generator-by-judge-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/glm4.5/generator_bar_by_judge_glm4.5_有效性.png}}}
-% 	\caption{有效性维度下，不同生成模型在各评审模型下的排名式评分对照（II）。}\label{fig:app-eff-generator-by-judge-cont}
-% \end{figure}
+\textbf{步骤 2：获取初始管理员密码并登录 UI/CLI}
+\begin{Verbatim}[breaklines,breakanywhere]
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+\end{Verbatim}
 
-% \subsection{不同生成模型的结构性对照（热力图）}
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Qwen3}\label{fig:app-eff-heatmap-generator-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/ali-qwen/heatmap_generator_ali-qwen_有效性.png}}\\
-% 	 \subfloat[\texttt{DeepSeek}\label{fig:app-eff-heatmap-generator-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/deepseek/heatmap_generator_deepseek_有效性.png}}\\
-% 	 \subfloat[\texttt{GPT-5}\label{fig:app-eff-heatmap-generator-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/gpt5/heatmap_generator_gpt5_有效性.png}}}
-% 	\caption{有效性维度下，不同生成模型的结构性热力图对照（I）。}\label{fig:app-eff-heatmap-generator}
-% \end{figure}
+\textbf{步骤 3：创建宽松的 AppProject（用于演示风险）}
+\begin{Verbatim}[breaklines,breakanywhere]
+cat <<EOF | kubectl apply -f -
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+	name: demo-project
+	namespace: argocd
+spec:
+	destinations:
+	- namespace: '*'
+		server: '*'
+	sourceRepos:
+	- '*'
+	clusterResourceWhitelist:
+	- group: '*'
+		kind: '*'
+EOF
+\end{Verbatim}
 
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Grok}\label{fig:app-eff-heatmap-generator-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/grok4/heatmap_generator_grok4_有效性.png}}\\
-% 	 \subfloat[\texttt{GLM-4.6}\label{fig:app-eff-heatmap-generator-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/有效性/generator/glm4.5/heatmap_generator_glm4.5_有效性.png}}}
-% 	\caption{有效性维度下，不同生成模型的结构性热力图对照（II）。}\label{fig:app-eff-heatmap-generator-cont}
-% \end{figure}
+\textbf{步骤 4：创建低权用户 bob，并授予其对目标 Application 的 \texttt{sync+override} 权限}
+在 \texttt{argocd-rbac-cm} 中添加如下策略（注意缩进）：
+\begin{Verbatim}[breaklines,breakanywhere]
+policy.default: role:readonly
+policy.csv: |
+	p, role:syncer, applications, sync, demo-project/*, allow
+	p, role:syncer, applications, override, demo-project/*, allow
+	g, bob, role:syncer
+\end{Verbatim}
+并在 \texttt{argocd-cm} 中开启账户：
+\begin{Verbatim}[breaklines,breakanywhere]
+accounts.bob: apiKey, login
+\end{Verbatim}
+随后重启 Argo CD Server 使配置生效：
+\begin{Verbatim}[breaklines,breakanywhere]
+kubectl rollout restart deployment/argocd-server -n argocd
+\end{Verbatim}
 
-% \section{可部署性：补充图表}\label{app:plots-deployability}
+\textbf{步骤 5：创建 Application 指向恶意仓库}
+\begin{Verbatim}[breaklines,breakanywhere]
+cat <<EOF | kubectl apply -f -
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+	name: bob-app
+	namespace: argocd
+spec:
+	project: demo-project
+	source:
+		repoURL: https://github.com/Ivanbeethoven/bad_repo
+		path: .
+		targetRevision: HEAD
+	destination:
+		server: https://kubernetes.default.svc
+		namespace: default
+	syncPolicy:
+		automated:
+			prune: true
+			selfHeal: true
+EOF
+\end{Verbatim}
 
-% \subsection{按生成模型拆分的热力图（评审偏好结构）}
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Qwen3}\label{fig:app-deploy-heatmap-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/ali-qwen/heatmap_ali-qwen_可部署性.png}}\\
-% 	 \subfloat[\texttt{DeepSeek}\label{fig:app-deploy-heatmap-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/deepseek/heatmap_deepseek_可部署性.png}}\\
-% 	 \subfloat[\texttt{GPT-5}\label{fig:app-deploy-heatmap-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/gpt5/heatmap_gpt5_可部署性.png}}}
-% 	\caption{可部署性维度下，不同评审模型的偏好结构热力图对照（I）。}\label{fig:app-deploy-heatmap}
-% \end{figure}
+\textbf{步骤 6：模拟 bob 触发同步（或依赖自动同步）}
+\begin{Verbatim}[breaklines,breakanywhere]
+argocd login localhost:8080 --username bob --password <token-or-password>
+argocd app sync bob-app --force
+\end{Verbatim}
 
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Grok}\label{fig:app-deploy-heatmap-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/grok4/heatmap_grok4_可部署性.png}}\\
-% 	 \subfloat[\texttt{GLM-4.6}\label{fig:app-deploy-heatmap-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/可部署性/heatmap/glm4.5/heatmap_glm4.5_可部署性.png}}}
-% 	\caption{可部署性维度下，不同评审模型的偏好结构热力图对照（II）。}\label{fig:app-deploy-heatmap-cont}
-% \end{figure}
+\textbf{步骤 7：验证是否提权成功}
+\begin{Verbatim}[breaklines,breakanywhere]
+kubectl auth can-i '*' '*' --as bob
+\end{Verbatim}
+若输出为 \texttt{yes}，说明 bob 获得了集群范围的高权限（该结果用于说明风险，生产环境严禁在真实集群中进行）。
 
-% \section{无干扰性：补充图表}\label{app:plots-interference}
+\section{策略代码清单}\label{app:cve-2022-24768-policy}
 
-% \subsection{按生成模型拆分的热力图（评审偏好结构）}
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Qwen3}\label{fig:app-interf-heatmap-qwen3}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/ali-qwen/heatmap_ali-qwen_无干扰性.png}}\\
-% 	 \subfloat[\texttt{DeepSeek}\label{fig:app-interf-heatmap-deepseek}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/deepseek/heatmap_deepseek_无干扰性.png}}\\
-% 	 \subfloat[\texttt{GPT-5}\label{fig:app-interf-heatmap-gpt5}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/gpt5/heatmap_gpt5_无干扰性.png}}}
-% 	\caption{无干扰性维度下，不同评审模型的偏好结构热力图对照（I）。}\label{fig:app-interf-heatmap}
-% \end{figure}
+\subsection{Kubernetes RBAC：收敛 AppProject 的写权限}
+将 \texttt{appprojects.argoproj.io} 的创建/更新/删除限制在平台管理员组，租户仅只读（示例中组名可按实际替换）：
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+	name: argocd-appproject-edit
+rules:
+- apiGroups: ["argoproj.io"]
+	resources: ["appprojects"]
+	verbs: ["get","list","watch","create","update","patch","delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+	name: argocd-appproject-readonly
+rules:
+- apiGroups: ["argoproj.io"]
+	resources: ["appprojects"]
+	verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+	name: argocd-appproject-edit-platform-admins
+roleRef:
+	apiGroup: rbac.authorization.k8s.io
+	kind: ClusterRole
+	name: argocd-appproject-edit
+subjects:
+- kind: Group
+	name: argo:platform-admin
+	apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+	name: argocd-appproject-readonly-tenants
+roleRef:
+	apiGroup: rbac.authorization.k8s.io
+	kind: ClusterRole
+	name: argocd-appproject-readonly
+subjects:
+- kind: Group
+	name: argo:tenant-readonly
+	apiGroup: rbac.authorization.k8s.io
+\end{Verbatim}
 
-% \begin{figure}[!ht]
-% 	\centering
-% 	{\setlength{\abovecaptionskip}{2pt}%
-% 	 \setlength{\belowcaptionskip}{0pt}%
-% 	 \subfloat[\texttt{Grok}\label{fig:app-interf-heatmap-grok}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/grok4/heatmap_grok4_无干扰性.png}}\\
-% 	 \subfloat[\texttt{GLM-4.6}\label{fig:app-interf-heatmap-glm46}]{\includegraphics[width=0.95\textwidth]{images/plots/无干扰性/heatmap/glm4.5/heatmap_glm4.5_无干扰性.png}}}
-% 	\caption{无干扰性维度下，不同评审模型的偏好结构热力图对照（II）。}\label{fig:app-interf-heatmap-cont}
-% \end{figure}
+\subsection{Argo CD RBAC：默认只读 + 高风险能力隔离}
+建议将 \texttt{argocd-rbac-cm} 纳入 Git 基线管理，并在修改后滚动重启 \texttt{argocd-server}：
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: v1
+kind: ConfigMap
+metadata:
+	name: argocd-rbac-cm
+	namespace: argocd
+data:
+	policy.csv: |
+		g, argo:platform-admin, role:admin
+		g, argo:tenant-readonly, role:readonly
+
+		p, role:admin, projects, *, *, allow
+		p, role:admin, repositories, *, *, allow
+		p, role:admin, clusters, *, *, allow
+		p, role:admin, applications, *, *, allow
+		p, role:admin, exec, *, *, allow
+		p, role:admin, logs, *, *, allow
+
+		p, role:readonly, applications, get, *, allow
+		p, role:readonly, repositories, get, *, allow
+		p, role:readonly, projects, get, *, allow
+		p, role:readonly, clusters, get, *, allow
+		p, role:readonly, logs, get, *, allow
+		p, role:readonly, exec, *, *, deny
+	policy.default: role:readonly
+\end{Verbatim}
+
+\subsection{准入控制：Gatekeeper（推荐）}\label{app:cve-2022-24768-gatekeeper}
+目标：在 \texttt{AppProject} 创建/更新时，对 \texttt{spec.roles[].policies[]} 进行一致性校验。
+本策略覆盖三类约束：
+\begin{itemize}
+	\item 禁止出现 \texttt{*, *, allow} 的全局通配符放权；
+	\item 要求 policy subject 绑定到项目域（\texttt{proj:<project>:<role>} 前缀）；
+	\item 禁止在 project 内授予 \texttt{projects/repositories/clusters/exec} 等高危资源写权限。
+\end{itemize}
+
+\textbf{（1）ConstraintTemplate}
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+	name: k8sargocdappprojectpolicies
+spec:
+	crd:
+		spec:
+			names:
+				kind: K8sArgoCDAppProjectPolicies
+			validation:
+				openAPIV3Schema:
+					properties:
+						enforceProjPrefix:
+							type: boolean
+	targets:
+	- target: admission.k8s.gatekeeper.sh
+		rego: |
+			package k8sargocdappprojectpolicies
+
+			trim_space(s) = out {
+				out := regex.replace("^\\s+|\\s+$", "", s)
+			}
+
+			# 1) 禁止出现 "..., *, *, allow" 的全局通配符放权
+			deny[msg] {
+				input.review.kind.group == "argoproj.io"
+				input.review.kind.kind == "AppProject"
+				roles := input.review.object.spec.roles
+				some i
+				policies := roles[i].policies
+				some j
+				policy := policies[j]
+				regex.match(".*,\\s*\\*,\\s*\\*,\\s*allow\\s*$", policy)
+				msg := sprintf("AppProject policy contains global wildcard allow: %s", [policy])
+			}
+
+			# 2) 要求 subject 采用 proj:<project>:<role> 前缀（可选开关）
+			deny[msg] {
+				input.review.kind.group == "argoproj.io"
+				input.review.kind.kind == "AppProject"
+				input.parameters.enforceProjPrefix == true
+				ap := input.review.object.metadata.name
+
+				roles := input.review.object.spec.roles
+				some i
+				policies := roles[i].policies
+				some j
+				policy := policies[j]
+
+				startswith(policy, "p,")
+				parts := split(policy, ",")
+				count(parts) >= 2
+				subject := trim_space(parts[1])
+				not startswith(subject, sprintf("proj:%s:", [ap]))
+				msg := sprintf("AppProject policy subject must start with 'proj:%s:': %s", [ap, policy])
+			}
+
+			# 3) 禁止授予 projects/repositories/clusters/exec 的写权限
+			deny[msg] {
+				input.review.kind.group == "argoproj.io"
+				input.review.kind.kind == "AppProject"
+				roles := input.review.object.spec.roles
+				some i
+				policies := roles[i].policies
+				some j
+				policy := policies[j]
+				regex.match("^p,.*,(projects|repositories|clusters|exec),\\s*(create|update|patch|delete|\\*),.*,(allow)\\s*$", policy)
+				msg := sprintf("AppProject policy grants write on global resource: %s", [policy])
+			}
+\end{Verbatim}
+
+\textbf{（2）Constraint}
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sArgoCDAppProjectPolicies
+metadata:
+	name: restrict-argocd-appproject-policies
+spec:
+	match:
+		kinds:
+		- apiGroups: ["argoproj.io"]
+			kinds: ["AppProject"]
+	parameters:
+		enforceProjPrefix: true
+\end{Verbatim}
+
+\subsection{准入控制：Kyverno（替代方案）}\label{app:cve-2022-24768-kyverno}
+若集群已使用 Kyverno，可用如下 \texttt{ClusterPolicy} 实现同类校验。建议先将 \texttt{validationFailureAction} 设为 \texttt{Audit}，稳定后再切换为 \texttt{Enforce}。
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+	name: restrict-argocd-appproject-policies
+spec:
+	validationFailureAction: Audit
+	background: true
+	rules:
+	- name: forbid-global-wildcard-allow
+		match:
+			any:
+			- resources:
+					kinds:
+					- argoproj.io/v1alpha1/AppProject
+		validate:
+			message: "forbid global wildcard allow in AppProject role policies"
+			foreach:
+			- list: "request.object.spec.roles[].policies[]"
+				deny:
+					conditions:
+						any:
+						- key: "{{ regex_match('.*,\\s*\\*,\\s*\\*,\\s*allow\\s*$', element) }}"
+							operator: Equals
+							value: true
+
+	- name: enforce-proj-prefix
+		match:
+			any:
+			- resources:
+					kinds:
+					- argoproj.io/v1alpha1/AppProject
+		validate:
+			message: "policy subject must use proj:<project>:<role> prefix"
+			foreach:
+			- list: "request.object.spec.roles[].policies[]"
+				deny:
+					conditions:
+						all:
+						- key: "{{ regex_match('^p,\\s*proj:[^:]+:[^,]+,', element) }}"
+							operator: Equals
+							value: false
+
+	- name: forbid-global-resource-write
+		match:
+			any:
+			- resources:
+					kinds:
+					- argoproj.io/v1alpha1/AppProject
+		validate:
+			message: "forbid write on projects/repositories/clusters/exec in AppProject policies"
+			foreach:
+			- list: "request.object.spec.roles[].policies[]"
+				deny:
+					conditions:
+						any:
+						- key: "{{ regex_match('^p,.*,(projects|repositories|clusters|exec),\\s*(create|update|patch|delete|\\*),.*,(allow)\\s*$', element) }}"
+							operator: Equals
+							value: true
+\end{Verbatim}
+
+
+\chapter{CVE-2025-2241 复现步骤与策略清单}\label{app:cve-2025-2241}
+
+本附录给出案例二（CVE-2025-2241）的\textbf{复现要点}与\textbf{缓解策略清单}，用于复核与工程落地。该漏洞属于\textbf{敏感信息泄漏}：vCenter 凭据出现在 Hive 的 \texttt{ClusterProvision} 对象可读字段中，导致“无 \texttt{Secret} 权限也可读到凭据”的旁路风险。请仅在隔离测试环境中操作。
+
+\section{漏洞复现详细步骤（受控测试）}\label{app:cve-2025-2241-repro}
+
+\textbf{前提条件}
+\begin{itemize}
+		\item 已部署 ACM/MCE 与 Hive，并启用 vSphere 集群供应能力（具体版本与安装方式依赖环境，以厂商公告与实验环境为准）；
+		\item 至少存在一个“只读身份”，其\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions.hive.openshift.io} 的 \texttt{get/list/watch} 权限（该条件用于验证旁路泄露）。
+\end{itemize}
+
+\textbf{步骤 1：触发一次 vSphere 集群供应}
+通过 ACM 控制台或 YAML 创建 Hive 的 \texttt{ClusterDeployment}（示例仅展示关键字段，真实环境中密码应引用 \texttt{Secret}；本漏洞的问题在于后续对象中出现明文暴露）：
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+	name: vsphere-cluster
+	namespace: your-namespace
+spec:
+	baseDomain: example.com
+	platform:
+		vsphere:
+			vCenter: vc.example.com
+			username: administrator@vsphere.local
+			password: your-password
+	provisioning:
+		installConfigSecretRef:
+			name: your-install-config
+		imageSetRef:
+			name: img4.14.0
+\end{Verbatim}
+
+\textbf{步骤 2：用“可读 \texttt{ClusterProvision} 但不可读 \texttt{Secret}”的身份读取对象}
+先确认权限面，再读取 \texttt{ClusterProvision}：
+\begin{Verbatim}[breaklines,breakanywhere]
+# 谁能读 clusterprovisions（OpenShift）
+oc adm policy who-can get clusterprovision
+oc adm policy who-can list clusterprovision
+
+# 低权用户自检（Kubernetes 通用）
+kubectl auth can-i get clusterprovision --as=<user> --all-namespaces
+kubectl auth can-i get secrets --as=<user> --all-namespaces
+
+# 导出对象（名称可能带随机后缀，按实际替换）
+kubectl get clusterprovision -n your-namespace
+kubectl get clusterprovision <name> -n your-namespace -o yaml
+\end{Verbatim}
+
+\textbf{步骤 3：定位敏感字段}
+在输出中查找类似结构（位置因版本实现而异，示例以 \texttt{status.vCenter.credentials} 为代表）：
+\begin{Verbatim}[breaklines,breakanywhere]
+status:
+	vCenter:
+		credentials:
+			username: ...
+			password: ...
+\end{Verbatim}
+若凭据以明文形式出现，即满足漏洞复现判据。
+
+\section{策略代码清单}\label{app:cve-2025-2241-policy}
+
+本节策略以“\textbf{收敛读取面} + \textbf{缩短暴露窗口} + \textbf{审计发现与轮换止血}”为主线。由于敏感信息出现在控制器写入的 \texttt{status} 字段中，\textbf{准入控制更适合作为审计/检测手段}，不建议强制拦截控制器更新（否则可能影响供应流程）。
+
+\subsection{1）立刻收敛 \texttt{ClusterProvision} 的读取权限（RBAC）}
+
+\textbf{风险盘点命令（OCP）}
+\begin{Verbatim}[breaklines,breakanywhere]
+oc adm policy who-can get clusterprovision
+oc adm policy who-can list clusterprovision
+oc adm policy who-can watch clusterprovision
+\end{Verbatim}
+
+\textbf{最小可读权限示例（仅绑定 Hive 控制器服务账号）}
+说明：Hive 控制器的具体 ServiceAccount/namespace 需按实际部署确认。
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+	name: hive-clusterprovision-read-min
+rules:
+- apiGroups: ["hive.openshift.io"]
+	resources: ["clusterprovisions"]
+	verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+	name: hive-clusterprovision-read-min-binding
+subjects:
+- kind: ServiceAccount
+	name: hive-controllers
+	namespace: hive
+roleRef:
+	kind: ClusterRole
+	name: hive-clusterprovision-read-min
+	apiGroup: rbac.authorization.k8s.io
+\end{Verbatim}
+
+\subsection{2）对读取行为启用审计并联动告警}
+
+Kubernetes 审计策略片段（加载方式依平台而定）：
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+	verbs: ["get","list","watch"]
+	resources:
+	- group: "hive.openshift.io"
+		resources: ["clusterprovisions"]
+	omitStages: ["RequestReceived"]
+\end{Verbatim}
+建议在 SIEM/日志平台中将 Hive 控制器主体加入白名单，仅对非白名单主体的读取行为告警。
+
+\subsection{3）缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
+
+\textbf{手动清理}
+\begin{Verbatim}[breaklines,breakanywhere]
+oc get clusterprovision -n <ns>
+oc delete clusterprovision -n <ns> <name>
+\end{Verbatim}
+
+\textbf{自动化清理（示例 CronJob）}
+说明：删除条件建议通过标签或状态字段精确匹配，避免误删；示例以标签 \texttt{hive.openshift.io/retain=false} 为条件。
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+	name: cleanup-sa
+	namespace: hive
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+	name: cleanup-role
+	namespace: hive
+rules:
+- apiGroups: ["hive.openshift.io"]
+	resources: ["clusterprovisions"]
+	verbs: ["list","get","delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+	name: cleanup-rb
+	namespace: hive
+subjects:
+- kind: ServiceAccount
+	name: cleanup-sa
+roleRef:
+	kind: Role
+	name: cleanup-role
+	apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+	name: cleanup-clusterprovision
+	namespace: hive
+spec:
+	schedule: "0 * * * *"
+	jobTemplate:
+		spec:
+			template:
+				spec:
+					serviceAccountName: cleanup-sa
+					containers:
+					- name: cleaner
+						image: registry.access.redhat.com/ubi9/ubi:latest
+						command: ["/bin/sh","-c"]
+						args:
+						- |
+							set -eu
+							oc delete clusterprovision -n hive -l hive.openshift.io/retain=false --ignore-not-found
+					restartPolicy: OnFailure
+\end{Verbatim}
+
+\subsection{4）vCenter 凭据轮换与强化（止血）}
+
+建议在确认泄露后立即轮换 vCenter 凭据，并启用最小权限、MFA、来源 IP 允许列表等约束。轮换完成后更新 Hive 使用的 Secret（示例命令需按实际 Secret 名称/namespace 调整）：
+\begin{Verbatim}[breaklines,breakanywhere]
+oc -n hive create secret generic vcenter-credentials \
+	--from-literal=username=<new-user> \
+	--from-literal=password=<new-pass> \
+	--dry-run=client -o yaml | oc apply -f -
+\end{Verbatim}
+
+\subsection{5）“敏感字段守护”检测（Gatekeeper/Kyverno，建议审计模式）}
+
+\textbf{Gatekeeper（dryrun）}：检测 \texttt{ClusterProvision} 中是否出现敏感键名（password/token/secret/credential）。
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+	name: k8sclustprovkeysensitive
+spec:
+	crd:
+		spec:
+			names:
+				kind: K8sClustProvKeySensitive
+	targets:
+	- target: admission.k8s.gatekeeper.sh
+		rego: |
+			package k8sclustprovkeysensitive
+
+			sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "password")
+			}
+			sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "token")
+			}
+			sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "secret")
+			}
+			sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "credential")
+			}
+
+			# 深度遍历 object，收集所有键
+			walk(obj, path, val) {
+				is_object(obj)
+				some k
+				v := obj[k]
+				walk(v, array.concat(path, [k]), val)
+			}
+			walk(obj, path, val) {
+				is_array(obj)
+				some i
+				v := obj[i]
+				walk(v, array.concat(path, [sprintf("%v", [i])]), val)
+			}
+			walk(obj, path, obj) {
+				not is_object(obj)
+				not is_array(obj)
+			}
+
+			deny[msg] {
+				input.review.kind.group == "hive.openshift.io"
+				input.review.kind.kind == "ClusterProvision"
+				walk(input.review.object, [], _)
+				some k
+				_ = input.review.object[k]
+				sensitive_key(k)
+				msg := sprintf("ClusterProvision contains sensitive key at top-level: %s", [k])
+			}
+
+			deny[msg] {
+				input.review.kind.group == "hive.openshift.io"
+				input.review.kind.kind == "ClusterProvision"
+				walk(input.review.object, path, _)
+				some i
+				k := path[i]
+				sensitive_key(k)
+				msg := sprintf("ClusterProvision contains sensitive key on path %v", [path])
+			}
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sClustProvKeySensitive
+metadata:
+	name: audit-clusterprovision-sensitive-keys
+spec:
+	enforcementAction: dryrun
+	match:
+		kinds:
+		- apiGroups: ["hive.openshift.io"]
+			kinds: ["ClusterProvision"]
+\end{Verbatim}
+
+
+\chapter{CVE-2023-30512 复现步骤与策略清单}\label{app:cve-2023-30512}
+
+本附录给出案例三（CVE-2023-30512，CubeFS CSI 插件过度授权导致的集群权限提升风险）的\textbf{验证性复现}与\textbf{策略清单}。
+为避免提供可被滥用的细粒度利用操作，复现部分以“权限证据 + 受控权限验证”为主，重点证明 CSI ServiceAccount 被绑定了不必要的 \texttt{secrets} 读取能力；策略部分给出可落地的 RBAC 收敛、准入防回归与审计检测。
+
+\section{漏洞复现详细步骤（验证性复现）}
+
+\textbf{变量约定（按实际替换）}
+\begin{Verbatim}[breaklines,breakanywhere]
+NAMESPACE=<cubefs-namespace>
+SA=cfs-csi-service-account
+CLUSTERROLE=cfs-csi-cluster-role
+
+# 如 SA 名称不同，请先定位：
+kubectl get sa -A | findstr /i "csi cfs cubefs"
+kubectl get clusterrole,clusterrolebinding -A | findstr /i "csi cfs cubefs"
+\end{Verbatim}
+
+\textbf{步骤 1：导出 RBAC 证据（确认 secrets 权限存在）}
+\begin{Verbatim}[breaklines,breakanywhere]
+kubectl get clusterrole $CLUSTERROLE -o yaml
+kubectl get clusterrolebinding -o yaml | findstr /i "cfs-csi cubefs"
+
+# 重点检查 ClusterRole 规则中是否出现：
+# resources: ["secrets"]
+# verbs: ["get","list","watch"]
+\end{Verbatim}
+
+\textbf{步骤 2：受控权限验证（不执行实际数据提取）}
+\begin{Verbatim}[breaklines,breakanywhere]
+# 直接验证该 SA 是否具备跨命名空间读取 secrets 的能力
+kubectl auth can-i get secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
+kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
+kubectl auth can-i watch secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
+\end{Verbatim}
+
+\textbf{权限提升路径（文字图，便于复盘）}
+\begin{Verbatim}[breaklines,breakanywhere]
+CubeFS CSI 安装环境
+	|
+	+--> DaemonSet: cfs-csi-node  (节点插件)
+	|
+	+--> Deployment: cfs-csi-controller (控制器)
+					|
+					v
+ServiceAccount: cfs-csi-service-account
+					|
+					v
+ClusterRole: cfs-csi-cluster-role
+	(误包含 secrets 的 get/list/watch)
+					|
+					v
+一旦攻击者控制节点或 CSI Pod => 可滥用该 SA 的身份边界
+	(风险：读取高价值凭据 -> 演化为集群级权限提升)
+\end{Verbatim}
+
+\section{策略代码清单}
+
+本节策略遵循“\textbf{最小权限} + \textbf{防回归} + \textbf{可观测}”主线：
+先移除 CSI 不必要的 \texttt{secrets} 读取权限；再用准入策略阻断未来再次引入过度授权；最后启用审计检测以便快速发现异常访问并触发止血流程。
+
+\subsection{1）RBAC 最小化：移除 ClusterRole 中的 \texttt{secrets} 权限}
+
+说明：CSI 需要的资源/动词与具体实现有关，建议在预生产以 PVC/PV 创建、挂载、扩容、attach/detach 等流程回归验证后再推广到生产。
+以下示例展示“覆盖式”更新 ClusterRole 的方式，明确不包含 \texttt{resources:["secrets"]}。
+
+\begin{Verbatim}[breaklines,breakanywhere]
+cat <<'EOF' | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+	name: cfs-csi-cluster-role
+	labels:
+		app.kubernetes.io/name: cfs-csi
+rules:
+- apiGroups: [""]
+	resources: ["nodes","persistentvolumes","pods"]
+	verbs: ["get","list","watch"]
+- apiGroups: ["storage.k8s.io"]
+	resources: ["volumeattachments","csinodes"]
+	verbs: ["get","list","watch"]
+# 注意：不应包含 resources:["secrets"]
+EOF
+
+# 复测（期望输出 no）
+kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
+\end{Verbatim}
+
+\subsection{2）ServiceAccount 硬化（按需评估）}
+
+若 CSI 驱动\textbf{不需要}直接调用 Kubernetes API，可评估禁用自动挂载令牌以降低“被攻陷即可滥用身份”的风险：
+\begin{Verbatim}[breaklines,breakanywhere]
+# 将 automountServiceAccountToken 设为 false（需评估 CSI 功能是否依赖 token）
+kubectl -n $NAMESPACE patch serviceaccount $SA --type='merge' -p '{"automountServiceAccountToken":false}'
+\end{Verbatim}
+
+\subsection{3）准入防回归（OPA Gatekeeper）：禁止创建包含 secrets 读取动词的 ClusterRole}
+
+说明：该策略用于\textbf{防止未来误配置再次引入过度授权}。建议先以 \texttt{dryrun} 运行观察影响，再逐步强制。
+\begin{Verbatim}[breaklines,breakanywhere]
+cat <<'EOF' | kubectl apply -f -
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+	name: k8sdenysecretsrbac
+spec:
+	crd:
+		spec:
+			names:
+				kind: K8sDenySecretsRBAC
+	targets:
+	- target: admission.k8s.gatekeeper.sh
+		rego: |
+			package k8sdenysecretsrbac
+
+			has_secrets_rule(rule) {
+				rule.resources[_] == "secrets"
+				rule.verbs[_] == "get"
+			}
+			has_secrets_rule(rule) {
+				rule.resources[_] == "secrets"
+				rule.verbs[_] == "list"
+			}
+			has_secrets_rule(rule) {
+				rule.resources[_] == "secrets"
+				rule.verbs[_] == "watch"
+			}
+
+			violation[{"msg": msg}] {
+				input.review.kind.kind == "ClusterRole"
+				some i
+				rule := input.review.object.rules[i]
+				has_secrets_rule(rule)
+				msg := "ClusterRole must not grant get/list/watch on secrets"
+			}
+EOF
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sDenySecretsRBAC
+metadata:
+	name: deny-clusterrole-secrets-read
+spec:
+	enforcementAction: dryrun
+	match:
+		kinds:
+		- apiGroups: ["rbac.authorization.k8s.io"]
+			kinds: ["ClusterRole"]
+EOF
+\end{Verbatim}
+
+\subsection{4）审计与检测：对 \texttt{secrets} 枚举行为进行可观测化}
+
+Kubernetes 审计策略片段（加载方式依平台而定）：
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+	verbs: ["get","list","watch"]
+	resources:
+	- group: ""
+		resources: ["secrets"]
+	omitStages: ["RequestReceived"]
+\end{Verbatim}
+建议在 SIEM/日志平台中对来自 CSI ServiceAccount 的 \texttt{secrets} 枚举进行聚合告警，并结合阈值与白名单降低噪音。
+
+\subsection{5）网络收敛（可选）：限制 CSI Pod 出站访问面}
+
+说明：NetworkPolicy 能降低被攻陷工作负载的横向移动能力，但在不同 CNI 下支持情况不同；同时 API Server 可能位于外部 LB，需按实际环境调整。
+\begin{Verbatim}[breaklines,breakanywhere]
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: cfs-csi-egress-lockdown
+	namespace: $NAMESPACE
+spec:
+	podSelector:
+		matchLabels:
+			app: cfs-csi
+	policyTypes: ["Egress"]
+	egress:
+	- to:
+		- namespaceSelector:
+				matchLabels:
+					kubernetes.io/metadata.name: kube-system
+			podSelector:
+				matchLabels:
+					k8s-app: kube-dns
+		ports:
+		- protocol: UDP
+			port: 53
+EOF
+\end{Verbatim}
+
+
+\textbf{Kyverno（Audit）}：使用正则对策略表达做检测（示例更偏“告警提示”，可按字段路径细化）。
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+	name: audit-clusterprovision-sensitive-keys
+spec:
+	validationFailureAction: Audit
+	background: true
+	rules:
+	- name: detect-secret-like-keys
+		match:
+			any:
+			- resources:
+					kinds:
+					- hive.openshift.io/v1/ClusterProvision
+		validate:
+			message: "ClusterProvision 可能包含敏感字段（password/token/secret/credential）。"
+			deny:
+				conditions:
+					any:
+					- key: "{{ to_string(request.object) }}"
+						operator: AnyIn
+						value:
+						- "password"
+						- "token"
+						- "secret"
+						- "credential"
+\end{Verbatim}
+
+

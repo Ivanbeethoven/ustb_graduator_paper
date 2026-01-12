@@ -1,4 +1,4 @@
-\chapter{案例分析（未完成）}\label{chap:case}
+\chapter{案例分析}\label{chap:case}
 为验证本文提出的智能安全策略生成框架在真实云原生权限提升漏洞场景下的有效性，本章选取若干典型 CVE 案例进行深入分析。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{三维质量验证}三个阶段：首先在可控环境中重现漏洞攻击路径并确认风险；随后使用本文方法自动生成候选安全策略；最后从有效性（E）、无干扰性（I）、可部署性（D）三个维度对生成策略进行实证评估，以验证策略能否真实阻断攻击、是否引入业务干扰以及部署难度是否可控。
 
 \section{案例选择与实验设计}
@@ -15,21 +15,6 @@
 
 \textbf{（4）防控价值}：漏洞场景具有典型的临时防控需求（如修复补丁尚未发布、业务无法立即升级或需要多层防御），使得智能生成策略具有实际应用价值。
 
-
-
-% \begin{table}[h]
-% \centering
-% \caption{案例 CVE 清单}
-% \label{tab:case-summary}
-% \begin{tabular}{|l|l|c|l|l|}
-% \hline
-% \textbf{CVE 编号} & \textbf{受影响组件} & \textbf{CVSS} & \textbf{成因分类} & \textbf{攻击类型} \\ \hline
-% CVE-YYYY-XXXXX & Kubernetes API Server & 8.8 & 安全逻辑缺陷/访问控制缺陷 & 越权访问集群资源 \\ \hline
-% CVE-YYYY-XXXXX & Argo CD & 7.5 & 代码注入/路径遍历 & 敏感配置泄露 \\ \hline
-% CVE-YYYY-XXXXX & Cilium & 7.2 & 配置错误/权限配置过宽 & 容器逃逸与横向移动 \\ \hline
-% \multicolumn{5}{|l|}{（待补充具体 CVE，根据实际复现情况确定最终案例）} \\ \hline
-% \end{tabular}
-% \end{table}
 
 \subsection{实验环境与复现流程}
 
@@ -61,72 +46,8 @@
     \end{itemize}
 \end{enumerate}
 
-\section{案例一：CVE-YYYY-XXXXX（Kubernetes API Server 访问控制缺陷）}
+\input{contents/chap6/case1}
 
-\subsection{漏洞详解与复现}
+\input{contents/chap6/case2.tex}
 
-\textbf{（1）漏洞背景}
-
-\textbf{CVE 描述}：[简要描述漏洞，包括受影响版本、CVSS 评分、攻击向量与影响范围]
-
-\textbf{成因分类}：安全逻辑缺陷 / 访问控制缺陷
-
-\textbf{攻击前提}：[描述攻击者需要满足的前置条件，如特定权限、网络可达性等]
-
-\textbf{（2）漏洞复现}
-
-\textbf{环境配置}：[描述测试集群配置与受影响组件版本]
-\begin{itemize}
-    \item Kubernetes 版本：vX.Y.Z（受影响版本）
-    \item 受影响组件：[组件名称与版本]
-    \item 测试负载：[部署的测试应用或服务]
-\end{itemize}
-
-\textbf{攻击步骤}：[展示关键攻击步骤与命令，配合代码片段或截图]
-
-\textbf{攻击结果}：[展示权限提升成功的证据，如获取的集群资源访问权限、执行的特权操作等]
-
-\subsection{策略部署}
-
-使用本文方法生成的最佳安全策略如下（经多智能体评估体系选出）：
-
-\textbf{策略概述}：
-\begin{itemize}
-    \item \textbf{防控层次（layer）}：[如身份与权限、网络隔离、运行时检测等]
-    \item \textbf{防控方法（method）}：[如权限最小化与访问控制加固]
-    \item \textbf{使用工具}：[如 RBAC、NetworkPolicy、OPA/Gatekeeper 等]
-\end{itemize}
-
-\textbf{策略配置}：[展示关键策略配置片段，如 YAML 文件、CLI 命令等]
-
-\textbf{部署步骤}：[说明策略的部署流程与验证方法]
-
-\subsection{三因素分析}
-
-\textbf{（1）有效性（Effectiveness）}
-
-\textbf{阻断测试}：部署策略后重新执行攻击，[描述策略是否成功阻断原攻击路径]
-
-\textbf{覆盖度分析}：[分析策略是否覆盖已知攻击变种，是否存在潜在绕过路径]
-
-\textbf{评价结论}：[给出有效性评价，如"完全阻断/部分阻断/无效"，并说明依据]
-
-\textbf{（2）无干扰性（Interference）}
-
-\textbf{业务影响测试}：[描述正常业务流量测试结果，是否产生误报或阻断]
-
-\textbf{性能开销}：[测量策略引入的延迟或资源消耗，如适用]
-
-\textbf{运维复杂度}：[评估策略的配置复杂度与日常维护成本]
-
-\textbf{评价结论}：[给出无干扰性评价，如"无明显影响/轻微影响/显著影响"，并量化说明]
-
-\textbf{（3）可部署性（Deployability）}
-
-\textbf{配置完整性}：[验证策略配置是否包含所有必要字段，语法是否正确]
-
-\textbf{执行可行性}：[测试策略是否可快速部署（如 \texttt{kubectl apply}），是否需要额外前置条件]
-
-\textbf{验证与回滚}：[说明策略的验证方法与回滚方案]
-
-\textbf{评价结论}：[给出可部署性评价，如"易部署/中等难度/复杂"，并说明依据]
+\input{contents/chap6/case3.tex}
