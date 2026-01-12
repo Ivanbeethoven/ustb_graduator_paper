@@ -89,6 +89,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2
 kubectl rollout status deployment/argocd-server -n argocd
 \end{Verbatim}
 
+
 \textbf{步骤 2：获取初始管理员密码并登录 UI/CLI}
 \begin{Verbatim}[breaklines,breakanywhere]
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
@@ -684,6 +685,37 @@ spec:
 \end{Verbatim}
 
 
+\textbf{Kyverno（Audit）}：对对象文本进行检测，以提示可能存在的敏感键名。该策略更适用于告警与排查，不建议直接用于阻断控制器更新。
+\begin{Verbatim}[breaklines,breakanywhere]
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+	name: audit-clusterprovision-sensitive-keys
+spec:
+	validationFailureAction: Audit
+	background: true
+	rules:
+	- name: detect-secret-like-keys
+		match:
+			any:
+			- resources:
+					kinds:
+					- hive.openshift.io/v1/ClusterProvision
+		validate:
+			message: ClusterProvision 可能包含敏感字段 password token secret credential。
+			deny:
+				conditions:
+					any:
+					- key: "{{ to_string(request.object) }}"
+						operator: AnyIn
+						value:
+						- password
+						- token
+						- secret
+						- credential
+\end{Verbatim}
+
+
 \chapter{CVE-2023-30512 复现步骤与策略清单}\label{app:cve-2023-30512}
 
 本附录给出案例三（CVE-2023-30512，CubeFS CSI 插件过度授权导致的集群权限提升风险）的\textbf{验证性复现}与\textbf{策略清单}。
@@ -881,34 +913,103 @@ EOF
 \end{Verbatim}
 
 
-\textbf{Kyverno（Audit）}：使用正则对策略表达做检测（示例更偏“告警提示”，可按字段路径细化）。
+\chapter{CVE-2020-4062 复现步骤与策略清单}\label{app:cve-2020-4062}
+
+本附录给出案例四（CVE-2020-4062，Conjur OSS Helm Chart 旧版本缺失网络隔离导致 Postgres 在集群内可达）的\textbf{复现要点}与\textbf{缓解策略清单}。
+考虑到该问题涉及数据库直连带来的敏感数据风险，复现环节仅进行网络暴露面验证，用于确认 5432 端口在集群内的可达性以及网络策略的生效性，不展开数据库操作细节。
+
+\section{漏洞复现详细步骤：受控测试}
+
+\textbf{前提条件}
+\begin{itemize}
+	\item 集群 CNI 支持 NetworkPolicy，例如 Calico。
+	\item Helm v3 可用。
+	\item 受影响的 Conjur OSS Helm Chart 版本为 \texttt{< 2.0.0}。
+\end{itemize}
+
+\textbf{步骤 1：在隔离命名空间部署旧版 Chart，并进行必要的兼容性适配}
+旧版 Chart 可能使用过时 API，例如 \texttt{apps/v1beta2}。在较新 Kubernetes 版本上复现时，可在\textbf{保持网络策略缺失这一特性不变}的前提下，将 Deployment API 适配为 \texttt{apps/v1} 并补齐 \texttt{selector} 字段以完成安装。
+
+\textbf{步骤 2：确认 Postgres Service 与 5432 端口暴露}
 \begin{Verbatim}[breaklines,breakanywhere]
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-	name: audit-clusterprovision-sensitive-keys
-spec:
-	validationFailureAction: Audit
-	background: true
-	rules:
-	- name: detect-secret-like-keys
-		match:
-			any:
-			- resources:
-					kinds:
-					- hive.openshift.io/v1/ClusterProvision
-		validate:
-			message: "ClusterProvision 可能包含敏感字段（password/token/secret/credential）。"
-			deny:
-				conditions:
-					any:
-					- key: "{{ to_string(request.object) }}"
-						operator: AnyIn
-						value:
-						- "password"
-						- "token"
-						- "secret"
-						- "credential"
+NAMESPACE=conjur-vuln
+
+kubectl get ns $NAMESPACE
+kubectl -n $NAMESPACE get svc
+
+# 重点确认 Postgres Service（名称以实际为准）与 5432 端口存在
+kubectl -n $NAMESPACE get svc | findstr /i "postgres 5432 conjur"
 \end{Verbatim}
 
+\textbf{步骤 3：确认未配置 NetworkPolicy}
+\begin{Verbatim}[breaklines,breakanywhere]
+kubectl -n $NAMESPACE get networkpolicy
+\end{Verbatim}
+若不存在任何约束 Postgres 入站的策略，且集群默认允许 Pod 间互通，则可判定数据库对集群内工作负载开放。
+
+\textbf{步骤 4：连通性验证}
+在不执行数据库操作的前提下，使用 TCP 连通性探测验证非 Conjur 组件工作负载是否能够与 Postgres 的 5432 端口建立连接，以此作为暴露面存在的验证依据。
+
+\section{策略代码清单}
+
+\subsection{1）根本修复：升级 Chart}
+将 Conjur OSS Helm Chart 升级到 \texttt{2.0.0} 或更高版本，使其默认包含更严格的 NetworkPolicy。
+
+\subsection{2）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
+
+下述策略在命名空间内实现两点：其一，默认拒绝 Postgres Pod 的入站流量；其二，仅允许 Conjur Server 访问 Postgres 的 5432 端口。
+其中标签选择器需与实际部署对象一致，示例使用 \texttt{app=conjur-oss} 与 \texttt{app=conjur-oss-postgres}，可按实际标签调整。
+
+\begin{Verbatim}[breaklines,breakanywhere]
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: conjur-postgres-default-deny
+	namespace: conjur-vuln
+spec:
+	podSelector:
+		matchLabels:
+			app: conjur-oss-postgres
+	policyTypes:
+	- Ingress
+	ingress: []
+EOF
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: conjur-postgres-allow-conjur
+	namespace: conjur-vuln
+spec:
+	podSelector:
+		matchLabels:
+			app: conjur-oss-postgres
+	policyTypes:
+	- Ingress
+	ingress:
+	- from:
+		- podSelector:
+			matchLabels:
+				app: conjur-oss
+		ports:
+		- protocol: TCP
+			port: 5432
+EOF
+\end{Verbatim}
+
+\textbf{策略验证}
+\begin{Verbatim}[breaklines,breakanywhere]
+kubectl -n conjur-vuln get networkpolicy
+
+# 复测：从非 Conjur 组件工作负载到 Postgres 5432 的连通性应失败
+# 从 Conjur Server 到 Postgres 5432 的连通性应成功
+\end{Verbatim}
+
+\subsection{3）命名空间隔离与 RBAC 收敛}
+\begin{itemize}
+	\item 将 Conjur 部署在独立命名空间，并通过 NetworkPolicy 限制跨命名空间访问。
+	\item 收敛对数据库凭据相关 Secret 的读取权限，降低网络可达与凭据可读叠加带来的风险。
+\end{itemize}
 

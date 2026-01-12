@@ -1,0 +1,83 @@
+\section{案例四：CVE-2020-4062 Conjur OSS Helm Chart 数据库网络暴露}
+
+\subsection{漏洞详解与复现}
+
+\textbf{（1）漏洞背景}
+
+Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Management 系统。在典型部署中，Conjur Server 负责鉴权与策略校验，后端数据库 PostgreSQL 用于持久化存储策略、审计与机密相关数据。
+Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平互通状态，Pod 间通信默认允许。因此，对于数据库等敏感组件，需要显式配置 NetworkPolicy 等隔离策略，形成默认拒绝策略 Default Deny，以控制最小暴露面。
+
+\textbf{CVE 描述}：CVE-2020-4062 影响 Conjur OSS Helm Chart 2.0.0 之前版本。旧版 Chart 默认\textbf{未提供对 Postgres 的访问控制策略}，例如缺失 NetworkPolicy，导致数据库服务在集群内对任意 Pod 可达。即使数据库未通过 NodePort 或 LoadBalancer 暴露到公网，攻击者一旦获得集群内任意工作负载的执行上下文，仍可能横向移动并直连数据库，绕过应用层安全控制，从而造成机密数据泄露、策略被篡改与审计记录被破坏等后果。
+
+\textbf{严重等级}：Critical。
+
+\textbf{主要成因分类}：配置缺陷 / 网络访问控制缺失 Missing NetworkPolicy。
+
+\textbf{攻击链条描述}：该漏洞可抽象为集群内横向移动与直连数据库绕过应用层安全的链条：
+\begin{enumerate}
+    \item \textbf{初始立足点}：攻击者控制集群内任意 Pod，例如通过业务漏洞或错误授权获得容器执行能力；
+    \item \textbf{侦察发现}：在目标命名空间中发现 Postgres Service 与 5432 端口；
+    \item \textbf{网络直连}：由于缺失 NetworkPolicy，攻击者可从任意 Pod 直连 Postgres；
+    \item \textbf{影响扩展}：一旦数据库凭据或数据密钥被获取，常见来源包括过宽 RBAC、配置泄露或备份泄露，风险可进一步扩展为机密窃取、权限篡改与审计删除。
+\end{enumerate}
+
+\textbf{（2）漏洞复现（验证性复现）}
+
+本案例复现以\textbf{网络暴露面验证}为主：证明在旧版 Chart 部署下，Postgres 在集群内可被非 Conjur 组件访问，随后通过部署 NetworkPolicy 将该访问面收敛。
+考虑到该场景涉及数据库直连与敏感数据风险，本文不展开可被滥用的数据库操作细节，完整的环境准备与策略清单见附录\ref{app:cve-2020-4062}。
+
+\textbf{环境配置（摘要）}：
+\begin{itemize}
+    \item 测试集群：Kubernetes Minikube 与 Helm v3；
+    \item 受影响组件：Conjur OSS Helm Chart \texttt{< 2.0.0}；
+    \item 网络前提：集群容器网络接口 CNI 支持 NetworkPolicy，否则策略无法生效。
+\end{itemize}
+
+\textbf{复现步骤（摘要）}：
+\begin{enumerate}
+    \item 在独立命名空间部署旧版 Conjur OSS Chart，并确认 Postgres Service 端口 5432 存在；
+    \item 证明该命名空间中不存在限制 Postgres 入站的 NetworkPolicy；
+    \item 进行受控连通性验证：从非 Conjur 组件工作负载发起到 Postgres 5432 的 TCP 探测，用于证明集群内可达；
+    \item 部署默认拒绝并仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy，复测应不可达。
+\end{enumerate}
+
+\textbf{攻击结果（摘要）}：若未隔离 Postgres，攻击者一旦获得集群内任意 Pod 的执行上下文，即存在横向移动并直连数据库的机会，形成从业务容器到机密管理后端的跨域突破。
+
+
+\subsection{策略部署}
+
+该漏洞的\textbf{根本修复}是升级 Conjur OSS Helm Chart 至 2.0.0 或更高版本，新版本默认包含更严格的网络策略。
+在无法立即升级的场景下，本案例给出以 NetworkPolicy 为核心的缓解策略：采用默认拒绝策略 Default Deny 收敛数据库入站访问面，仅允许 Conjur Server 访问 Postgres 5432 端口，并辅以命名空间隔离与持续审计，降低配置漂移风险。
+
+\textbf{策略概述}：
+\begin{itemize}
+    \item \textbf{防控层次 layer}：网络隔离 / 身份与权限 / 审计与治理
+    \item \textbf{防控方法 method}：NetworkPolicy 默认拒绝与精确放通，仅允许 Conjur Server\,$\rightarrow$\,Postgres 5432，配合命名空间隔离、RBAC 收敛与基线检测
+    \item \textbf{使用工具}：Kubernetes NetworkPolicy、Kubernetes RBAC、审计与告警系统
+\end{itemize}
+
+\textbf{策略配置与部署步骤}：为避免正文过长，NetworkPolicy 示例、验证命令与注意事项见附录\ref{app:cve-2020-4062}。
+
+
+\subsection{三因素分析}
+
+\textbf{（1）有效性（Effectiveness）}
+\begin{itemize}
+    \item NetworkPolicy 能直接收敛数据库暴露面，将任意 Pod 可达降低为仅 Conjur Server 可达，从网络层阻断横向直连路径；
+    \item 命名空间隔离与 RBAC 收敛可降低数据库凭据被读取/滥用的概率，与网络隔离形成互补；
+    \item 基线检测可在 Helm 回滚、配置漂移时及时发现 NetworkPolicy 缺失或规则被弱化。
+\end{itemize}
+
+\textbf{（2）无干扰性（Interference）}
+\begin{itemize}
+    \item NetworkPolicy 变更可能影响 Conjur 组件间通信与运维排障，需要在预生产验证并保留回滚方案；
+    \item 若集群 CNI 不支持 NetworkPolicy，则策略无效；此时应优先通过命名空间隔离或选择支持策略的 CNI 解决；
+    \item 精确放通依赖正确的标签选择器，标签不一致会导致误拦截，需要与 Chart 模板保持一致。
+\end{itemize}
+
+\textbf{（3）可部署性（Deployability）}
+\begin{itemize}
+    \item NetworkPolicy 属于原生资源，易于 GitOps 化与多集群复制；
+    \item 规则相对稳定，数据库服务相对固定，维护成本较低；
+    \item 建议将 NetworkPolicy 纳入 Helm values 或部署流水线的强制检查项，避免遗漏或回归。
+\end{itemize}
