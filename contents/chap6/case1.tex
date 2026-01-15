@@ -14,37 +14,23 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 \textbf{攻击链条描述}：其抽象攻击链可概括为：
 \begin{enumerate}
         \item \textbf{合法身份阶段}：攻击者以普通 Argo CD 用户身份登录；
-        \item \textbf{配置影响阶段}：凭借对 Application 的 \texttt{sync+override} 或对源码仓库的 push 权限，注入恶意资源清单；
+        \item \textbf{配置影响阶段}：凭借对 Application 的 \texttt{sync\allowbreak+\allowbreak override} 或对源码仓库的 push 权限，注入恶意资源清单；
         \item \textbf{控制平面滥用阶段}：Argo CD 按 GitOps 同步逻辑将恶意资源应用到集群；
         \item \textbf{权限提升阶段}：借助被创建的高权限 RBAC 绑定（如 \texttt{ClusterRoleBinding}）获得集群级管理员能力。
 \end{enumerate}
 \textbf{（2）漏洞复现}
 
-本节给出可复现的实验流程：通过构造一个包含“正常资源 + 恶意 RBAC 绑定”的 Git 仓库，并为低权用户配置 \texttt{sync+override} 权限，使其能够触发 Argo CD 同步，从而在集群中创建管理员级绑定实现提权。
+本节给出可复现的实验流程：通过构造一个包含“正常资源 + 恶意 RBAC 绑定”的 Git 仓库，并为低权用户配置 \texttt{sync\allowbreak+\allowbreak override} 权限，使其能够触发 Argo CD 同步，从而在集群中创建管理员级绑定实现提权。
 
-\textbf{环境配置}：
-\begin{itemize}
-        \item Kubernetes 版本：vX.Y.Z（\texttt{kind}/\texttt{minikube} 均可，本文复现以可部署 Argo CD 的版本为准，具体版本号以实验环境为准）；
-        \item 受影响组件：Argo CD v2.3.1（漏洞版本，补丁版本为 2.3.2/2.2.8/2.1.14）；
-        \item 测试负载：
-\begin{itemize}
-        \item Git 仓库：\url{https://github.com/Ivanbeethoven/bad_repo}；
-        \item 其中包含 \texttt{app.yaml}（正常资源，如 nginx）与 \texttt{hack-admin.yaml}（恶意 \texttt{ClusterRoleBinding}，将用户 \texttt{bob} 绑定到管理员角色）。
-\end{itemize}
-\end{itemize}
+        \textbf{环境配置}：Kubernetes 测试集群可选 \texttt{kind} 或 \texttt{minikube}，版本以实验环境为准。受影响组件为 Argo CD v2.3.1，补丁版本为 2.3.2、2.2.8、2.1.14。测试负载使用仓库 \url{https://github.com/Ivanbeethoven/bad_repo}，其中包含 \texttt{app.yaml} 与 \texttt{hack-admin.yaml}，用于分别承载正常资源与恶意 RBAC 绑定。
 
 \textbf{攻击步骤}：
 
-本文复现按“部署漏洞版本\,$\rightarrow$\,创建宽松 AppProject\,$\rightarrow$\,授予低权用户 \texttt{sync+override}\,$\rightarrow$\,创建指向恶意仓库的 Application\,$\rightarrow$\,触发同步\,$\rightarrow$\,验证权限变化”的流程进行。
+本文复现包括以下关键环节：部署漏洞版本并创建宽松 AppProject；授予低权用户 \texttt{sync\allowbreak+\allowbreak override}；创建指向恶意仓库的 Application 并触发同步；最后验证权限变化。
 为避免正文过长，关键命令与清单见附录\ref{app:cve-2022-24768}。
 
 
-\textbf{攻击结果}：综合上述验证，可观察到“权限边界放大”的典型迹象：
-\begin{itemize}
-        \item 低权用户 bob 原本仅被授予 \texttt{applications sync/override}（对特定项目范围内应用）；
-        \item 通过影响 Git 期望状态或应用同步动作，最终间接在集群中创建了高权限 RBAC 绑定；
-        \item 其效果表现为 \texttt{kubectl auth can-i '*' '*'} 在 \texttt{--as bob} 条件下返回 \texttt{yes}。
-\end{itemize}
+        \textbf{攻击结果}：综合上述验证可观察到权限边界放大。低权用户 bob 原本仅具备对特定项目范围内应用的 \texttt{sync/override} 能力，但通过影响 Git 期望状态或同步动作，间接诱导控制平面在集群中创建高权限 RBAC 绑定，最终表现为在 \texttt{--as bob} 条件下 \texttt{kubectl auth can-i '*' '*'} 返回 \texttt{yes}。
 \begin{figure}[htbp]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image2.png}
@@ -60,23 +46,11 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 \end{figure}
 
 \subsection{策略部署}
-使用本文方法生成的最佳安全策略如下（经多智能体评估体系选出）。该策略遵循“纵深防御（Defense in Depth）”，强调\textbf{限制配置可达性、限制配置表达力、限制权限来源}，并将“升级补丁”作为必要但非唯一手段。
+本节给出可落地的缓解策略。该策略遵循纵深防御思路，强调限制配置可达性、限制配置表达力以及约束授权来源，并将升级补丁作为必要但非唯一手段。
 
-\textbf{策略概述}：
-\begin{itemize}
-        \item \textbf{防控层次（layer）}：身份与权限 / 策略执行 / 准入控制 / 审计与治理
-        \item \textbf{防控方法（method）}：Kubernetes RBAC 收敛 + Argo CD RBAC 加固 + 准入控制校验 AppProject/权限策略 + 身份组映射白名单 + 审计告警 + 基线与回滚 + 分阶段强制
-        \item \textbf{使用工具}：Kubernetes RBAC、Argo CD RBAC（Casbin）、OPA/Gatekeeper（或 Kyverno）、Kubernetes Audit（以及 SIEM/告警系统）
-\end{itemize}
+        \textbf{策略概述}：从身份与权限、策略执行、准入控制以及审计治理四个层面协同落地。方法侧以 Kubernetes RBAC 收敛与 Argo CD RBAC 加固为基础，在 AppProject 与权限策略的创建更新环节施加准入约束，并通过身份组映射白名单、审计告警、基线与回滚机制降低权限漂移风险。相关能力可由 Kubernetes RBAC、Argo CD RBAC、Gatekeeper 或 Kyverno 以及审计与告警系统实现。
 
-\textbf{策略配置}：为便于复用与自动化，以下给出关键配置片段（可按“先审计、后强制”的方式分阶段落地）。
-
-\begin{itemize}
-        \item \textbf{Kubernetes RBAC（集群层）}：收敛 \texttt{AppProject} 的创建/更新/删除权限，仅平台管理员可写；
-        \item \textbf{Argo CD RBAC（应用层）}：\texttt{policy.default=role:readonly}，并显式隔离 \texttt{projects/repositories/clusters/exec} 等高风险能力；
-        \item \textbf{准入控制（策略层）}：在 \texttt{AppProject} 创建/更新时校验策略表达，禁止通配符放权、强制项目域前缀、禁止授予高危资源写权限；
-        \item \textbf{审计与基线（治理层）}：将关键配置纳入 Git 基线与审计告警，降低权限漂移风险。
-\end{itemize}
+        \textbf{策略配置}：为便于复用与自动化，可按先审计后强制的节奏分阶段落地。集群侧通过 Kubernetes RBAC 收敛 \texttt{AppProject} 的创建更新删除权限，应用侧通过 Argo CD RBAC 将默认权限设置为只读并显式隔离 \texttt{projects}、\texttt{repositories}、\texttt{clusters}、\texttt{exec} 等高风险能力。策略侧在 \texttt{AppProject} 创建更新环节校验策略表达，限制通配符放权并约束权限授予范围。治理侧将关键配置纳入 Git 基线并接入审计告警，降低权限漂移风险。
 
 为避免正文堆叠大量 YAML/Rego 清单，Kubernetes RBAC、Argo CD RBAC、Gatekeeper/Kyverno 准入策略的完整可用代码与应用命令见附录\ref{app:cve-2022-24768}。
 
@@ -84,26 +58,14 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 
 \textbf{（1）有效性（Effectiveness）}
 该策略在攻击链的多个关键点形成“多点阻断”：
-\begin{itemize}
-        \item Kubernetes RBAC 限制 \texttt{AppProject} 写入，降低“放开 sourceRepos/destinations/whitelist”导致的爆炸半径；
-        \item Argo CD RBAC 默认只读并隔离高危资源写权限，使低权用户难以获得可用于放大控制面的关键操作集合；
-        \item 准入控制对策略表达施加硬约束，防止隐蔽通配符放权与权限漂移；
-        \item 身份治理约束授权来源，降低组注入或错误映射造成的隐式提权。
-\end{itemize}
+Kubernetes RBAC 对 \texttt{AppProject} 写入进行限制，可降低放开 \texttt{sourceRepos}、\texttt{destinations} 与白名单导致的爆炸半径。Argo CD RBAC 默认只读并隔离高危资源写权限，使低权用户难以获得可用于放大控制面的关键操作集合。准入控制对策略表达施加硬约束，用于防止隐蔽通配符放权与权限漂移。身份治理约束授权来源，可降低组注入或错误映射造成的隐式提权。
 在复现实验中，若上述策略生效，则攻击者即使拥有 \texttt{sync} 权限，也难以通过修改 AppProject/仓库/策略来诱导 Argo CD 创建集群级高权限绑定，攻击路径被显著收敛。
 
 \textbf{（2）无干扰性（Interference）}
 该策略以“最小必要变更”为原则，主要影响集中在管理面与配置流程：
-\begin{itemize}
-        \item 对业务同步的直接影响可控：保留项目内正常的 \texttt{sync} 能力，仅收紧 \texttt{override}、高危资源写权限与危险策略表达；
-        \item 准入控制建议先 audit 再 enforce，可显著降低误拦截对业务的冲击；
-        \item 额外运维开销主要来自 RBAC 精细化与准入规则维护，但可通过模板化与 GitOps 基线降低长期成本。
-\end{itemize}
+对业务同步的直接影响可控，策略保留项目内正常的 \texttt{sync} 能力，仅收紧 \texttt{override}、高危资源写权限与高风险策略表达。准入控制建议先审计后强制，以降低误拦截对业务的冲击。额外运维开销主要来自 RBAC 精细化与准入规则维护，但可通过模板化与 GitOps 基线降低长期成本。
 
 \textbf{（3）可部署性（Deployability）}
 该策略依赖的能力均为云原生常用组件，具有较强可落地性：
-\begin{itemize}
-        \item Kubernetes RBAC 与 Argo CD RBAC 为原生能力，配置可版本化并可审计；
-        \item Gatekeeper/Kyverno 为成熟的准入控制方案，可按项目逐步推广；
-\end{itemize}
+Kubernetes RBAC 与 Argo CD RBAC 均为原生能力，配置可版本化并可审计。Gatekeeper 或 Kyverno 属于成熟的准入控制方案，可按项目逐步推广，并与审计治理配套形成闭环。
 

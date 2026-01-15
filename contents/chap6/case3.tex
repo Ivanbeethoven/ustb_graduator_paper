@@ -1,4 +1,4 @@
-\section{案例三：CVE-2023-30512（CubeFS CSI 插件集群权限提升）}
+\section{案例三：CVE-2023-30512（CubeFS CSI 过度权限配置）}
 
 \subsection{漏洞详解与复现}
 
@@ -35,16 +35,11 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 同时在策略部署后复测，验证该能力被有效移除。
 完整命令与策略清单见附录\ref{app:cve-2023-30512}。
 
-\textbf{环境配置（摘要）}：
-\begin{itemize}
-	\item Kubernetes 测试集群（Kind/Minikube/实验集群均可，版本以实验环境为准）；
-	\item 部署受影响版本的 CubeFS CSI（通过 Helm 或 YAML 部署，命名空间以实际为准）；
-	\item 明确 CSI 使用的 ServiceAccount（如 \texttt{cfs-csi-service-account}）以及绑定的 ClusterRole/ClusterRoleBinding。
-\end{itemize}
+\textbf{环境配置}：Kubernetes 测试集群可选 Kind、Minikube 或实验集群，版本以实验环境为准。需要部署受影响版本的 CubeFS CSI，部署方式可为 Helm 或 YAML，命名空间按实际为准。同时应明确 CSI 使用的 ServiceAccount 以及其绑定的 ClusterRole 与 ClusterRoleBinding，以便开展权限证据提取与复测。
 
 \textbf{复现步骤（摘要）}：
 \begin{enumerate}
-	\item 盘点并导出 CSI 的 RBAC 绑定，确认 ClusterRole 规则中包含 \texttt{resources:["secrets"]} 且 verbs 包含 \texttt{get/list/watch}；
+	\item 盘点并导出 CSI 的 RBAC 绑定，确认 ClusterRole 规则中包含 \texttt{resources:\allowbreak[\allowbreak secrets\allowbreak]} 且 verbs 包含 \texttt{get/list/watch}；
 	\item 以该 ServiceAccount 身份执行权限验证（\texttt{kubectl auth can-i}），确认其具备跨命名空间读取 \texttt{Secret} 的能力；
 	\item 按“最小权限 + 准入防回归 + 审计检测”部署策略后，重复第 2 步验证权限应为 \texttt{no}。
 \end{enumerate}
@@ -64,12 +59,7 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 本案例的治理重点是\textbf{移除不必要的 Secrets 读取权限}并\textbf{防止权限回归}：
 对系统组件而言，升级补丁固然重要，但“RBAC 基线治理 + 准入策略 + 审计检测”能够在补丁不可立即应用或配置漂移场景下提供纵深防护。
 
-\textbf{策略概述}：
-\begin{itemize}
-	\item \textbf{防控层次（layer）}：身份与权限 / 策略执行 / 审计与检测 / 网络收敛 / 秘密治理
-	\item \textbf{防控方法（method）}：RBAC 最小化与清理 + ServiceAccount 硬化（必要时禁用自动挂载令牌） + OPA/Gatekeeper 准入防回归（禁止创建含 \texttt{secrets} 读取动词的 ClusterRole） + 审计检测（对 \texttt{secrets} 枚举告警） + 网络出站收敛（仅允许必要目的地）
-	\item \textbf{使用工具}：Kubernetes RBAC、OPA/Gatekeeper（或 Kyverno）、Kubernetes Audit（以及 SIEM/告警系统）、NetworkPolicy
-\end{itemize}
+\textbf{策略概述}：从身份与权限、策略执行、审计与检测、网络收敛以及秘密治理等层面协同落地。核心方法包括对 CSI 相关 RBAC 进行最小化与清理，按需评估 ServiceAccount 硬化措施，在准入侧阻断再次引入含 \texttt{secrets} 读取动词的 ClusterRole，并在审计侧对 \texttt{secrets} 的枚举行为建立可观测与告警。必要时可进一步收敛 CSI 工作负载的出站访问面。
 
 \textbf{策略配置与部署步骤}：为避免正文过长，RBAC 最小化示例、准入控制规则、审计策略片段与验证命令见附录\ref{app:cve-2023-30512}。
 
@@ -77,23 +67,11 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 \subsection{三因素分析}
 
 \textbf{（1）有效性（Effectiveness）}
-\begin{itemize}
-	\item \textbf{RBAC 最小化}直接移除攻击链关键条件（\texttt{secrets} 读取能力），可从根源降低风险；
-	\item \textbf{准入防回归}可阻断后续“误配置/回滚/安装脚本重复引入过度授权”的问题；
-	\item \textbf{审计检测}可在异常访问出现时快速发现并触发凭据轮换等止血动作。
-\end{itemize}
+RBAC 最小化可直接移除攻击链关键条件，即 \texttt{secrets} 读取能力，从根源降低风险。准入防回归用于阻断误配置、版本回滚或安装脚本重复执行导致的过度授权再次出现。审计检测可在异常访问出现时提供证据并触发凭据轮换等止血动作。
 
 \textbf{（2）无干扰性（Interference）}
-\begin{itemize}
-	\item RBAC 收敛可能影响 CSI 的部分诊断/自愈路径，应在预生产环境验证 PVC/PV 生命周期与 attach/detach 流程；
-	\item 准入策略若采用 \texttt{deny} 强制模式，需避免误拦截平台必需组件的合法权限；建议先 \texttt{dryrun/audit} 运行并基于白名单迭代；
-	\item 审计与检测会增加日志量与告警治理成本，但通常不影响业务链路。
-\end{itemize}
+RBAC 收敛可能影响 CSI 的部分诊断与自愈路径，应在预生产环境验证 PVC/PV 生命周期以及 attach/detach 等关键流程。准入策略若采用 \texttt{deny} 强制模式，需要避免误拦截平台必需组件的合法权限，建议先以 \texttt{dryrun/audit} 运行并结合白名单迭代。审计与检测会增加日志量与告警治理成本，但通常不影响业务链路。
 
 \textbf{（3）可部署性（Deployability）}
-\begin{itemize}
-	\item RBAC 与审计为平台原生能力，可在多集群场景模板化推广；
-	\item 准入策略与网络收敛属于“长期基线治理”，可通过 GitOps 与策略即代码持续交付；
-	\item 建议提供回滚与灰度路径：先在测试/预生产验证，再逐步推广到生产。
-\end{itemize}
+RBAC 与审计属于平台原生能力，适合在多集群场景中模板化推广。准入策略与网络收敛属于长期基线治理内容，可通过 GitOps 与策略即代码持续交付。工程落地时建议提供回滚与灰度路径，先在测试与预生产验证后再逐步推广至生产。
 

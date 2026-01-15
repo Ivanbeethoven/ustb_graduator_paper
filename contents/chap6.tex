@@ -16,6 +16,30 @@
 \textbf{（4）防控价值}：漏洞场景具有典型的临时防控需求（如修复补丁尚未发布、业务无法立即升级或需要多层防御），使得智能生成策略具有实际应用价值。
 
 
+% --- CVE 案例汇总表格（插入处）
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption{本章所选 CVE 案例一览}
+    \label{tab:cve-summary}
+    \begin{tabularx}{\textwidth}{C{1.0cm} C{3.2cm} X C{2.4cm} X C{2.0cm}}
+        \toprule
+        序号 & CVE / 案例 & 影响组件 & 一级分类 & 二级分类 & 章节 \\
+        \midrule
+        1 & CVE-2022-24768 & Argo CD & 安全逻辑缺陷 & 访问控制缺陷 & 案例一 \\
+        2 & CVE-2025-2241 & Hive (ClusterProvision) & 敏感信息泄露 & API端口暴漏 & 案例二 \\
+        3 & CVE-2023-30512 & CubeFS CSI & 配置缺陷 & 冗余权限 & 案例三 \\
+        4 & CVE-2020-4062 & ConjurOSS / Postgres & 配置缺陷 & 网络隔离不足 & 案例四 \\
+        5 & CVE-2022-24877 & Flux (kustomize-controller) & 代码注入 & 路径遍历 & 案例五 \\
+        6 & CVE-2022-29171 & Sourcegraph (gitserver) & 代码注入 & 命令注入 & 案例六 \\
+        7 & CVE-2023-22482 & Argo CD (OIDC aud) & 安全逻辑缺陷 & 身份验证绕过 & 案例七 \\
+        \midrule
+        \multicolumn{6}{l}{\textit{注：一级/二级分类与第~\ref{chap:method}~章表~\ref{tab:cloud-native-vuln}一致，具体映射依据“分类漏洞.csv”中的标注结果。}} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+
 \subsection{实验环境与复现流程}
 
 \textbf{（1）环境搭建}。所有漏洞复现与策略验证在隔离的 Kubernetes 测试集群中进行，集群配置如下：
@@ -53,3 +77,9 @@
 \input{contents/chap6/case3.tex}
 
 \input{contents/chap6/case4.tex}
+
+\input{contents/chap6/case5.tex}
+
+\input{contents/chap6/case6.tex}
+
+\input{contents/chap6/case7.tex}

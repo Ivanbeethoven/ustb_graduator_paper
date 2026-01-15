@@ -1,0 +1,39 @@
+\section{案例五：CVE-2022-24877（Flux \texttt{kustomize\allowbreak-controller} 路径穿越）}
+
+\subsection{漏洞详解与复现}
+
+\textbf{（1）漏洞背景}
+
+Flux 是云原生 GitOps 交付体系中的常用组件，典型部署包含 \texttt{kustomize\allowbreak-controller} 等控制器，用于在集群中持续对齐 Git 仓库的期望状态。
+在该工作流中，控制器会拉取仓库内容并调用 Kustomize 解析 \texttt{kustomization\allowbreak.yaml}，进而生成并应用资源清单。由于 \texttt{kustomization\allowbreak.yaml} 以“文件路径”为核心配置对象，控制器必须将其中指定的资源、补丁与组件路径解析为实际文件系统访问。
+若路径规范化与边界检查不足，则恶意构造的 \texttt{kustomization\allowbreak.yaml} 可能触发路径穿越，使控制器读取超出预期工作目录的文件，从而造成敏感信息暴露，并在多租户部署中形成隔离边界破坏的风险。
+
+\textbf{CVE 描述}：CVE-2022-24877 是 Flux \texttt{kustomize\allowbreak-controller} 的路径穿越漏洞。攻击者可通过恶意 \texttt{kustomization\allowbreak.yaml} 触发控制器读取其 Pod 文件系统中的非预期文件，从而暴露敏感数据；在多租户部署下，该能力可能进一步放大为权限提升风险。该漏洞已在 \texttt{kustomize\allowbreak-controller v0.24.0} 中修复，并随 \texttt{flux2 v0.29.0} 集成发布。工程侧常见缓解手段包括在 CI/CD 流水线中自动校验 \texttt{kustomization\allowbreak.yaml} 是否符合安全策略。
+
+\textbf{主要成因分类}：输入校验缺陷 / 路径穿越（Path Traversal，路径规范化与目录边界检查不足）。
+
+\textbf{攻击链条描述}：该漏洞可抽象为“仓库内容被信任\,$\rightarrow$\,路径解析越界\,$\rightarrow$\,敏感数据外泄”的链条：攻击者将恶意 \texttt{kustomization\allowbreak.yaml} 提交至可被控制器同步的仓库；控制器在构建阶段解析并访问其中指定的路径；若路径可越界访问控制器容器文件系统，则非预期文件内容可能被注入到构建产物、事件输出或后续流程中，造成敏感信息暴露，并在多租户环境中破坏隔离边界。
+
+\textbf{（2）漏洞复现（验证性复现）}
+
+本案例复现采用\textbf{验证性复现}思路，重点验证控制器是否会在构建过程中读取超出预期目录边界的文件，并以构建日志与产物行为作为证据，复现的观测点包括：控制器在构建阶段出现与异常路径解析相关的错误或告警信息，或在严格受控的测试条件下出现“构建产物包含非预期内容”的迹象。为避免涉及敏感文件读取的可滥用细节，正文仅给出复现边界与证据判据。
+完整的环境准备、受控验证步骤与证据判据见附录\ref{app:cve-2022-24877}。
+
+\subsection{策略部署}
+
+本节给出针对该类“路径解析越界导致的数据暴露”的优先级缓解策略。治理思路以\textbf{版本修复}与\textbf{前置校验}为核心，并以 GitOps 变更治理降低多租户场景下的输入面风险。
+
+\textbf{策略概述}：第一，升级到修复版本（\texttt{kustomize\allowbreak-controller v0.24.0}，随 \texttt{flux2 v0.29.0} 发布），从根源修复路径穿越问题。第二，在 CI/CD 或代码评审环节对 \texttt{kustomization\allowbreak.yaml} 进行策略化校验，阻断异常路径引用进入仓库，作为补丁窗口期的工程性缓解手段。第三，在多租户环境中收敛对 Git 仓库写入与 Flux 资源变更的权限，并通过运行时硬化与最小权限配置降低异常路径下的后果。
+
+\textbf{策略配置与部署步骤}：为避免正文堆叠大量清单，CI 校验示例、权限收敛要点与验证建议见附录\ref{app:cve-2022-24877}。
+
+\subsection{三因素分析}
+
+\textbf{（1）有效性（Effectiveness）}
+版本升级可从根源修复路径穿越问题，是最直接的风险消减手段。CI 校验用于在提交阶段阻断异常路径引用进入仓库，显著降低触发概率。权限与变更治理用于限制恶意 \texttt{kustomization\allowbreak.yaml} 进入同步面，并在多租户场景下缩小爆炸半径。
+
+\textbf{（2）无干扰性（Interference）}
+升级通常对业务影响可控，但需验证控制器与现有 GitOps 工作流的兼容性。CI 校验可能对历史仓库中不规范写法产生阻断，应采用先告警后强制的方式灰度推进，并提供例外与审批流程。多租户下的权限收敛可能影响自助交付效率，需要以标准化模板与可审计的变更机制替代高权限直写。
+
+\textbf{（3）可部署性（Deployability）}
+上述措施以工程流程与平台能力为主，便于标准化推广：版本治理可纳入组件清单与升级窗口；CI 校验可作为流水线质量门禁复用；多租户权限收敛与运行时硬化可通过 GitOps 模板化交付，形成持续治理闭环。

@@ -35,54 +35,32 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 由于该漏洞涉及敏感凭据泄露，本文仅给出\textbf{受控测试环境}的复现要点，详细 YAML 与命令序列见附录\ref{app:cve-2025-2241}。
 
 \textbf{环境配置}：
-\begin{itemize}
-	\item 测试集群：OpenShift 或 Kubernetes（部署 ACM/MCE 与 Hive，具体版本以厂商公告与实验环境为准）；
-	\item 基础设施：vSphere 环境与可用 vCenter 账号（最小权限、测试专用）；
-	\item 权限模型：至少一个“只读用户/角色”，具备 \texttt{ClusterProvision} 读取权限但不具备 \texttt{Secret} 读取权限。
-\end{itemize}
+测试集群为 OpenShift 或 Kubernetes，并已部署 ACM/MCE 与 Hive，具体版本以厂商公告与实验环境为准。基础设施侧需要可用的 vSphere 环境与测试专用的 vCenter 账号，建议采用最小权限配置。权限模型侧需准备至少一个只读主体，其具备 \texttt{ClusterProvision} 的读取权限但不具备 \texttt{Secret} 的读取权限，用于验证旁路泄露条件。
 
 \textbf{攻击步骤（摘要）}：
 \begin{enumerate}
 	\item 创建 vSphere 集群供应配置（Hive \texttt{ClusterDeployment} 等相关对象），触发供应流程；
 	\item 使用低权限但可读 \texttt{ClusterProvision} 的身份读取对象并导出 YAML；
-	\item 在输出中定位 vCenter 用户名/密码等敏感字段（例如 \texttt{status.vCenter.credentials.*} 或同类结构）。
+	\item 在输出中定位 vCenter 用户名/密码等敏感字段（例如 \texttt{status.\allowbreak vCenter.\allowbreak credentials\allowbreak.*} 或同类结构）。
 \end{enumerate}
 
 \textbf{攻击结果}：若在 \texttt{ClusterProvision} 的可读字段中发现明文凭据，则说明“敏感信息通过 CR 状态旁路泄露”成立；该风险不依赖 \texttt{Secret} 读取权限，属于权限边界外泄。
 
 \subsection{策略部署}
-使用本文方法生成的最佳安全策略如下（经多智能体评估体系选出）。与“纯升级”不同，本案例强调：\textbf{敏感信息泄漏的治理核心在于读权限面（read surface）与暴露窗口（exposure window）管理}。
+本节给出可落地的缓解策略。与仅依赖版本升级不同，本案例强调敏感信息泄漏的治理核心在于读权限面与暴露窗口管理。
 
-\textbf{策略概述}：
-\begin{itemize}
-	\item \textbf{防控层次（layer）}：身份与权限 / 审计与告警 / 资源生命周期治理 / 准入策略（审计型）
-	\item \textbf{防控方法（method）}：RBAC 收敛 + 读取审计与告警 + 供应完成后的对象清理（缩短暴露窗口）+ vCenter 凭据轮换与强化 + “敏感字段守护”检测
-	\item \textbf{使用工具}：Kubernetes/OpenShift RBAC、Kubernetes Audit、CronJob/自动化清理、Gatekeeper 或 Kyverno（建议以 \texttt{dryrun/Audit} 方式用于检测）
-\end{itemize}
+\textbf{策略概述}：从身份与权限、审计与告警、资源生命周期治理以及审计型准入检测四个层面协同落地。具体方法包括收敛 \texttt{ClusterProvision} 的读取权限，启用读取行为审计并联动告警，在供应完成后对对象进行清理以缩短暴露窗口，并在发现泄露风险后执行 vCenter 凭据轮换与强化。同时，可用 Gatekeeper 或 Kyverno 以 \texttt{dryrun/Audit} 模式对对象中疑似敏感字段进行检测提示，作为治理与回归监测的补充手段。
 
 \textbf{策略配置与部署步骤}：为避免正文过长，本案例的复现详细步骤、RBAC 清单、审计策略片段、自动化清理示例与 Gatekeeper/Kyverno 检测规则完整代码见附录\ref{app:cve-2025-2241}。
 
 \subsection{三因素分析}
 
-\textbf{（1）有效性（Effectiveness）}
-\begin{itemize}
-	\item \textbf{RBAC 收敛}可直接降低“非必要主体读取 \texttt{ClusterProvision}”的概率，是最关键的风险抑制手段；
-	\item \textbf{审计与告警}可发现异常读取行为，并在凭据轮换后用于验证风险是否仍存在；
-	\item \textbf{对象清理/自动化}可缩短凭据暴露窗口，降低“读取即泄露”的可利用时间；
-	\item \textbf{准入策略（审计型）}可帮助在配置漂移或版本回退时及时发现敏感字段再次出现。
-\end{itemize}
+\textbf{（1）有效性（Effectiveness）}\par
+RBAC 收敛可直接降低非必要主体读取 \texttt{ClusterProvision} 的概率，是风险抑制的关键手段。审计与告警用于发现异常读取行为，并可在凭据轮换后用于验证风险是否仍然存在。对象清理及其自动化可以缩短凭据暴露窗口，降低可利用时间。审计型准入检测则有助于在配置漂移或版本回退时及时发现敏感字段再次出现。
 
-\textbf{（2）无干扰性（Interference）}
-\begin{itemize}
-	\item RBAC 收敛主要影响运维/排障可见性，需要通过“按需、限时、可审计”的授权流程替代全局可读；
-	\item 审计与告警对业务无直接影响，但会增加日志量与告警治理成本；
-	\item 自动化清理需确保不会破坏 Hive 的后续对账/回收流程，建议先在预生产验证并以标签/状态条件精确匹配删除对象。
-\end{itemize}
+\textbf{（2）无干扰性（Interference）}\par
+RBAC 收敛主要影响运维与排障可见性，需要以按需、限时、可审计的授权流程替代全局可读。审计与告警对业务链路通常无直接影响，但会增加日志量与告警治理成本。自动化清理需避免破坏 Hive 的对账或回收流程，建议先在预生产验证，并以标签或状态条件精确匹配对象后再删除。
 
-\textbf{（3）可部署性（Deployability）}
-\begin{itemize}
-	\item RBAC 与审计为平台原生能力，可在多集群场景快速模板化推广；
-	\item 清理与轮换为运维流程问题，建议与 GitOps/流水线集成（供应完成后打标签\,$\rightarrow$\,定时清理）；
-	\item 准入策略建议从 \texttt{dryrun/Audit} 起步，作为检测与治理辅助，而非强制拦截控制器写入 \texttt{status}（避免影响供应）。
-\end{itemize}
+\textbf{（3）可部署性（Deployability）}\par
+RBAC 与审计属于平台原生能力，适合在多集群场景中模板化推广。清理与轮换更多体现为运维流程治理，建议与 GitOps 或流水线集成，例如在供应完成后打标签并由定时任务触发清理。准入策略建议从 \texttt{dryrun/Audit} 起步，用于检测与辅助治理，通常不建议强制拦截控制器写入 \texttt{status} 字段，以避免影响供应流程。
 

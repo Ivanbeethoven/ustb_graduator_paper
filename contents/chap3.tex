@@ -110,6 +110,36 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
     \caption{Kubernetes 容器化应用权限提升攻击方式分类}
     \label{fig:vulnerability-taxonomy-ch3}
 \end{figure}
+\begin{table}[htbp]
+    \centering
+    \small
+    \setlength{\tabcolsep}{3pt}
+    \renewcommand{\arraystretch}{0.9} % 稍微增加行高更美观
+    \caption{云原生权限提升漏洞分类框架}
+    \label{tab:cloud-native-vuln}
+
+    \begin{tabular}{ >{\centering\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{3cm} }
+        \toprule
+        \textbf{一级分类} & \textbf{二级分类} & \textbf{示例 CVE} \\
+        \midrule
+        \multirow{2}{*}{配置缺陷} & 冗余权限 & \mbox{CVE-2023-30512} \\
+         & 网络隔离不足 & \mbox{CVE-2020-4062} \\
+        \midrule
+        \multirow{4}{*}{安全逻辑缺陷} & 访问控制缺陷 & \mbox{CVE-2022-24768} \\
+         & 身份验证绕过 & \mbox{CVE-2023-22482} \\
+         & 输入验证不足 & \mbox{CVE-2023-3955} \\
+         & 授权验证不完善 & \mbox{CVE-2022-21701} \\
+        \midrule
+        \multirow{3}{*}{敏感信息泄露} & API端口暴漏 & \mbox{CVE-2022-1902} \\
+         & 日志泄露 & \mbox{CVE-2019-10165} \\
+         & 配置文件泄露 & \mbox{CVE-2019-3869} \\
+        \midrule
+        \multirow{2}{*}{代码注入} & 命令注入 & \mbox{CVE-2021-41254} \\
+         & 路径遍历 & \mbox{CVE-2022-24877} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 具体分类定义如下：
 
 \textbf{1. 配置缺陷}：应用或基础设施的配置不当导致的安全漏洞，包括：

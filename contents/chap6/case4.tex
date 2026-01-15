@@ -1,4 +1,4 @@
-\section{案例四：CVE-2020-4062 Conjur OSS Helm Chart 数据库网络暴露}
+\section{案例四：CVE-2020-4062 Conjur OSS 缺乏网络隔离式}
 
 \subsection{漏洞详解与复现}
 
@@ -26,14 +26,9 @@ Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平�
 本案例复现以\textbf{网络暴露面验证}为主：证明在旧版 Chart 部署下，Postgres 在集群内可被非 Conjur 组件访问，随后通过部署 NetworkPolicy 将该访问面收敛。
 考虑到该场景涉及数据库直连与敏感数据风险，本文不展开可被滥用的数据库操作细节，完整的环境准备与策略清单见附录\ref{app:cve-2020-4062}。
 
-\textbf{环境配置（摘要）}：
-\begin{itemize}
-    \item 测试集群：Kubernetes Minikube 与 Helm v3；
-    \item 受影响组件：Conjur OSS Helm Chart \texttt{< 2.0.0}；
-    \item 网络前提：集群容器网络接口 CNI 支持 NetworkPolicy，否则策略无法生效。
-\end{itemize}
+\textbf{环境配置}：测试集群为 Kubernetes（Minikube）与 Helm v3，受影响组件为 Conjur OSS Helm Chart \texttt{< 2.0.0}。同时要求集群 CNI 支持 NetworkPolicy；若不支持，则本文所述隔离策略无法生效。
 
-\textbf{复现步骤（摘要）}：
+\textbf{复现步骤}：
 \begin{enumerate}
     \item 在独立命名空间部署旧版 Conjur OSS Chart，并确认 Postgres Service 端口 5432 存在；
     \item 证明该命名空间中不存在限制 Postgres 入站的 NetworkPolicy；
@@ -47,14 +42,9 @@ Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平�
 \subsection{策略部署}
 
 该漏洞的\textbf{根本修复}是升级 Conjur OSS Helm Chart 至 2.0.0 或更高版本，新版本默认包含更严格的网络策略。
-在无法立即升级的场景下，本案例给出以 NetworkPolicy 为核心的缓解策略：采用默认拒绝策略 Default Deny 收敛数据库入站访问面，仅允许 Conjur Server 访问 Postgres 5432 端口，并辅以命名空间隔离与持续审计，降低配置漂移风险。
+在无法立即升级的场景下，可采用以 NetworkPolicy 为核心的缓解路径：以默认拒绝策略 Default Deny 收敛数据库入站访问面，仅允许 Conjur Server 访问 Postgres 5432 端口，并与命名空间隔离、RBAC 收敛及审计治理配套，以降低横向直连与配置漂移带来的风险。
 
-\textbf{策略概述}：
-\begin{itemize}
-    \item \textbf{防控层次 layer}：网络隔离 / 身份与权限 / 审计与治理
-    \item \textbf{防控方法 method}：NetworkPolicy 默认拒绝与精确放通，仅允许 Conjur Server\,$\rightarrow$\,Postgres 5432，配合命名空间隔离、RBAC 收敛与基线检测
-    \item \textbf{使用工具}：Kubernetes NetworkPolicy、Kubernetes RBAC、审计与告警系统
-\end{itemize}
+\textbf{策略概述}：从网络隔离、身份与权限、审计与治理三个层面协同落地。网络层通过 NetworkPolicy 实现默认拒绝与精确放通，身份层通过 RBAC 限制对数据库凭据相关资源的读取面，治理层以基线检测与告警机制保证策略长期有效。
 
 \textbf{策略配置与部署步骤}：为避免正文过长，NetworkPolicy 示例、验证命令与注意事项见附录\ref{app:cve-2020-4062}。
 
@@ -62,22 +52,10 @@ Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平�
 \subsection{三因素分析}
 
 \textbf{（1）有效性（Effectiveness）}
-\begin{itemize}
-    \item NetworkPolicy 能直接收敛数据库暴露面，将任意 Pod 可达降低为仅 Conjur Server 可达，从网络层阻断横向直连路径；
-    \item 命名空间隔离与 RBAC 收敛可降低数据库凭据被读取/滥用的概率，与网络隔离形成互补；
-    \item 基线检测可在 Helm 回滚、配置漂移时及时发现 NetworkPolicy 缺失或规则被弱化。
-\end{itemize}
+NetworkPolicy 能直接收敛数据库暴露面，将任意 Pod 可达降至仅 Conjur Server 可达，从网络层阻断横向直连路径。命名空间隔离与 RBAC 收敛可进一步降低数据库凭据被读取或滥用的概率，与网络隔离形成互补。基线检测用于在 Helm 回滚或配置漂移时及时发现 NetworkPolicy 缺失、规则被弱化等回归风险。
 
 \textbf{（2）无干扰性（Interference）}
-\begin{itemize}
-    \item NetworkPolicy 变更可能影响 Conjur 组件间通信与运维排障，需要在预生产验证并保留回滚方案；
-    \item 若集群 CNI 不支持 NetworkPolicy，则策略无效；此时应优先通过命名空间隔离或选择支持策略的 CNI 解决；
-    \item 精确放通依赖正确的标签选择器，标签不一致会导致误拦截，需要与 Chart 模板保持一致。
-\end{itemize}
+NetworkPolicy 的引入可能影响 Conjur 组件间通信与运维排障，需在预生产完成连通性与回归验证，并准备回滚方案。若集群 CNI 不支持 NetworkPolicy，则相关策略无法执行，应优先通过命名空间隔离等手段降低暴露面，或在平台层面选用支持策略的 CNI。精确放通依赖正确的标签选择器，标签不一致可能造成误拦截，需要与 Chart 模板保持一致。
 
 \textbf{（3）可部署性（Deployability）}
-\begin{itemize}
-    \item NetworkPolicy 属于原生资源，易于 GitOps 化与多集群复制；
-    \item 规则相对稳定，数据库服务相对固定，维护成本较低；
-    \item 建议将 NetworkPolicy 纳入 Helm values 或部署流水线的强制检查项，避免遗漏或回归。
-\end{itemize}
+NetworkPolicy 属于 Kubernetes 原生资源，便于纳入 GitOps 流程并在多集群环境中复制推广。由于数据库服务与端口相对稳定，规则维护成本较低。为避免遗漏与回归，可将 NetworkPolicy 纳入 Helm values 或部署流水线的强制检查项，并与基线检测形成闭环。

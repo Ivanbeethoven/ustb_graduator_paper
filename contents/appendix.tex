@@ -116,7 +116,7 @@ spec:
 EOF
 \end{Verbatim}
 
-\textbf{步骤 4：创建低权用户 bob，并授予其对目标 Application 的 \texttt{sync+override} 权限}
+\textbf{步骤 4：创建低权用户 bob，并授予其对目标 Application 的 \texttt{sync\allowbreak+\allowbreak override} 权限}
 在 \texttt{argocd-rbac-cm} 中添加如下策略（注意缩进）：
 \begin{Verbatim}[breaklines,breakanywhere]
 policy.default: role:readonly
@@ -221,7 +221,7 @@ subjects:
 \end{Verbatim}
 
 \subsection{Argo CD RBAC：默认只读 + 高风险能力隔离}
-建议将 \texttt{argocd-rbac-cm} 纳入 Git 基线管理，并在修改后滚动重启 \texttt{argocd-server}：
+建议将 \texttt{argocd\allowbreak-\allowbreak rbac\allowbreak-\allowbreak cm} 纳入 Git 基线管理，并在修改后滚动重启 \texttt{argocd\allowbreak-\allowbreak server}：
 \begin{Verbatim}[breaklines,breakanywhere]
 apiVersion: v1
 kind: ConfigMap
@@ -419,7 +419,7 @@ spec:
 \textbf{前提条件}
 \begin{itemize}
 		\item 已部署 ACM/MCE 与 Hive，并启用 vSphere 集群供应能力（具体版本与安装方式依赖环境，以厂商公告与实验环境为准）；
-		\item 至少存在一个“只读身份”，其\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions.hive.openshift.io} 的 \texttt{get/list/watch} 权限（该条件用于验证旁路泄露）。
+		\item 至少存在一个“只读身份”。该身份\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions\allowbreak.\allowbreak hive\allowbreak.\allowbreak openshift\allowbreak.\allowbreak io} 的 \texttt{get/list/watch} 权限（该条件用于验证旁路泄露）。
 \end{itemize}
 
 \textbf{步骤 1：触发一次 vSphere 集群供应}
@@ -958,7 +958,7 @@ kubectl -n $NAMESPACE get networkpolicy
 \subsection{2）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
 下述策略在命名空间内实现两点：其一，默认拒绝 Postgres Pod 的入站流量；其二，仅允许 Conjur Server 访问 Postgres 的 5432 端口。
-其中标签选择器需与实际部署对象一致，示例使用 \texttt{app=conjur-oss} 与 \texttt{app=conjur-oss-postgres}，可按实际标签调整。
+其中标签选择器需与实际部署对象一致，示例使用 \texttt{app\allowbreak=\allowbreak conjur\allowbreak-\allowbreak oss} 与 \texttt{app\allowbreak=\allowbreak conjur\allowbreak-\allowbreak oss\allowbreak-\allowbreak postgres}，可按实际标签调整。
 
 \begin{Verbatim}[breaklines,breakanywhere]
 cat <<'EOF' | kubectl apply -f -
@@ -1012,4 +1012,248 @@ kubectl -n conjur-vuln get networkpolicy
 	\item 将 Conjur 部署在独立命名空间，并通过 NetworkPolicy 限制跨命名空间访问。
 	\item 收敛对数据库凭据相关 Secret 的读取权限，降低网络可达与凭据可读叠加带来的风险。
 \end{itemize}
+
+
+\chapter{CVE-2022-24877 复现步骤与策略清单}\label{app:cve-2022-24877}
+
+本附录给出案例五（CVE-2022-24877，Flux \texttt{kustomize\allowbreak-controller} 通过恶意 \texttt{kustomization\allowbreak.yaml} 触发路径穿越，导致控制器 Pod 文件系统敏感数据暴露，并在多租户部署中可能引发权限提升）的\textbf{验证性复现}与\textbf{缓解策略清单}。
+为避免提供可直接滥用的利用细节，复现部分以“路径越界行为证据与判据”为主，不提供可复用的攻击脚本。
+
+\section{漏洞复现详细步骤：验证性复现}
+
+\textbf{复现目标}
+验证控制器在构建过程中是否会因配置文件中的异常路径引用而产生目录边界越界读取风险。
+重点关注构建阶段的路径规范化与边界约束，并以日志行为与构建产物的异常特征作为证据判据。
+本案例涉及的控制器为 \texttt{kustomize\allowbreak-controller}，相关配置文件为 \texttt{kustomization\allowbreak.yaml}。
+
+\textbf{环境与前提}
+建议在隔离测试集群中进行，并使用受影响版本的 \texttt{kustomize\allowbreak-controller}。
+在多租户集群中，该类问题可能放大隔离破坏风险，故不建议在生产环境进行实验。
+修复信息：该漏洞已在 \texttt{kustomize\allowbreak-controller v0.24.0} 修复，并随 \texttt{flux2 v0.29.0} 集成发布。
+
+\textbf{步骤要点（受控）}
+\begin{enumerate}
+	\item 在隔离仓库中准备最小化示例，包含 \texttt{kustomization\allowbreak.yaml} 及少量合法资源清单，用于建立可对比的基线构建产物。
+	\item 在受控条件下引入异常路径引用（例如包含父目录引用或绝对路径风格的条目），触发控制器重新拉取并执行构建。
+	\item 观察控制器日志与事件输出，记录与路径解析、文件读取失败或异常引用相关的报错/告警。
+	\item 对比构建产物与基线差异，检查是否出现“非预期文件内容进入产物”的迹象。该步骤应仅使用无敏感性的测试素材进行验证。
+\end{enumerate}
+
+\textbf{证据判据与逻辑解释}
+该类漏洞的关键证据在于“路径解析是否受目录边界约束”。若控制器在构建阶段对异常路径引用给出明确的拒绝与报错，并且构建产物未出现越界读取痕迹，可视为风险被抑制。
+若在严格受控的测试条件下观察到异常路径引用导致非预期内容进入构建产物，则可判定目录边界约束存在缺口，需立即升级组件并补齐流程治理措施。
+
+\section{策略代码清单（优先级方案）}
+
+本节选取对该类风险\textbf{最直接且工程可落地}的缓解措施：版本升级与 CI/CD 前置校验，并辅以多租户下的变更治理与运行时硬化。
+
+\subsection{1）根本修复：升级到修复版本}
+优先升级 \texttt{kustomize\allowbreak-controller} 至 \texttt{v0.24.0} 或更高版本，或升级 \texttt{flux2} 至 \texttt{v0.29.0} 或更高版本。升级应配套回归验证构建与同步流程的兼容性。
+
+\subsection{2）工作区缓解：在 CI/CD 中校验 \texttt{kustomization\allowbreak.yaml} 路径策略}
+
+在补丁窗口期或多团队协作场景下，可在 CI/CD 流水线中加入配置校验门禁。
+校验对象为 \texttt{kustomization\allowbreak.yaml}，要求其资源路径满足安全策略，例如：禁止绝对路径风格、禁止父目录引用、限制引用的文件类型与目录范围。
+下述示例为 \texttt{conftest}（OPA）策略骨架，用于展示如何对 \texttt{kustomization\allowbreak.yaml} 的路径字段进行约束；可按组织规范扩展字段列表与白名单策略。
+
+\begin{Verbatim}[breaklines,breakanywhere]
+package kustomizepolicy
+
+deny[msg] {
+  some p
+  p := input.resources[_]
+  risky_path(p)
+  msg := sprintf("kustomization.yaml: resources contains risky path: %s", [p])
+}
+
+deny[msg] {
+  some i
+  p := input.patches[i].path
+  risky_path(p)
+  msg := sprintf("kustomization.yaml: patches[%d].path contains risky path: %s", [i, p])
+}
+
+risky_path(p) {
+  startswith(p, "/")
+}
+
+risky_path(p) {
+  contains(p, "..")
+}
+\end{Verbatim}
+
+说明：为降低误报，可进一步将 \texttt{contains(p,"..") } 改为按路径分段匹配“父目录段”，并对允许的相对路径前缀建立白名单。
+
+\subsection{3）多租户变更治理与运行时硬化（纵深防御）}
+在多租户集群中，应严格控制谁可以向 Flux 同步源提交变更、谁可以修改 Flux 相关资源，并通过代码评审与分支保护降低恶意配置进入同步面的概率。
+同时可对控制器工作负载启用非特权运行、只读根文件系统、默认 seccomp 配置与能力集收敛，以降低异常路径下的后续风险。
+
+
+\chapter{CVE-2022-29171 复现步骤与策略清单}\label{app:cve-2022-29171}
+
+本附录给出案例六（CVE-2022-29171，Sourcegraph 在 Gitolite 与 Phabricator 联动集成中存在配置驱动的命令执行风险）的\textbf{验证性复现}与\textbf{缓解策略清单}。
+为避免提供可直接滥用的利用细节，复现部分以执行路径证据与回归判据为主，不给出可直接用于远程执行的命令载荷与请求模板。
+
+\section{漏洞复现详细步骤：验证性复现}
+
+\textbf{复现目标}
+验证在受影响版本（\texttt{<\allowbreak 3.38.\allowbreak 0}）中，特定集成配置项（\texttt{callsign\allowbreak Command}）是否会被 \texttt{gitserver} 在处理仓库元数据获取流程时执行。
+复现以日志、审计与可观测证据为主，并在升级或禁用集成后复测，确认风险被消除。
+
+\textbf{环境与前提}
+仅在隔离测试环境开展。前置条件包括：
+（i）Sourcegraph 版本处于受影响范围；
+（ii）启用了 Gitolite code host 并与 Phabricator 元数据获取路径相关联；
+（iii）存在可编辑/新增 Gitolite code host 的管理权限；
+（iv）存在对内置 Grafana 的高权限访问，用于说明观测面可能降低内部寻址成本。
+
+\textbf{步骤要点（受控）}
+\begin{enumerate}
+	\item 部署受影响版本 Sourcegraph，并确认 \texttt{gitserver} 作为独立工作负载运行（记录其命名空间与标签信息）。
+	\item 在管理面将 Gitolite 与 Phabricator 集成配置为可用状态，保证仓库元数据获取流程可被触发。
+	\item 在严格受控条件下对 \texttt{callsignCommand} 进行\textbf{无害探针式}变更（例如仅返回固定标识、且不访问外部网络、不读取敏感文件）。
+	\item 触发一次与该集成相关的元数据获取/同步流程，并观察 \texttt{gitserver} 日志、任务记录或审计日志中是否出现外部命令执行的迹象。
+	\item 升级至 \texttt{>= 3.38.0} 或禁用 Gitolite code host 后重复触发流程，确认相同迹象不再出现。
+\end{enumerate}
+
+\textbf{证据判据与逻辑解释}
+若在受影响版本中，\texttt{gitserver} 的运行日志或可观测数据中出现因集成配置而执行外部命令的明确迹象，可判定存在执行面风险。
+升级至修复版本或禁用相关集成后，该执行路径应被移除或被显式限制；若仍可观察到可疑执行迹象，则需进一步检查是否存在配置残留、版本回退或旁路路径。
+
+\section{策略清单}
+
+本节仅选取 4 条对该类风险最直接且工程可落地的策略：版本升级、功能禁用、网络隔离与权限分离/暴露面收敛。
+
+\subsection{1）根本修复：升级到修复版本}
+优先将 Sourcegraph 升级至 \texttt{3.38.0} 或更高版本，并在升级后复测验证：相关集成流程不再触发外部命令执行路径。
+
+\subsection{2）快速缓解：禁用或移除 Gitolite code host（若业务允许）}
+若业务不依赖 Gitolite，可移除所有 Gitolite code host 配置并保持禁用状态，从输入面直接消除 \texttt{callsignCommand} 的风险来源。
+该措施不应替代升级，但可作为补丁窗口期的快速收敛方案。
+
+\subsection{3）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
+在 Kubernetes 部署中，建议对 \texttt{gitserver} 应用 NetworkPolicy：仅允许 Sourcegraph 内部必要组件访问其入站端口；出站仅放通 DNS 与必要的代码托管出口。
+该策略用于降低内部拓扑信息被获取后的横向触达能力，并为权限误授提供纵深缓冲。
+
+\textbf{策略示例}
+示例分别约束入站与出站。入站仅允许 Sourcegraph 内部调用方访问 \texttt{gitserver}；出站仅放通 DNS，并对代码托管出口按需单独放通。选择器与端口应按实际部署对象调整。
+
+\begin{Verbatim}[breaklines,breakanywhere]
+NAMESPACE=sourcegraph
+
+# 1) 入站收敛：仅允许 Sourcegraph 内部组件访问 gitserver
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: gitserver-ingress-allow-internal
+	namespace: sourcegraph
+spec:
+	podSelector:
+		matchLabels:
+			app: gitserver
+	policyTypes: ["Ingress"]
+	ingress:
+	- from:
+		- podSelector:
+				matchLabels:
+					app: sourcegraph-frontend
+		- podSelector:
+				matchLabels:
+					app: repo-updater
+		ports:
+		- protocol: TCP
+			port: 3178
+EOF
+
+# 2) 出站收敛：仅放通 DNS；代码托管出口按需另行放通
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: gitserver-egress-dns-only
+	namespace: sourcegraph
+spec:
+	podSelector:
+		matchLabels:
+			app: gitserver
+	policyTypes: ["Egress"]
+	egress:
+	- to:
+		- namespaceSelector:
+				matchLabels:
+					kubernetes.io/metadata.name: kube-system
+			podSelector:
+				matchLabels:
+					k8s-app: kube-dns
+		ports:
+		- protocol: UDP
+			port: 53
+		- protocol: TCP
+			port: 53
+EOF
+
+# 验证：策略已创建，且 gitserver 的出站/入站符合预期
+kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
+\end{Verbatim}
+
+\textbf{验证要点}
+建议先在预生产灰度启用，并结合 \texttt{gitserver} 的错误日志与调用链路指标观察误拦截情况。对确需访问的代码托管出口，按最小集合逐项放通，并保留变更记录。
+
+\subsection{4）权限分离与暴露面收敛：限制管理面与观测面的高权限}
+严格限制可编辑外部服务配置（尤其是 Gitolite code host 配置）的主体数量，并启用变更审批与审计。
+同时收敛 Grafana 的暴露面，例如仅内网访问、受控 Ingress、强认证与最小管理员集合，并将 Grafana 管理员与 Sourcegraph 站点管理员职责分离，避免观测面权限放大攻击链的信息优势。
+
+\textbf{落地要点}
+在平台流程上，可将外部服务配置变更与观测面账号授权纳入同一类高风险变更，要求双人复核、强制留痕与定期回收。在技术控制上，可对管理入口启用强认证并限制来源网络，同时在日志平台中对关键配置项变更进行集中审计与告警。
+
+
+\chapter{CVE-2023-22482 复现步骤与策略清单}\label{app:cve-2023-22482}
+
+本附录给出案例七（CVE-2023-22482，Argo CD 在 OIDC 场景下未校验令牌受众 \texttt{aud}，导致跨受众令牌可能被接受）的\textbf{验证性复现}与\textbf{缓解策略清单}。
+为避免提供可直接复用的越权访问细节，复现部分以配置证据、令牌声明证据与接口返回判据为主，不展开可直接用于获取令牌与构造请求的具体命令。
+
+\section{漏洞复现详细步骤：验证性复现}
+
+\textbf{复现目标}
+验证在受影响版本中，Argo CD 是否会接受 \texttt{aud} 不匹配但签名与发行者合法的 OIDC 令牌，并据此返回受 RBAC 控制的资源响应；在升级到修复版本后，同一条件应被拒绝。
+
+\textbf{环境与前提}
+仅在隔离测试环境开展。前置条件包括：
+（i）部署受影响版本的 Argo CD（例如 \texttt{2.5.4}），并启用 OIDC 登录；
+（ii）OIDC 提供方能够为至少两个不同受众签发令牌，且其中一个受众并非 Argo CD；
+（iii）Argo CD 已配置为信任该 OIDC 提供方，并启用 \texttt{groups} 相关声明用于 RBAC 映射；
+（iv）具备可观察的审计与日志渠道，用于对登录校验与资源访问结果进行证据采集。
+
+\textbf{步骤要点（受控）}
+\begin{enumerate}
+	\item 固化基线配置：记录 Argo CD 版本与 OIDC 配置要点（\texttt{issuer}、\texttt{clientID}、所请求的 scope），并确认 Argo CD 能够正常使用 OIDC 完成会话建立。
+	\item 获取一枚由同一 OIDC 提供方签发、但 \texttt{aud} 指向其他受众的有效令牌。该令牌应满足验签可通过且包含可用于 RBAC 映射的 \texttt{groups} 声明。
+	\item 提取令牌声明证据：对该令牌解析其 payload，保留 \texttt{iss}、\texttt{aud}、\texttt{exp} 与 \texttt{groups} 等字段的记录，证明其受众并非 Argo CD。
+	\item 使用该令牌访问 Argo CD 的受保护接口，选择一个只读且便于判定的 API 作为验证点，记录响应结果与 Argo CD 侧日志。
+	\item 回归验证：将 Argo CD 升级到修复版本分支后重复上述验证点。期望行为是请求在校验阶段被拒绝，且日志中出现与令牌校验失败相关的记录。
+\end{enumerate}
+
+\textbf{证据判据与逻辑解释}
+若在受影响版本中，Argo CD 在验签通过的前提下接受 \texttt{aud} 不匹配的令牌，并返回受 RBAC 控制的资源响应，可判定存在受众校验缺失。
+升级到修复版本后，相同条件应被拒绝；若仍被接受，则需检查是否存在版本未生效、配置未加载或旁路访问路径。
+
+\section{策略清单}
+
+本节仅选取 4 条对该类风险最直接且工程可落地的策略：版本升级、身份提供方客户端隔离、前置受众校验与 RBAC 收敛。
+
+\subsection{1）根本修复：升级到修复版本}
+优先将 Argo CD 升级至修复版本分支，例如 \texttt{2.5.6} 及以上，或对应分支的 \texttt{2.3.13}/\texttt{2.4.19}/\texttt{2.6.0-rc3} 及以上版本。升级后执行回归验证，确认 \texttt{aud} 不匹配的令牌在校验阶段被拒绝。
+
+\subsection{2）身份提供方治理：独立客户端与唯一受众}
+为 Argo CD 配置独立 OIDC 客户端与唯一受众标识，避免与其他业务系统共享同一受众空间。
+同时对该客户端签发的 \texttt{groups} 声明进行裁剪，确保仅包含与 Argo CD 授权相关的组，并建立清晰的组命名规范，避免跨系统复用带来的权限含义漂移。
+
+\subsection{3）入口补偿控制：前置强制校验 \texttt{aud}}
+在 Argo CD 前置入口（如 API 网关或反向代理）对令牌进行一致性校验，至少包含发行者、签名与受众校验。
+该措施可在升级窗口期降低跨受众令牌复用风险，但不应替代版本修复；落地时应提供灰度与回滚机制，并覆盖 Web 与自动化访问路径。
+
+\subsection{4）权限收敛：RBAC 最小化与项目边界约束}
+收敛 \texttt{argocd\allowbreak-rbac\allowbreak-cm} 中的角色授权，将高权限组限制在最小集合，并通过 AppProject 限定可部署的命名空间、资源类型与来源仓库。
+同时将关键接口的访问失败与异常登录事件纳入审计与告警，以便在令牌泄露或误用时快速发现与止血。
 
