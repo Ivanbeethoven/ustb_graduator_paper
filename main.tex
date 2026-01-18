@@ -1,5 +1,15 @@
 \documentclass{ustbthesis}
 
+% Use fontspec + xeCJK when compiling with XeLaTeX/LuaLaTeX to handle CJK fonts.
+% This avoids errors like "Font shape `TU/SimSun(1)/m/it' undefined" by
+% explicitly mapping italic/slanted shapes to a fallback (SimSun doesn't
+% provide a native italic). If you use pdfLaTeX keep your existing setup.
+\usepackage{fontspec}
+\usepackage{xeCJK}
+% Set CJK main font and make Italic/Slanted use the same regular font to
+% prevent undefined italic shapes. Adjust names if your system font names differ.
+\setCJKmainfont[ItalicFont={SimSun},SlantedFont={SimSun},BoldFont={SimHei}]{SimSun}
+
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{tabularx}
 \usepackage{amsmath}
