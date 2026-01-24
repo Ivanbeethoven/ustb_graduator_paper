@@ -44,7 +44,25 @@
 
 为回答有关令牌消耗与大模型调用成本的问题，本文在生成与评审阶段记录每次调用的输入与输出的令牌数，并按漏洞样本（CVE）聚合统计令牌消耗；对于包含反馈迭代的配置，累计其多轮调用的令牌消耗。
 
-为对比传统静态安全工具，选取 \texttt{kubelinter}、\texttt{kubescape}、\texttt{kubesec} 和 \texttt{SLI-Kube} 作为基线，输出风险/合规报告后人工评估其对策略生成的启发性，例如能否指向与漏洞路径相关的高风险配置、是否给出可落地的修正建议等。
+为对比传统静态安全工具，选取如下四种代表性工具/文献作为基线，输出风险/合规报告后人工评估其对策略生成的启发性（例如能否指向与漏洞路径相关的高风险配置、是否给出可落地的修正建议等）：
+
+\begin{table}[htb]
+	\centering
+	\bicaption{本研究选用的静态扫描工具}{Selected static-scanning tools}
+	\label{tab:static-tools}
+	\setlength{\tabcolsep}{8pt}
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabularx}{0.95\linewidth}{>{\ttfamily\raggedright\arraybackslash}p{0.14\linewidth} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{0.36\linewidth}}
+	\toprule
+		\textbf{工具} & \textbf{简介} & \textbf{来源} \\
+	\midrule
+	kube-linter & Kubernetes YAML/Helm 的静态规则检查器，提供修复建议。 & \url{https://github.com/stackrox/kube-linter}~\cite{kubelinter2025} \\
+	Kubescape & 基于合规基线的安全扫描与加固建议工具。 & \url{https://github.com/kubescape/kubescape}~\cite{kubescape2025} \\
+	KubeSec & 轻量级配置风险检测与快速巡检工具。 & \url{https://kubesec.io/}~\cite{kubesec2025} \\
+	SLI-Kube & 基于实证研究的配置风险评估规则集扫描工具。 & TOSEM 2023~\cite{k8smanifests2023} \\
+	\bottomrule
+	\end{tabularx}
+\end{table}
 
 \section{RQ1：防控技术工作流整体优势}
 
@@ -264,6 +282,7 @@
 % 定义居中对齐的自动宽列格式 Y
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 % 将表格宽度设置为 \linewidth，第一列左对齐(l)，其余列均匀分布并居中(Y)
+\bicaption{静态扫描工具风险结果汇总}{Summary of risk types from static scanning tools}
 \begin{tabularx}{0.85\linewidth}{l Y Y Y Y}
 \toprule
 风险类型 & Kubescape & Kubesec & Kubelinter& SLI-Kube\\
@@ -279,7 +298,6 @@
 探针配置 & 92 & 0 & 15 & 0 \\
 \bottomrule
 \end{tabularx}
-\caption{四种静态扫描工具在统一风险类型上的报告数量统计}
 \label{tab:risk-summary-four-tools}
 \end{table}
 
