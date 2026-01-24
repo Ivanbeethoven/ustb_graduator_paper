@@ -1,4 +1,3 @@
-% refs.bib  —— 参考文献数据库（UTF-8 编码）
 @article{wei2022chain,
   title={Chain-of-thought prompting elicits reasoning in large language models},
   author={Wei, Jason and Wang, Xuezhi and Schuurmans, Dale and Bosma, Maarten and Xia, Fei and Chi, Ed and Le, Quoc V and Zhou, Denny and others},
@@ -7,10 +6,6 @@
   pages={24824--24837},
   year={2022}
 }
-
-% -----------------------------------------------------------------------------
-% Cloud-native / Kubernetes security references (migrated from KubeGuard_ICWS2025/ref.bib)
-
 @misc{kubernetes2024,
   author       = {{Kubernetes}},
   title        = {Kubernetes Documentation},
@@ -18,7 +13,18 @@
   howpublished = {Available online: \url{https://kubernetes.io/docs/home/}},
   note         = {Accessed: November 18, 2024}
 }
-
+ @inproceedings{Verma_2015, 
+ series={EuroSys ’15}, 
+ title={Large-scale cluster management at Google with Borg}, 
+ url={http://dx.doi.org/10.1145/2741948.2741964}, 
+ DOI={10.1145/2741948.2741964}, 
+ booktitle={Proceedings of the Tenth European Conference on Computer Systems}, 
+ publisher={ACM}, 
+ author={Verma, Abhishek and Pedrosa, Luis and Korupolu, Madhukar and Oppenheimer, David and Tune, Eric and Wilkes, John}, 
+ year={2015}, 
+ month=apr, 
+ pages={1–17}, 
+ collection={EuroSys ’15}}
 @misc{cncf2022survey,
   author       = {Cloud Native Computing Foundation},
   title        = {Annual Survey 2022},
@@ -34,251 +40,6 @@
   howpublished = {Available online: \url{https://www.alibabacloud.com/blog/from-serverless-containers-to-serverless-kubernetes_596533}},
   note         = {Accessed: November 18, 2024}
 }
-
-@inproceedings{ferraiolo1995role,
-  title        = {Role-based access control (RBAC): Features and motivations},
-  author       = {Ferraiolo, David and Cugini, Janet and Kuhn, D Richard and others},
-  booktitle    = {Proceedings of the 11th Annual Computer Security Applications Conference},
-  pages        = {241--48},
-  year         = {1995}
-}
-
-@article{saltzer1975protection,
-  author       = {Saltzer, J.H. and Schroeder, M.D.},
-  journal      = {Proceedings of the IEEE},
-  title        = {The protection of information in computer systems},
-  year         = {1975},
-  volume       = {63},
-  number       = {9},
-  pages        = {1278-1308},
-  doi          = {10.1109/PROC.1975.9939}
-}
-
-@article{o1995redundant,
-  title        = {Redundant access rights},
-  journal      = {Computers \& Security},
-  volume       = {14},
-  number       = {4},
-  pages        = {323-348},
-  year         = {1995},
-  issn         = {0167-4048},
-  author       = {Greg O'Shea}
-}
-@INPROCEEDINGS{KGSecConfig2022,
-  author={Ul Haque, Mubin and Kholoosi, M. Mehdi and Babar, M. Ali},
-  booktitle={2022 IEEE International Conference on Software Analysis, Evolution and Reengineering (SANER)}, 
-  title={KGSecConfig: A Knowledge Graph Based Approach for Secured Container Orchestrator Configuration}, 
-  year={2022},
-  volume={},
-  number={},
-  pages={420-431},
-  abstract={Container Orchestrator (CO) is a vital technology for managing clusters of containers, which may form a virtualized infrastructure for developing and operating software systems. Like any other software system, securing CO is critical, but can be quite challenging task due to large number of configurable options. Manual configuration is not only knowledge intensive and time consuming, but also is error prone. For automating security configuration of CO, we propose a novel Knowledge Graph based Security Configuration, KGSecConfig, approach. Our solution leverages keyword and learning models to systematically capture, link, and correlate heterogeneous and multi-vendor configuration space in a unified structure for supporting automation of security configuration of CO. We implement KGSecConfig on Kubernetes, Docker, Azure, and VMWare to build secured configuration knowledge graph. Our evaluation results show 0.98 and 0.94 accuracy for keyword and learning-based secured configuration option and concept extraction, respectively. We also demonstrate the utilization of the knowledge graph for automated misconfiguration mitigation in a Kubernetes cluster. We assert that our knowledge graph based approach can help in addressing several challenges, e.g., misconfiguration of security, associated with manually configuring the security of CO.},
-  keywords={Automation;Conferences;Manuals;Containers;Software systems;Security;Task analysis;Container;Configuration;Security;Knowledge Graph},
-  doi={10.1109/SANER53432.2022.00057},
-  ISSN={1534-5351},
-  month={March},}
-@inproceedings{shamim2025dastk8s,
-author = {Shamim, Shazibul Islam and Hu, Hanyang and Rahman, Akond},
-title = {Dynamic Application Security Testing for Kubernetes Deployment: An Experience Report from Industry},
-year = {2025},
-isbn = {9798400712760},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-url = {https://doi.org/10.1145/3696630.3728573},
-doi = {10.1145/3696630.3728573},
-abstract = {While Kubernetes enables practitioners to rapidly deploy their software and perform container orchestration efficiently, security of the Kubernetes-based deployment infrastructure is a concern for industry practitioners. A systematic understanding of how dynamic analysis can be used for securing Kubernetes deployments can aid practitioners in securing their Kubernetes deployments. We present an experience report, where we describe empirical findings from three dynamic application security testing (DAST) tools on a Kubernetes deployment used by 'Company-Z'. From our empirical study, we find (i) 3,442 recommended security configurations are violated in 'Company-Z's' Kubernetes deployment; and (ii) of the three studied DAST tools, Kubescape and Kubebench provide the highest support with respect to detecting 14 types of recommended security configurations. Based on our findings, we recommend practitioners to apply DAST tools for their Kubernetes deployments, and security researchers to investigate how to detect configuration violations dynamically in the Kubernetes deployment.},
-booktitle = {Proceedings of the 33rd ACM International Conference on the Foundations of Software Engineering},
-pages = {514–519},
-numpages = {6},
-keywords = {devops, devsecops, kubernetes, security},
-location = {Clarion Hotel Trondheim, Trondheim, Norway},
-series = {FSE Companion '25}
-}
-@INPROCEEDINGS{shamim2025prescription,
-  author={Shamim, Shazibul Islam and Hu, Hanyang and Rahman, Akond},
-  booktitle={2025 IEEE/ACM 47th International Conference on Software Engineering (ICSE)}, 
-  title={On Prescription or Off Prescription? An Empirical Study of Community-Prescribed Security Configurations for Kubernetes}, 
-  year={2025},
-  volume={},
-  number={},
-  pages={2432-2444},
-  abstract={Despite being beneficial for rapid delivery of software, Kubernetes deployments can be susceptible to security attacks, which can cause serious consequences. A systematic characterization of how community-prescribed security configurations, i.e., security configurations that are recommended by security experts, can aid practitioners to secure their Kubernetes deployments. To that end, we conduct an empirical study with 53 security configurations recommended by the Center for Internet Security (CIS), 20 survey respondents, and 544 configuration files obtained from the open source software (OSS) and proprietary domains. From our empirical study, we observe: (i) practitioners can be unaware of prescribed security configurations as $5 \% \sim 40 {\%}$ of the survey respondents are unfamiliar with 16 prescribed configurations; and (ii) for Company-A and OSS respectively, 18.0% and 17.9% of the configuration files include at least one violation of prescribed configurations. From our evaluation with 5 static application security testing (SAST) tools we find (i) only Kubescape to support all of the prescribed security configuration categories; (ii) the highest observed precision to be 0.41 and 0.43 respectively, for the Company-A and OSS datasets; and (iii) the highest observed recall to be respectively, 0.53 and 0.65 for the Company-A and OSS datasets. Our findings show a disconnect between what CIS experts recommend for Kubernetes-related configurations and what happens in practice. We conclude the paper by providing recommendations for practitioners and researchers. Dataset used for the paper is publicly available online.},
-  keywords={Surveys;Systematics;DevOps;Internet security;Static analysis;Security;Open source software;Guidelines;Testing;Software engineering;configuration;container orchestration;devops;devsecops;empirical study;Kubernetes;security;static analysis},
-  doi={10.1109/ICSE55347.2025.00170},
-  ISSN={1558-1225},
-  month={April},}
-
-@article{k8smanifests2023,
-  author       = {Rahman, Akond and Shamim, Shazibul Islam and Bose, Dibyendu Brinto and Pandita, Rahul},
-  title        = {Security Misconfigurations in Open Source Kubernetes Manifests: An Empirical Study},
-  year         = {2023},
-  issue_date   = {July 2023},
-  publisher    = {Association for Computing Machinery},
-  address      = {New York, NY, USA},
-  volume       = {32},
-  number       = {4},
-  issn         = {1049-331X},
-  journal      = {ACM Transactions on Software Engineering and Methodology},
-  month        = may,
-  articleno    = {99},
-  numpages     = {36},
-  pages        = {1-36},
-  keywords     = {Configuration, container orchestration, devops, devsecops, empirical study, Kubernetes, misconfiguration, security}
-}
-
-@inproceedings{yang2023take,
-  author       = {Yang, Nanzi and Shen, Wenbo and Li, Jinku and Liu, Xunqi and Guo, Xin and Ma, Jianfeng},
-  title        = {Take Over the Whole Cluster: Attacking Kubernetes via Excessive Permissions of Third-party Applications},
-  year         = {2023},
-  isbn         = {9798400700507},
-  doi          = {10.1145/3576915.3623121},
-  booktitle    = {Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (CCS 2023)},
-  pages        = {3048–3062},
-  numpages     = {15},
-  keywords     = {excessive permission, kubernetes, third-party application},
-  location     = {Copenhagen, Denmark}
-}
-
-@inproceedings{pecka2022privilege,
-  author       = {Pecka, Nicholas and Ben Othmane, Lotfi and Valani, Altaz},
-  title        = {Privilege Escalation Attack Scenarios on the DevOps Pipeline Within a Kubernetes Environment},
-  year         = {2022},
-  isbn         = {9781450396745},
-  doi          = {10.1145/3529320.3529325},
-  pages        = {45–49},
-  numpages     = {5},
-  keywords     = {CI/CD, DevSecOps, Kubernetes, Security},
-  location     = {Pittsburgh, PA, USA},
-  booktitle    = {Proceedings of the International Conference on Software and System Processes and International Conference on Global Software Engineering(ICSSP)}
-}
-
-@INPROCEEDINGS{kubeguard_icws2025,
-  author={Sun, Chang-ai and Han, Xiaoyang and Gong, Yufei},
-  booktitle={2025 IEEE International Conference on Web Services (ICWS)},
-  title={KubeGuard: A Systematic Permission-Oriented Risk Detection Approach for Kubernetes Applications},
-  year={2025},
-  volume={},
-  number={},
-  pages={855-865},
-  keywords={Systematics;Web services;Prototypes;Security;Monitoring;Kubernetes;Security;Excessive Permission;Permission Escalation;Sensitive Resource Leakage},
-  doi={10.1109/ICWS67624.2025.00111}
-}
-
-@inproceedings{gu2024epscan,
-  title        = {EPScan: Automated Detection of Excessive RBAC Permissions in Kubernetes Applications},
-  author       = {Gu, Yue and Tan, Xin and Zhang, Yuan and Gao, Siyan and Yang, Min},
-  booktitle    = {2025 IEEE Symposium on Security and Privacy (SP)},
-  pages        = {11--11},
-  year         = {2024},
-  organization = {IEEE Computer Society}
-}
-
-@article{cesarano2025kubefence,
-  title   = {KubeFence: Security Hardening of the Kubernetes Attack Surface},
-  author  = {Cesarano, Carmine and Natella, Roberto},
-  journal = {arXiv preprint arXiv:2504.11126},
-  year    = {2025}
-}
-
-% -----------------------------------------------------------------------------
-% Permission-oriented security references (migrated from KubeGuard_ICWS2025/ref.bib)
-
-@inproceedings{molloy2012generative,
-  title={Generative models for access control policies: applications to role mining over logs with attribution},
-  author={Molloy, Ian and Park, Youngja and Chari, Suresh},
-  booktitle={Proceedings of the 17th ACM Symposium on Access Control Models and Technologies},
-  pages={45-56},
-  year={2012}
-}
-
-@inproceedings{sanders2018minimizing,
-  author = {Sanders, Matthew W. and Yue, Chuan},
-  title = {Minimizing Privilege Assignment Errors in Cloud Services},
-  year = {2018},
-  isbn = {9781450356329},
-  doi = {10.1145/3176258.3176307},
-  booktitle = {Proceedings of the Eighth ACM Conference on Data and Application Security and Privacy},
-  pages = {2–12},
-  numpages = {11},
-  keywords = {cloud computing, principle of least privilege, role based access control (rbac)}
-}
-
-@inproceedings{au2012pscout,
-  author = {Au, Kathy Wain Yee and Zhou, Yi Fan and Huang, Zhen and Lie, David},
-  title = {PScout: analyzing the Android permission specification},
-  year = {2012},
-  isbn = {9781450316514},
-  doi = {10.1145/2382196.2382222},
-  booktitle = {Proceedings of the 2012 ACM Conference on Computer and Communications Security (CCS 2012)},
-  pages = {217–228},
-  numpages = {12},
-  keywords = {android, permissions, smartphone}
-}
-
-@inproceedings{wang2024minichecker,
-  author = {Wang, Yin and Fan, Ming and Zhou, Hao and Wang, Haijun and Jin, Wuxia and Li, Jiajia and Chen, Wenbo and Li, Shijie and Zhang, Yu and Han, Deqiang and Liu, Ting},
-  title = {MiniChecker: Detecting Data Privacy Risk of Abusive Permission Request Behavior in Mini-Programs},
-  year = {2024},
-  isbn = {9798400712487},
-  doi = {10.1145/3691620.3695534},
-  booktitle = {Proceedings of the 39th IEEE/ACM International Conference on Automated Software Engineering (ASE 2024)},
-  pages = {1667–1679},
-  numpages = {13},
-  keywords = {mini-programs, data permission, privacy protection, mobile security}
-}
-
-@article{papadimitriou2010data,
-  author={Papadimitriou, Panagiotis and Garcia-Molina, Hector},
-  journal={IEEE Transactions on Knowledge and Data Engineering},
-  title={Data Leakage Detection},
-  year={2011},
-  volume={23},
-  number={1},
-  pages={51-63},
-  doi={10.1109/TKDE.2010.100}
-}
-
-@inproceedings{tripp2009taj,
-  author = {Tripp, Omer and Pistoia, Marco and Fink, Stephen J. and Sridharan, Manu and Weisman, Omri},
-  title = {TAJ: effective taint analysis of web applications},
-  year = {2009},
-  isbn = {9781605583921},
-  address = {New York, NY, USA},
-  doi = {10.1145/1542476.1542486},
-  booktitle = {Proceedings of the 30th ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI 2009)},
-  pages = {87–97},
-  numpages = {11},
-  keywords = {web application, taint analysis, static analysis, slicing, security, program analysis, java}
-}
-
-@article{enck2014taintdroid,
-  author = {Enck, William and Gilbert, Peter and Han, Seungyeop and Tendulkar, Vasant and Chun, Byung-Gon and Cox, Landon P. and Jung, Jaeyeon and McDaniel, Patrick and Sheth, Anmol N.},
-  title = {TaintDroid: An Information-Flow Tracking System for Realtime Privacy Monitoring on Smartphones},
-  year = {2014},
-  issue_date = {June 2014},
-  volume = {32},
-  number = {2},
-  issn = {0734-2071},
-  doi = {10.1145/2619091},
-  journal = {ACM Transactions on Computer Systems},
-  month = jun,
-  articleno = {5},
-  pages = {1-29},
-  numpages = {29},
-  keywords = {Information-flow tracking, mobile apps, privacy monitoring, smartphones}
-}
-
-@article{you2017taintman,
-  author={You, Wei and Liang, Bin and Shi, Wenchang and Wang, Peng and Zhang, Xiangyu},
-  journal={IEEE Transactions on Dependable and Secure Computing},
-  title={TaintMan: An ART-Compatible Dynamic Taint Analysis Framework on Unmodified and Non-Rooted Android Devices},
-  year={2020},
-  volume={17},
-  number={1},
-  pages={209-222},
-  doi={10.1109/TDSC.2017.2740169}
-}
-
 @misc{kubiscan2024,
   author       = {CyberArk},
   title        = {KubiScan: Kubernetes Risk Assessment Tool},
@@ -385,4 +146,552 @@ series = {FSE Companion '25}
   year         = {2024},
   howpublished = {Available online: \url{https://docs.docker.com/}},
   note         = {Accessed: January 15, 2026}
+}
+
+
+% aacademic references
+@inproceedings{ferraiolo1995role,
+  title        = {Role-based access control (RBAC): Features and motivations},
+  author       = {Ferraiolo, David and Cugini, Janet and Kuhn, D Richard and others},
+  booktitle    = {Proceedings of the 11th Annual Computer Security Applications Conference},
+  pages        = {241--48},
+  year         = {1995}
+}
+
+@article{saltzer1975protection,
+  author       = {Saltzer, J.H. and Schroeder, M.D.},
+  journal      = {Proceedings of the IEEE},
+  title        = {The protection of information in computer systems},
+  year         = {1975},
+  volume       = {63},
+  number       = {9},
+  pages        = {1278-1308},
+  doi          = {10.1109/PROC.1975.9939}
+}
+
+@article{o1995redundant,
+  title        = {Redundant access rights},
+  journal      = {Computers \& Security},
+  volume       = {14},
+  number       = {4},
+  pages        = {323-348},
+  year         = {1995},
+  issn         = {0167-4048},
+  author       = {Greg O'Shea}
+}
+
+
+
+@INPROCEEDINGS{KGSecConfig2022,
+  author={Ul Haque, Mubin and Kholoosi, M. Mehdi and Babar, M. Ali},
+  booktitle={2022 IEEE International Conference on Software Analysis, Evolution and Reengineering (SANER)}, 
+  title={KGSecConfig: A Knowledge Graph Based Approach for Secured Container Orchestrator Configuration}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={420-431},
+  abstract={Container Orchestrator (CO) is a vital technology for managing clusters of containers, which may form a virtualized infrastructure for developing and operating software systems. Like any other software system, securing CO is critical, but can be quite challenging task due to large number of configurable options. Manual configuration is not only knowledge intensive and time consuming, but also is error prone. For automating security configuration of CO, we propose a novel Knowledge Graph based Security Configuration, KGSecConfig, approach. Our solution leverages keyword and learning models to systematically capture, link, and correlate heterogeneous and multi-vendor configuration space in a unified structure for supporting automation of security configuration of CO. We implement KGSecConfig on Kubernetes, Docker, Azure, and VMWare to build secured configuration knowledge graph. Our evaluation results show 0.98 and 0.94 accuracy for keyword and learning-based secured configuration option and concept extraction, respectively. We also demonstrate the utilization of the knowledge graph for automated misconfiguration mitigation in a Kubernetes cluster. We assert that our knowledge graph based approach can help in addressing several challenges, e.g., misconfiguration of security, associated with manually configuring the security of CO.},
+  keywords={Automation;Conferences;Manuals;Containers;Software systems;Security;Task analysis;Container;Configuration;Security;Knowledge Graph},
+  doi={10.1109/SANER53432.2022.00057},
+  ISSN={1534-5351},
+  month={March},}
+@inproceedings{pecka2022privilege,
+author = {Pecka, Nicholas and Ben Othmane, Lotfi and Valani, Altaz},
+title = {Privilege Escalation Attack Scenarios on the DevOps Pipeline Within a Kubernetes Environment},
+year = {2022},
+isbn = {9781450396745},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3529320.3529325},
+doi = {10.1145/3529320.3529325},
+abstract = {Companies are misled into thinking they solve their security issues by using tooling that is advertised as aligning with DevSecOps principles. This paper aims to answer the question: Could the misuse of the DevOps pipeline subject applications to malicious behavior? To answer the question, we designed a typical DevOps pipeline utilizing Kubernetes (K8s) as a case study environment and analyzed the applicable threats. Then, we developed four attack scenarios against the case study environment: maliciously abusing the user’s privilege of deploying containers within the K8s cluster, abusing the Jenkins instance to modify files during the continuous integration, delivery, and deployment systems (CI/CD) build phase, modifying the K8s DNS layer to expose an internal IP to external traffic, and elevating privileges from an account with create, read, update, and delete (CRUD) privileges to root privileges. The attacks answer the research question positively: companies should design and use a secure DevOps pipeline and not expect that utilizing software ”advertised as aligning” with DevSecOps principles alone is sufficient to deliver secure software.},
+booktitle = {Proceedings of the International Conference on Software and System Processes and International Conference on Global Software Engineering},
+pages = {45–49},
+numpages = {5},
+keywords = {CI/CD, DevSecOps, Kubernetes, Security},
+location = {Pittsburgh, PA, USA},
+series = {ICSSP '22}
+}
+
+
+
+@inproceedings{k8smanifests2023,
+author = {Yang, Nanzi and Shen, Wenbo and Li, Jinku and Liu, Xunqi and Guo, Xin and Ma, Jianfeng},
+title = {Take Over the Whole Cluster: Attacking Kubernetes via Excessive Permissions of Third-party Applications},
+year = {2023},
+isbn = {9798400700507},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3576915.3623121},
+doi = {10.1145/3576915.3623121},
+abstract = {As the dominant container orchestration system, Kubernetes is widely used by many companies and cloud vendors. It runs third-party add-ons and applications (termed third-party apps) on its control plane to manage the whole cluster. The security of these third-party apps is critical to the whole cluster but has not been systematically studied so far.Therefore, this paper analyzes the security of third-party apps and reveals that third-party apps are granted excessive critical permissions, which can be exploited by an attacker to escape from the worker node and take over the whole Kubernetes cluster. Even worse, excessive permissions of different third-party apps can be chained together to turn non-critical issues into severe attack vectors. To systematically analyze the exploitability of excessive permissions, we design three strategies based on different attacking paths. These three strategies can steal the cluster admin permission with the DaemonSet of a third-party app directly, or via the same app's or another app's critical component indirectly.We investigate the security impact of excessive permission attacks in real production environments. We analyze all third-party apps in CNCF and show that 51 of 153 (33.3\%) ones have potential security risks. We further scan Kubernetes services provided by the top four cloud vendors. The results show that all of them are vulnerable to excessive permission attacks. We report all our findings to the corresponding teams and get eight new CVEs from communities and a security bounty from Google.},
+booktitle = {Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security},
+pages = {3048–3062},
+numpages = {15},
+keywords = {excessive permission, kubernetes, third-party application},
+location = {Copenhagen, Denmark},
+series = {CCS '23}
+}
+@inproceedings{shamim2025dastk8s,
+author = {Shamim, Shazibul Islam and Hu, Hanyang and Rahman, Akond},
+title = {Dynamic Application Security Testing for Kubernetes Deployment: An Experience Report from Industry},
+year = {2025},
+isbn = {9798400712760},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3696630.3728573},
+doi = {10.1145/3696630.3728573},
+abstract = {While Kubernetes enables practitioners to rapidly deploy their software and perform container orchestration efficiently, security of the Kubernetes-based deployment infrastructure is a concern for industry practitioners. A systematic understanding of how dynamic analysis can be used for securing Kubernetes deployments can aid practitioners in securing their Kubernetes deployments. We present an experience report, where we describe empirical findings from three dynamic application security testing (DAST) tools on a Kubernetes deployment used by 'Company-Z'. From our empirical study, we find (i) 3,442 recommended security configurations are violated in 'Company-Z's' Kubernetes deployment; and (ii) of the three studied DAST tools, Kubescape and Kubebench provide the highest support with respect to detecting 14 types of recommended security configurations. Based on our findings, we recommend practitioners to apply DAST tools for their Kubernetes deployments, and security researchers to investigate how to detect configuration violations dynamically in the Kubernetes deployment.},
+booktitle = {Proceedings of the 33rd ACM International Conference on the Foundations of Software Engineering},
+pages = {514–519},
+numpages = {6},
+keywords = {devops, devsecops, kubernetes, security},
+location = {Clarion Hotel Trondheim, Trondheim, Norway},
+series = {FSE Companion '25}
+}
+@INPROCEEDINGS{shamim2025prescription,
+  author={Shamim, Shazibul Islam and Hu, Hanyang and Rahman, Akond},
+  booktitle={2025 IEEE/ACM 47th International Conference on Software Engineering (ICSE)}, 
+  title={On Prescription or Off Prescription? An Empirical Study of Community-Prescribed Security Configurations for Kubernetes}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={2432-2444},
+  abstract={Despite being beneficial for rapid delivery of software, Kubernetes deployments can be susceptible to security attacks, which can cause serious consequences. A systematic characterization of how community-prescribed security configurations, i.e., security configurations that are recommended by security experts, can aid practitioners to secure their Kubernetes deployments. To that end, we conduct an empirical study with 53 security configurations recommended by the Center for Internet Security (CIS), 20 survey respondents, and 544 configuration files obtained from the open source software (OSS) and proprietary domains. From our empirical study, we observe: (i) practitioners can be unaware of prescribed security configurations as $5 \% \sim 40 {\%}$ of the survey respondents are unfamiliar with 16 prescribed configurations; and (ii) for Company-A and OSS respectively, 18.0% and 17.9% of the configuration files include at least one violation of prescribed configurations. From our evaluation with 5 static application security testing (SAST) tools we find (i) only Kubescape to support all of the prescribed security configuration categories; (ii) the highest observed precision to be 0.41 and 0.43 respectively, for the Company-A and OSS datasets; and (iii) the highest observed recall to be respectively, 0.53 and 0.65 for the Company-A and OSS datasets. Our findings show a disconnect between what CIS experts recommend for Kubernetes-related configurations and what happens in practice. We conclude the paper by providing recommendations for practitioners and researchers. Dataset used for the paper is publicly available online.},
+  keywords={Surveys;Systematics;DevOps;Internet security;Static analysis;Security;Open source software;Guidelines;Testing;Software engineering;configuration;container orchestration;devops;devsecops;empirical study;Kubernetes;security;static analysis},
+  doi={10.1109/ICSE55347.2025.00170},
+  ISSN={1558-1225},
+  month={April},}
+
+@inproceedings{yang2023take,
+author = {Yang, Nanzi and Shen, Wenbo and Li, Jinku and Liu, Xunqi and Guo, Xin and Ma, Jianfeng},
+title = {Take Over the Whole Cluster: Attacking Kubernetes via Excessive Permissions of Third-party Applications},
+year = {2023},
+isbn = {9798400700507},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3576915.3623121},
+doi = {10.1145/3576915.3623121},
+abstract = {As the dominant container orchestration system, Kubernetes is widely used by many companies and cloud vendors. It runs third-party add-ons and applications (termed third-party apps) on its control plane to manage the whole cluster. The security of these third-party apps is critical to the whole cluster but has not been systematically studied so far.Therefore, this paper analyzes the security of third-party apps and reveals that third-party apps are granted excessive critical permissions, which can be exploited by an attacker to escape from the worker node and take over the whole Kubernetes cluster. Even worse, excessive permissions of different third-party apps can be chained together to turn non-critical issues into severe attack vectors. To systematically analyze the exploitability of excessive permissions, we design three strategies based on different attacking paths. These three strategies can steal the cluster admin permission with the DaemonSet of a third-party app directly, or via the same app's or another app's critical component indirectly.We investigate the security impact of excessive permission attacks in real production environments. We analyze all third-party apps in CNCF and show that 51 of 153 (33.3\%) ones have potential security risks. We further scan Kubernetes services provided by the top four cloud vendors. The results show that all of them are vulnerable to excessive permission attacks. We report all our findings to the corresponding teams and get eight new CVEs from communities and a security bounty from Google.},
+booktitle = {Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security},
+pages = {3048–3062},
+numpages = {15},
+keywords = {excessive permission, kubernetes, third-party application},
+location = {Copenhagen, Denmark},
+series = {CCS '23}
+}
+
+@INPROCEEDINGS{kubeguard_icws2025,
+  author={Sun, Chang-ai and Han, Xiaoyang and Gong, Yufei},
+  booktitle={2025 IEEE International Conference on Web Services (ICWS)}, 
+  title={KubeGuard: A Systematic Permission-Oriented Risk Detection Approach for Kubernetes Applications}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={855-865},
+  abstract={Kubernetes is a popular containerized application orchestration platform that is widely adopted for the development of large-scale service-oriented systems. Such a system often involves the integration of third-party applications, which may introduce security risks, such as excessive permission configurations and privilege escalations, resulting in the leakage of sensitive resources and unauthorized operations. Existing risk detection techniques mainly examine the permission configurations with some predefined rules, which may not be adaptive and precise due to the dynamic nature of Kubernetes environments. To overcome the limitations, we propose a systematic permission-oriented risk detection approach called KubeGuard. First, KubeGuard identifies a minimal permission set and uses it to check whether the existence of excessive permissions in the permission configurations. Second, KubeGuard detects various privilege escalation risks through dynamic rule-based auditing. Third, KubeGuard prevents sensitive resource leakages by monitoring the messages transferred between pods in Kubernetes and alerting in case sensitive resources are involved through the keyword matching. We further developed a supporting prototype called Kube-Guarder. Experiments were conducted on a suite of open-source Kubernetes applications and simulated scenarios to evaluate the effectiveness of KubeGuard. Experimental results have shown that KubeGuard can detect excessive permissions more effectively and precisely compared with the static rule-based baseline technique, and in the meanwhile, KubeGuard can detect various types of privilege escalation and sensitive resource leakage. As a result, this study delivered a promising technique for improving the security of Kubernetes applications.},
+  keywords={Systematics;Web services;Prototypes;Security;Monitoring;Kubernetes;Security;Excessive Permission;Permission Escalation;Sensitive Resource Leakage},
+  doi={10.1109/ICWS67624.2025.00111},
+  ISSN={2836-3868},
+  month={July},}
+
+@INPROCEEDINGS{gu2024epscan,
+  author={Gu, Yue and Tan, Xin and Zhang, Yuan and Gao, Siyan and Yang, Min},
+  booktitle={2025 IEEE Symposium on Security and Privacy (SP)}, 
+  title={EPScan: Automated Detection of Excessive RBAC Permissions in Kubernetes Applications}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={3199-3217},
+  abstract={As the dominant container orchestration system, Kubernetes has a large ecosystem of third-party applications. The third-party Kubernetes applications access various cluster resources to extend the cluster functionality and Kubernetes adopts the RBAC mechanism to manage the resource access permissions. Recently, researchers revealed that third-party applications are granted excessive permissions and proposed an excessive permission attack. The attacker can exploit some critical excessive permissions to escape from the worker node and take over the whole Kubernetes cluster. However, this attack assumes that the attacker has compromised a worker node via container escape, which is difficult to realize in real scenarios. Therefore, we propose a new excessive permission attack with simpler attack conditions in this paper. We reveal that an attacker who has compromised one pod (less difficult than compromising a worker node) can exploit some other excessive privileges to take over worker nodes or break the availability and data confidentiality of other pods. Although excessive permissions of third-party applications pose a great threat to the security of Kubernetes clusters, there is no effective approach for detecting them. In this paper, we propose a novel approach, namely EPScan, which automatically detects exploitable excessive permissions in third-party applications. To achieve this, EPScan employs a novel pod-oriented program analysis, which utilizes several new techniques to accurately identify the resource access behavior of the programs running in each pod. EPScan then compares the permissions required for these behaviors with those requested by the pod in its configuration file and finally reports the exploitable permissions that can be abused to launch an excessive permissions attack. We applied EPScan on 108 third-party applications from the CNCF projects and discovered previously unknown exploitable excessive permissions in 106 pods across 50 applications with a precision of 94.6% and 9 CVE identifiers assigned.},
+  keywords={Privacy;Data privacy;Ecosystems;Containers;Security},
+  doi={10.1109/SP61157.2025.00011},
+  ISSN={2375-1207},
+  month={May},}
+
+@article{cesarano2025kubefence,
+  title   = {KubeFence: Security Hardening of the Kubernetes Attack Surface},
+  author  = {Cesarano, Carmine and Natella, Roberto},
+  journal = {arXiv preprint arXiv:2504.11126},
+  year    = {2025},
+  abstract= "Kubernetes (K8s) is widely used to orchestrate containerized applications, including critical services in domains such as finance, healthcare, and government. However, its extensive and feature-rich API interface exposes a broad attack surface, making K8s vulnerable to exploits of software vulnerabilities and misconfigurations. Even if K8s adopts role-based access control (RBAC) to manage access to K8s APIs, this approach lacks the granularity needed to protect specification attributes within API requests. This paper proposes a novel solution, KubeFence, which implements finer-grain API filtering tailored to specific client workloads. KubeFence analyzes Kubernetes Operators from trusted repositories and leverages their configuration files to restrict unnecessary features of the K8s API, to mitigate misconfigurations and vulnerabilities exploitable through the K8s API. The experimental results show that KubeFence can significantly reduce the attack surface and prevent attacks compared to RBAC.",
+}
+
+% -----------------------------------------------------------------------------
+% Permission-oriented security references (migrated from KubeGuard_ICWS2025/ref.bib)
+@inproceedings{molloy2012generative,
+author = {Molloy, Ian and Park, Youngja and Chari, Suresh},
+title = {Generative models for access control policies: applications to role mining over logs with attribution},
+year = {2012},
+isbn = {9781450312950},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2295136.2295145},
+doi = {10.1145/2295136.2295145},
+abstract = {We consider a fundamentally new approach to role and policy mining: finding RBAC models which reflect the observed usage of entitlements and the attributes of users. Such policies are interpretable, i.e., there is a natural explanation of why a role is assigned to a user and are conservative from a security standpoint since they are based on actual usage. Further, such "generative" models provide many other benefits including reconciliation with policies based on entitlements, detection of provisioning errors, as well as the detection of anomalous behavior. Our contributions include defining the fundamental problem as extensions of the well-known role mining problem, as well as providing several new algorithms based on generative machine learning models. Our algorithms find models which are causally associated with actual usage of entitlements and any arbitrary combination of user attributes when such information is available. This is the most natural process to provision roles, thus addressing a key usability issue with existing role mining algorithms.We have evaluated our approach on a large number of real life data sets, and our algorithms produce good role decompositions as measured by metrics such as coverage, stability, and generality We compare our algorithms with traditional role mining algorithms by equating usage with entitlement. Results show that our algorithms improve on existing approaches including exact mining, approximate mining, and probabilistic algorithms; the results are more temporally stable than exact mining approaches, and are faster than probabilistic algorithms while removing artificial constraints such as the number of roles assigned to each user. Most importantly, we believe that these roles more accurately capture what users actually do, the essence of a role, which is not captured by traditional methods.},
+booktitle = {Proceedings of the 17th ACM Symposium on Access Control Models and Technologies},
+pages = {45–56},
+numpages = {12},
+keywords = {role mining, rbac, generative models, access control},
+location = {Newark, New Jersey, USA},
+series = {SACMAT '12}
+}
+@inproceedings{sanders2018minimizing,
+author = {Sanders, Matthew W. and Yue, Chuan},
+title = {Minimizing Privilege Assignment Errors in Cloud Services},
+year = {2018},
+isbn = {9781450356329},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3176258.3176307},
+doi = {10.1145/3176258.3176307},
+abstract = {The Principle of Least Privilege is a security objective of granting users only those accesses they need to perform their duties. Creating least privilege policies in the cloud environment with many diverse services, each with unique privilege sets, is significantly more challenging than policy creation previously studied in other environments. Such security policies are always imperfect and must balance between the security risk of granting over-privilege and the effort to correct for under-privilege. In this paper, we formally define the problem of balancing between over-privilege and under-privilege as the Privilege Error Minimization Problem (PEMP) and present a method for quantitatively scoring security policies. We design and compare three algorithms for automatically generating policies: a naive algorithm, an unsupervised learning algorithm, and a supervised learning algorithm. We present the results of evaluating these three policy generation algorithms on a real-world dataset consisting of 5.2 million Amazon Web Service (AWS) audit log entries. The application of these methods can help create policies that balance between an organization's acceptable level of risk and effort to correct under-privilege.},
+booktitle = {Proceedings of the Eighth ACM Conference on Data and Application Security and Privacy},
+pages = {2–12},
+numpages = {11},
+keywords = {cloud computing, principle of least privilege, role based access control (rbac)},
+location = {Tempe, AZ, USA},
+series = {CODASPY '18}
+}
+@inproceedings{au2012pscout,
+author = {Au, Kathy Wain Yee and Zhou, Yi Fan and Huang, Zhen and Lie, David},
+title = {PScout: analyzing the Android permission specification},
+year = {2012},
+isbn = {9781450316514},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2382196.2382222},
+doi = {10.1145/2382196.2382222},
+abstract = {Modern smartphone operating systems (OSs) have been developed with a greater emphasis on security and protecting privacy. One of the mechanisms these systems use to protect users is a permission system, which requires developers to declare what sensitive resources their applications will use, has users agree with this request when they install the application and constrains the application to the requested resources during runtime. As these permission systems become more common, questions have risen about their design and implementation. In this paper, we perform an analysis of the permission system of the Android smartphone OS in an attempt to begin answering some of these questions. Because the documentation of Android's permission system is incomplete and because we wanted to be able to analyze several versions of Android, we developed PScout, a tool that extracts the permission specification from the Android OS source code using static analysis. PScout overcomes several challenges, such as scalability due to Android's 3.4 million line code base, accounting for permission enforcement across processes due to Android's use of IPC, and abstracting Android's diverse permission checking mechanisms into a single primitive for analysis.We use PScout to analyze 4 versions of Android spanning version 2.2 up to the recently released Android 4.0. Our main findings are that while Android has over 75 permissions, there is little redundancy in the permission specification. However, if applications could be constrained to only use documented APIs, then about 22\% of the non-system permissions are actually unnecessary. Finally, we find that a trade-off exists between enabling least-privilege security with fine-grained permissions and maintaining stability of the permission specification as the Android OS evolves.},
+booktitle = {Proceedings of the 2012 ACM Conference on Computer and Communications Security},
+pages = {217–228},
+numpages = {12},
+keywords = {android, permissions, smartphone},
+location = {Raleigh, North Carolina, USA},
+series = {CCS '12}
+}
+
+@inproceedings{wang2024minichecker,
+author = {Wang, Yin and Fan, Ming and Zhou, Hao and Wang, Haijun and Jin, Wuxia and Li, Jiajia and Chen, Wenbo and Li, Shijie and Zhang, Yu and Han, Deqiang and Liu, Ting},
+title = {MiniChecker: Detecting Data Privacy Risk of Abusive Permission Request Behavior in Mini-Programs},
+year = {2024},
+isbn = {9798400712487},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3691620.3695534},
+doi = {10.1145/3691620.3695534},
+abstract = {The rising popularity of mini-programs deployed on super-app platforms has drawn significant attention due to their convenience. However, developers' improper handling of data permission application in mini-programs has raised concerns about non-compliance and violations. Unfortunately, existing tools lack the capability to support the construction of a universal function call graph for the mini-program and the literature lacks a comprehensive and systematic study of the abusive issues. To bridge this gap, this paper introduces an automated tool, MiniChecker, to uncover the abusive permission request behavior in mini-programs. It defines five primary categories of abusive issues, namely homepage pop-up, overlaying pop-up, bothering pop-up, repeating pop-up, and looping pop-up, based on the request behavior features. MiniChecker achieves a detection precision rate of 82.4\% and a recall rate of 95.3\% on our benchmark, and identifies 3,866 risky mini-programs out of 20,000 real-world mini-programs. Our analysis reveals inherent design flaws in the mini-program permission mechanism, and we have shared our findings with several mini-program platforms.},
+booktitle = {Proceedings of the 39th IEEE/ACM International Conference on Automated Software Engineering},
+pages = {1667–1679},
+numpages = {13},
+keywords = {mini-programs, data permission, privacy protection, mobile security},
+location = {Sacramento, CA, USA},
+series = {ASE '24}
+}
+@article{papadimitriou2010data,
+  author={Papadimitriou, Panagiotis and Garcia-Molina, Hector},
+  journal={IEEE Transactions on Knowledge and Data Engineering},
+  title={Data Leakage Detection},
+  year={2011},
+  volume={23},
+  number={1},
+  pages={51-63},
+  doi={10.1109/TKDE.2010.100}
+}
+
+@inproceedings{tripp2009taj,
+  author = {Tripp, Omer and Pistoia, Marco and Fink, Stephen J. and Sridharan, Manu and Weisman, Omri},
+  title = {TAJ: effective taint analysis of web applications},
+  year = {2009},
+  isbn = {9781605583921},
+  address = {New York, NY, USA},
+  doi = {10.1145/1542476.1542486},
+  booktitle = {Proceedings of the 30th ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI 2009)},
+  pages = {87–97},
+  numpages = {11},
+  keywords = {web application, taint analysis, static analysis, slicing, security, program analysis, java}
+}
+
+@article{enck2014taintdroid,
+  author = {Enck, William and Gilbert, Peter and Han, Seungyeop and Tendulkar, Vasant and Chun, Byung-Gon and Cox, Landon P. and Jung, Jaeyeon and McDaniel, Patrick and Sheth, Anmol N.},
+  title = {TaintDroid: An Information-Flow Tracking System for Realtime Privacy Monitoring on Smartphones},
+  year = {2014},
+  issue_date = {June 2014},
+  volume = {32},
+  number = {2},
+  issn = {0734-2071},
+  doi = {10.1145/2619091},
+  journal = {ACM Transactions on Computer Systems},
+  month = jun,
+  articleno = {5},
+  pages = {1-29},
+  numpages = {29},
+  keywords = {Information-flow tracking, mobile apps, privacy monitoring, smartphones}
+}
+
+@article{you2017taintman,
+  author={You, Wei and Liang, Bin and Shi, Wenchang and Wang, Peng and Zhang, Xiangyu},
+  journal={IEEE Transactions on Dependable and Secure Computing},
+  title={TaintMan: An ART-Compatible Dynamic Taint Analysis Framework on Unmodified and Non-Rooted Android Devices},
+  year={2020},
+  volume={17},
+  number={1},
+  pages={209-222},
+  doi={10.1109/TDSC.2017.2740169}
+}
+@INPROCEEDINGS{Islam_Shamim_2020,
+  author={Islam Shamim, Md. Shazibul and Ahamed Bhuiyan, Farzana and Rahman, Akond},
+  booktitle={2020 IEEE Secure Development (SecDev)}, 
+  title={XI Commandments of Kubernetes Security: A Systematization of Knowledge Related to Kubernetes Security Practices}, 
+  year={2020},
+  volume={},
+  number={},
+  pages={58-64},
+  keywords={Security;Internet;Containers;Servers;Authorization;Authentication;Peer-to-peer computing;containers;devops;devsecops;grey literature;kubernetes;practices;review;security;systematization of knowledge},
+  doi={10.1109/SecDev45635.2020.00025}}
+
+@article{Bhardwaj_2024, 
+title={AI-Powered Anomaly Detection for Kubernetes Security: A Systematic Approach to Identifying Threats},
+volume={2024}, 
+url={https://mesopotamian.press/journals/index.php/BJML/article/view/487}, 
+DOI={10.58496/BJML/2024/014},
+abstract={
+This study delves into the intricacies of AI-based threat detection in Kubernetes security, with a specific focus on its role in identifying anomalous behavior. By harnessing the power of AI algorithms, vast amounts of telemetry data generated by Kubernetes clusters can be analyzed in real-time, enabling the identification of patterns and anomalies that may signify potential security threats or system malfunctions. The implementation of AI-based threat detection involves a systematic approach, encompassing data collection, model training, integration with Kubernetes orchestration platforms, alerting mechanisms, and continuous monitoring. AI-powered threat detection offers numerous advantages, including predictive threat detection, increased accuracy and scalability, shorter response times, and the ability to adapt to evolving threats. However, it also presents challenges, such as ensuring data quality, managing model complexity, mitigating false positives, addressing resource requirements, and maintaining security and privacy standards.  The proposed AI-powered anomaly detection framework for Kubernetes security demonstrated significant improvements in threat identification and mitigation. Through real-time analysis of telemetry data and leveraging advanced AI algorithms, the system accurately identified over 92% of simulated security threats and anomalies across various Kubernetes clusters. Additionally, the integration of automated alerting mechanisms and response protocols reduced the average response time by 67%, enabling rapid containment of potential breaches.}, 
+journal={Babylonian Journal of Machine Learning}, 
+year={2024}, 
+month={Aug.}, 
+pages={142–148}}
+
+@article{Minna_2021,
+  title={Understanding the Security Implications of Kubernetes Networking}, 
+  author={Minna, Francesco and Blaise, Agathe and Rebecchi, Filippo and Chandrasekaran, Balakrishnan and Massacci, Fabio},
+  journal={IEEE Security & Privacy}, 
+  year={2021},
+  volume={19},
+  number={5},
+  pages={46-56},
+  abstract={Container-orchestration software such as Kubernetes make it easy to deploy and manage modern cloud applications based on microservices. Yet, its network abstractions pave the way for "unexpected attacks" if we approach cloud network security with the same mental model of traditional network security.},
+  doi={10.1109/MSEC.2021.3094726},
+  ISSN={1558-4046},
+  month={Sep.} 
+}
+
+
+@INPROCEEDINGS{Budigiri_2021,
+  author={Budigiri, Gerald and Baumann, Christoph and Mühlberg, Jan Tobias and Truyen, Eddy and Joosen, Wouter},
+  booktitle={2021 Joint European Conference on Networks and Communications & 6G Summit (EuCNC/6G Summit)}, 
+  title={Network Policies in Kubernetes: Performance Evaluation and Security Analysis}, 
+  year={2021},
+  volume={},
+  number={},
+  pages={407-412},
+  abstract={5G applications with ultra-high reliability and low latency requirements necessitate the adoption of edge computing solutions in mobile networks. Container orchestration frameworks like Kubernetes (K8s) have further emerged as the preferred standard to dynamically deploy edge applications on demand of end-users and third-party companies. Unfortunately, complex networking and security concerns have been highlighted as challenges that impede the successful adoption of container technology by the industry. The security challenge is exacerbated by (mis-)conceptions that secure inter-container communication comes at the cost of performance, yet both requirements are vital for 5G edge-computing use cases. Pursuing low-overhead security solutions, this paper investigates network policies, the K8s concept for controlling network isolation between tenants. We evaluate performance overheads of eBPF -based solutions by Calico and Cilium, and analyze the security of network policies, highlighting security threats to network policies and outline corresponding state-of-the-art solutions. Our assessment shows that network policies are a suitable low-overhead security solution for low-latency inter-container communication.},
+  keywords={Performance evaluation;Industries;5G mobile communication;Interference;Containers;Ultra reliable low latency communication;Security;container orchestration;edge computing;network isolation;microservices;tenants;eBPF;Calico;Cilium},
+  doi={10.1109/EuCNC/6GSummit51104.2021.9482526},
+  ISSN={2575-4912},
+  month={June},}
+
+@inproceedings{Shamim_2021,
+author = {Shamim, Shazibul Islam},
+title = {Mitigating security attacks in kubernetes manifests for security best practices violation},
+year = {2021},
+isbn = {9781450385626},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3468264.3473495},
+doi = {10.1145/3468264.3473495},
+abstract = {Kubernetes is an open-source software system that helps practitioners in automatically deploying, scaling, and managing containerized applications. Information technology (IT) organizations, such as IBM, Spotify, and Capital One, use Kubernetes to manage their containers and reported benefits in the deployment process. However, recent security breaches and survey results among practitioners suggest that Kubernetes deployment can be vulnerable to attacks due to misconfiguration and not following security best practices. This research explores how malicious users can perform potential security exploits from the violations of Kubernetes security best practices. We explore how attacks can be conducted such as denial of service attacks against one of the security best practices violations in Kubernetes manifests. In addition, we are exploring potential exploits in the Kubernetes cluster to propose mitigation strategies to secure the Kubernetes cluster.},
+booktitle = {Proceedings of the 29th ACM Joint Meeting on European Software Engineering Conference and Symposium on the Foundations of Software Engineering},
+pages = {1689–1690},
+numpages = {2},
+keywords = {software security, security practices, security policies, security, secure software engineering, misconfiguration, manifests, kubernetes, dos, devsecops, devops, denial of service, container, configuration, compromised user, cloud computing, attacks, attack mitigation},
+location = {Athens, Greece},
+series = {ESEC/FSE 2021}
+}
+
+
+@article{Pitkar_2025, 
+title={Enhancing Kubernetes Security with AI: Anomaly Detection for Cloud-Based Workloads}, 
+volume={04}, 
+ISSN={2583-6129}, 
+url={http://dx.doi.org/10.55041/isjem02746}, 
+DOI={10.55041/isjem02746}, 
+number={04}, 
+journal={International Scientific Journal of Engineering and Management}, 
+publisher={Edtech Publishers (OPC) Private Limited}, 
+author={Pitkar, Harshad}, 
+year={2025}, 
+month=apr, 
+abstract= "Kubernetes has become the de facto standard for container orchestration in cloud environments, offering scalability and automation. While its dynamic and complex architecture brings about significant security problems, standard rule-based security mechanisms fail to detect high-level, complex threats. This research proposes an AI-driven anomaly detection framework specifically for Kubernetes security. Multiple data sources such as Kubernetes logs, API calls, network traffic, and system metrics are used in a holistic framework for threat detection. The system uses machine learning models such as Isolation Forest, Autoencoders, and LSTMs to detect deviation from normal behavior, raising the alarm of possible security threats.Experimental evaluation of the framework shows superior accuracy, recall, and fewer false-positive rates from the ordinary, rule-based security tools. Furthermore, they integrate with Falco, Prometheus, and Open Policy Agent (OPA) to secure monitoring and policy enforcement in Kubernetes clusters. These results show that AI-driven anomaly detection significantly improves the detection of insider threats, zero-day attacks, and other complex security incidents.However, there are still challenges regarding scalability, explainability, and, in particular, adversarial robustness, although there are clear benefits of CDN transcriptions. Future improvement may include federated learning for distributed threat intelligence, accurate real-time response, and advanced model optimization techniques. Recognizing the need to make Kubernetes more resilient against the new breed of cyber threats, this study puts forward the role of AI-driven security solutions in improving the effectiveness of technology in the modern world.",
+pages={1–9} }
+@Article{Dell_Immagine_2023,
+AUTHOR = {Dell’Immagine, Giorgio and Soldani, Jacopo and Brogi, Antonio},
+TITLE = {KubeHound: Detecting Microservices’ Security Smells in Kubernetes Deployments},
+JOURNAL = {Future Internet},
+VOLUME = {15},
+YEAR = {2023},
+NUMBER = {7},
+ARTICLE-NUMBER = {228},
+URL = {https://www.mdpi.com/1999-5903/15/7/228},
+ISSN = {1999-5903},
+ABSTRACT = {As microservice-based architectures are increasingly adopted, microservices security has become a crucial aspect to consider for IT businesses. Starting from a set of “security smells” for microservice applications that were recently proposed in the literature, we enable the automatic detection of such smells in microservice applications deployed with Kubernetes. We first introduce possible analysis techniques to automatically detect security smells in Kubernetes-deployed microservices. We then demonstrate the practical applicability of the proposed techniques by introducing KubeHound, an extensible prototype tool for automatically detecting security smells in microservice applications, and which already features a selected subset of the discussed analyses. We finally show that KubeHound can effectively detect instances of security smells in microservice applications by means of controlled experiments and by applying it to existing, third-party applications.},
+DOI = {10.3390/fi15070228}
+}
+@INPROCEEDINGS{Curtis_2025,
+author={Curtis, J. Alexander and Eisty, Nasir U.},
+booktitle={2025 IEEE/ACIS 23rd International Conference on Software Engineering Research, Management and Applications (SERA)}, 
+title={The Kubernetes Security Landscape: AI-Driven Insights from Developer Discussions}, 
+year={2025},
+volume={},
+number={},
+pages={179-186},
+abstract={Context: Kubernetes, the go-to container orchestration solution, has swiftly become the industry standard for managing containers at scale in production environments. Its widespread adoption, particularly in large organizations, has elevated its profile and made it a prime target for security concerns. Objective: This study aims to understand how prevalent security concerns are among Kubernetes practitioners by analyzing all Kubernetes posts made on Stack Overflow over the past four years. Method: We gathered security insights from Kubernetes practitioners and transformed the data through machine learning algorithms for cleaning and topic clustering. Subsequently, we used advanced AI tools to automatically generate topic descriptions, thereby reducing the analysis process. Results: In our analysis, security-related posts ranked as the fourth most prevalent topic in these forums, comprising $12.3 \%$ of the overall discussions. Furthermore, the findings indicated that although the frequency of security discussions has remained constant, their popularity and influence have experienced significant growth. Conclusions: Kubernetes users consistently prioritize security topics, and the rising popularity of security posts reflects a growing interest and concern for maintaining secure Kubernetes clusters. The findings underscore key security issues that warrant further research and the development of additional tools to resolve them.},
+keywords={Industries;Machine learning algorithms;Discussion forums;Standards organizations;Production;Organizations;Containers;Cleaning;Security;Software engineering;Kubernetes;Kubernetes Security;Container Security;Web Extraction;Developer Discussion Forum},
+doi={10.1109/SERA65747.2025.11154503},
+ISSN={2770-8209},
+month={May},}
+@INPROCEEDINGS{Zerouali_2023,
+  author={Zerouali, Ahmed and Opdebeeck, Ruben and De Roover, Coen},
+  booktitle={2023 IEEE/ACM 20th International Conference on Mining Software Repositories (MSR)}, 
+  title={Helm Charts for Kubernetes Applications: Evolution, Outdatedness and Security Risks}, 
+  year={2023},
+  volume={},
+  number={},
+  pages={523-533},
+  abstract={Using Kubernetes for the deployment, management and scaling of containerized applications has become a common practice. To facilitate the installation and management of these applications, practitioners can use the Helm package manager to assemble their configuration files into charts. The latter are reusable packages of pre-configured Kubernetes resources that can be deployed as a unit. In this paper, we aim to support chart developers and users by carrying out a comprehensive study on publicly available charts. For 9,482 charts that are distributed via the Artifact Hub repository, we mine and collect the list of their metadata, versions, dependencies, maintainers and container images. Then, we carry out an empirical analysis to assess the state and evolution of charts, as well as the outdatedness and security risks of their images. We found that the ecosystem forming around Helm charts is growing fast. However, most of the charts are not official with no popularity and no license. We also observed that charts tend to release multiple versions, but around half of them are still in the initial development phase. When looking at the container images used in charts, we found that around half of them are outdated and 88.1% of them are exposed to vulnerabilities, jeopardizing 93.7% of the charts.},
+  keywords={Ecosystems;Containers;Licenses;Metadata;Software;Security;Data mining;Kubernetes;Helm;Software Ecosystem;Infrastructure-as-code;Evolution;Security},
+  doi={10.1109/MSR59073.2023.00078},
+  ISSN={2574-3864},
+  month={May},}
+
+@ARTICLE{Kim_2025,
+  author={Kim, Bom and Kim, Jinwoo and Lee, Seungsoo},
+  journal={IEEE Access}, 
+  title={Exploring Security Enhancements in Kubernetes CNI: A Deep Dive Into Network Policies}, 
+  year={2025},
+  volume={13},
+  number={},
+  pages={35322-35338},
+  abstract={With the explosive growth of Kubernetes adoption, Container Network Interfaces (CNIs) have become critical components for configuring and securing container networks, but a comprehensive analysis of their security capabilities and performance impact is noticeably lacking. Our study conducts a comprehensive security analysis of the major CNI plugins (Cilium, Calico, WeaveNet, Kube-router, and Antrea) in cloud-native environments with Kubernetes through extensive evaluation of Layer 3/4 policy processing, policy complexity scaling, pod scalability, and Layer 7 policy processing. The experimental results show that eBPF-based Cilium maintains 8.9K Mbps throughput under complex L3/4 policies, but drops to 94 Mbps with L7 processing, while Antrea achieves 6.6K Mbps at L7 through HTTP filtering, with performance degrading as policy complexity increases. Under high concurrent pod loads, iptables-based CNIs show a 60-70% reduction in throughput, while Cilium maintains performance within 10% of baseline. These results reveal critical trade-offs between architectural choices and security capabilities, and provide practical guidelines for CNI selection based on specific operational and security requirements in cloud-native environments.},
+  keywords={Security;Containers;Throughput;Network interfaces;Routing;Complexity theory;Organizations;Electronic mail;Monitoring;Filtering;Container network interface;cloud security;container security;network policy},
+  doi={10.1109/ACCESS.2025.3543841},
+  ISSN={2169-3536},
+  month={},}
+
+
+% 用这篇说明 Kubernetes RBAC 和 应用IAM的分离
+ @article{Priya_Patharlagadda_2019, 
+ title={Enhance the Application Security using Kubernetes Role Based Access Control for Applications}, 
+ volume={8}, 
+ ISSN={2319-7064}, 
+ url={http://dx.doi.org/10.21275/sr24829160051}, 
+ DOI={10.21275/sr24829160051}, 
+ number={8}, 
+ journal={International Journal of Science and Research (IJSR)}, 
+ publisher={International Journal of Science and Research}, 
+ author={Priya Patharlagadda, Pallavi}, 
+ year={2019}, 
+ month=aug, 
+ pages={2339–2342},
+ abstract={The goal of an identity and access management system is to guarantee that you have control over who can access your 
+information system and what can be accessed by users. Since it is one of the core procedures in security management, it needs to be 
+handled carefully. Identity and user management in Kubernetes should be handled via third-party IAM solutions such as Keycloak, Active 
+Directory, Google's IAM, etc. as these are not incorporated into the platform itself. On the other side, Kubernetes manages authorization 
+and authentication. This article will concentrate on the authorization features of Kubernetes' Identity and Access Management (IAM), 
+particularly on how to use the Role-Based Access Control model to ensure that a user has the appropriate permissions for the appropriate 
+resources.}}
+
+
+
+ @inproceedings{10.1145/3297858.3304016,
+author = {Shen, Zhiming and Sun, Zhen and Sela, Gur-Eyal and Bagdasaryan, Eugene and Delimitrou, Christina and Van Renesse, Robbert and Weatherspoon, Hakim},
+title = {X-Containers: Breaking Down Barriers to Improve Performance and Isolation of Cloud-Native Containers},
+year = {2019},
+isbn = {9781450362405},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3297858.3304016},
+doi = {10.1145/3297858.3304016},
+abstract = {"Cloud-native" container platforms, such as Kubernetes, have become an integral part of production cloud environments. One of the principles in designing cloud-native applications is called Single Concern Principle, which suggests that each container should handle a single responsibility well. In this paper, we propose X-Containers as a new security paradigm for isolating single-concerned cloud-native containers. Each container is run with a Library OS (LibOS) that supports multi-processing for concurrency and compatibility. A minimal exokernel ensures strong isolation with small kernel attack surface. We show an implementation of the X-Containers architecture that leverages Xen paravirtualization (PV) to turn Linux kernel into a LibOS. Doing so results in a highly efficient LibOS platform that does not require hardware-assisted virtualization, improves inter-container isolation, and supports binary compatibility and multi-processing. By eliminating some security barriers such as seccomp and Meltdown patch, X-Containers have up to 27X higher raw system call throughput compared to Docker containers, while also achieving competitive or superior performance on various benchmarks compared to recent container platforms such as Google's gVisor and Intel's Clear Containers.},
+booktitle = {Proceedings of the Twenty-Fourth International Conference on Architectural Support for Programming Languages and Operating Systems},
+pages = {121–135},
+numpages = {15},
+keywords = {cloud-native, containers, exokernel, library os, x-containers},
+location = {Providence, RI, USA},
+series = {ASPLOS '19}
+}
+@INPROCEEDINGS{Zhu_2022,
+  author={Zhu, Hui and Gehrmann, Christian},
+  booktitle={2022 14th International Conference on COMmunication Systems & NETworkS (COMSNETS)}, 
+  title={Kub-Sec, an automatic Kubernetes cluster AppArmor profile generation engine}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={129-137},
+  abstract={Kubernetes (K8s) is one of the best options available to deploy applications in large-scale infrastructures. Security has been a big concern for all practitioners in the K8s eco-system. Almost all cloud vendors have their security solution for K8s cluster, pods, workloads, etc. In recent years, a large number of open-source tools and projects related to K8s security have emerged to meet the increased demand for enhanced security in these systems. Following this general need and trend, we propose a new design for automatic K8s cluster AppArmor profile generation. Our design is based on a most recent work of automatic AppArmor policy generator for Docker containers called Lic-Sec. The system collects the behavioral data of application containers in all worker nodes distributively, then centrally transforms the data to AppArmor policies for each application container, and enforces the policies without interrupting the service. We present a prototype of the system using Google K8s environment and with an AppArmor profile for a WordPress personal blog. We show that the security policies generated by the system can defend one typical kind of attack which targets all WordPress's XML-RPC interface.},
+  keywords={Blogs;Prototypes;Transforms;Containers;Market research;Generators;Internet;Kubernetes;security;AppArmor;cloud},
+  doi={10.1109/COMSNETS53615.2022.9668504},
+  ISSN={2155-2509},
+  month={Jan},}
+@INPROCEEDINGS{Blaise_2022,
+  author={Blaise, Agathe and Rebecchi, Filippo},
+  booktitle={2022 IEEE 15th International Conference on Cloud Computing (CLOUD)}, 
+  title={Stay at the Helm: secure Kubernetes deployments via graph generation and attack reconstruction}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={59-69},
+  abstract={In recent years, there has been an explosion of attacks directed at microservice-based platforms – a trend that follows closely the massive shift of the digital industries towards these environments. Management and operation of container-based microservices is automation-heavy, leveraging on container orchestration engines such as Kubernetes (K8s). Helm is the package manager of choice for K8s and provides Charts, i.e., configuration files that define a programmatic model for application deployments. In this paper, we propose a novel methodology for extracting and evaluating the security model of Helm Charts. Our proposal extracts a topological graph of the Chart, whose nodes and edges are then characterised by security features. We carry out risk assessments that refer to the attack tactics of the MITRE ATT&CK framework. Furthermore, starting from these scores, we extract the riskiest attack paths. We adopt an experimental validation approach by analysing a dataset created from multiple publicly accessible Helm Chart repositories. Our methodology reveals that, in most cases, they have vulnerabilities that can be exploited through complex attack paths.},
+  keywords={Industries;Cloud computing;Microservice architectures;Feature extraction;Market research;Explosions;Security;Microservices;cloud computing;containerisation;orchestration;Kubernetes;Helm Charts},
+  doi={10.1109/CLOUD55607.2022.00022},
+  ISSN={2159-6190},
+  month={July},}
+@inproceedings{Le_2023,
+author = {Le, Michael V. and Ahmed, Salman and Williams, Dan and Jamjoom, Hani},
+title = {Securing Container-based Clouds with Syscall-aware Scheduling},
+year = {2023},
+isbn = {9798400700989},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3579856.3582835},
+doi = {10.1145/3579856.3582835},
+abstract = {Container-based clouds—in which containers are the basic unit of isolation—face security concerns because, unlike Virtual Machines, containers directly interface with the underlying highly privileged kernel through the wide and vulnerable system call interface. Regardless of whether a container itself requires dangerous system calls, a compromised or malicious container sharing the host (a bad neighbor) can compromise the host kernel using a vulnerable syscall, thereby compromising all other containers sharing the host. In this paper, rather than attempting to eliminate host compromise, we limit the effectiveness of attacks by bad neighbors to a subset of the cluster. To do this, we propose a new metric dubbed Extraneous System call Exposure (ExS). Scheduling containers to minimize ExS reduces the number of nodes that expose a vulnerable system call and as a result the number of affected containers in the cluster. Experimenting with 42 popular containers on SySched, our greedy scheduler implementation in Kubernetes, we demonstrate that SySched can reduce up to 46\% more victim nodes and up to 48\% more victim containers compared to the Kubernetes default scheduling while also reducing overall host attack surface by 20\%.},
+booktitle = {Proceedings of the 2023 ACM Asia Conference on Computer and Communications Security},
+pages = {812–826},
+numpages = {15},
+keywords = {co-location, container, scheduling, seccomp, system call},
+location = {Melbourne, VIC, Australia},
+series = {ASIA CCS '23}
+}
+
+
+@inproceedings{Suneja_2019,
+author = {Suneja, Sahil and Kanso, Ali and Isci, Canturk},
+title = {Can Container Fusion Be Securely Achieved?},
+year = {2019},
+isbn = {9781450370332},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3366615.3368356},
+doi = {10.1145/3366615.3368356},
+abstract = {Linux containers are key enablers for building microservices. The application's microservices fall broadly under two categories, the core-microservices implementing the business logic and the utility-microservices implementing middleware functionalities. Such functionalities include vulnerability scanning, monitoring, telemetry, etc. Segregating the utility-microservices in separate containers from the core-microservice containers may prevent them from achieving their functionality. This is due to the strong isolation between containers. By diffusing the boundaries between containers we can fuse them together and enable close collaboration. However, this raises several security concerns, especially that the utility-microservices may include vulnerabilities that threaten the entire application. In this paper, we analyze the different techniques to enhance the security of container fusion and present an automated solution based on Kubernetes to configure utility-microservices containers to fuse with core-microservices containers.},
+booktitle = {Proceedings of the 5th International Workshop on Container Technologies and Container Clouds},
+pages = {31–36},
+numpages = {6},
+keywords = {Kubernetes, Linux containers, microservices, orchestration, security},
+location = {Davis, CA, USA},
+series = {WOC '19}
+}
+
+
+@article{minna2025analyzing,
+  title={Analyzing and mitigating (with llms) the security misconfigurations of helm charts from artifact hub},
+  author={Minna, Francesco and Massacci, Fabio and Tuma, Katja},
+  journal={Empirical Software Engineering},
+  volume={30},
+  number={5},
+  pages={132},
+  year={2025},
+  publisher={Springer},
+  abstract="Helm is a package manager that allows defining, installing, and upgrading applications with Kubernetes (K8s), a popular container orchestration platform. A Helm chart is a collection of files describing all dependencies, resources, and parameters required for deploying an application within a K8s cluster. This study aimed to mine and empirically evaluate the security of Helm charts, comparing the performance of existing tools in terms of misconfigurations reported by policies available by default, and measuring to what extent LLMs could be used for removing misconfigurations. For these reasons, we proposed a pipeline to mine Helm charts from Artifact Hub, a popular centralized repository, and analyze them using state-of-the-art open-source tools like Checkov and KICS. First, the pipeline runs several chart analyzers and identifies the common and unique misconfigurations reported by each tool. Secondly, it uses LLMs to suggest a mitigation for each misconfiguration. Finally, the LLM refactored chart previously generated is analyzed again by the same tools to see whether it satisfies the tool’s policies. We also performed a manual analysis on a subset of charts to evaluate whether there are false positive misconfigurations from the tool’s reporting and in the LLM refactoring. We found that (i) there is a significant difference between LLMs, (ii) providing a snippet of the YAML template as input might be insufficient compared to all resources, and (iii) even though LLMs can generate correct fixes, they may also delete other irrelevant configurations that break the application."
 }
