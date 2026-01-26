@@ -76,6 +76,83 @@
 \end{table}
 
 
+\chapter{云原生权限提升漏洞分类与 CWE 对应关系}\label{app:vuln-cwe-mapping}
+
+\begin{table}[htbp]
+	\centering
+	\small
+	\setlength{\tabcolsep}{3pt}
+	\renewcommand{\arraystretch}{0.9}
+	\caption{云原生权限提升漏洞分类框架与 CWE 对应关系}
+	\label{tab:vuln-cwe-mapping}
+
+	\begin{tabular}{ >{\centering\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{3cm} >{\centering\arraybackslash}p{2cm} >{\raggedright\arraybackslash}p{5cm} }
+		\toprule
+		\textbf{一级分类} & \textbf{二级分类} & \textbf{主要 CWE} & \textbf{CWE 描述} \\
+		\midrule
+		\multirow{6}{*}{配置缺陷} 
+		 & \multirow{3}{*}{冗余权限} 
+		 & CWE-269 & 不当访问控制（通用型） \\
+		 & & CWE-266 & 权限分配错误 \\
+		 & & CWE-732 & 关键资源权限分配错误 \\
+		\cmidrule(lr){2-4}
+		 & \multirow{3}{*}{网络隔离不足} 
+		 & CWE-653 & 隔离措施不足 \\
+		 & & CWE-668 & 资源暴露至错误安全域 \\
+		 & & CWE-669 & 资源在不同安全域间转移错误 \\
+		\midrule
+		\multirow{12}{*}{安全逻辑缺陷} 
+		 & \multirow{3}{*}{访问控制缺陷} 
+		 & CWE-863 & 授权验证错误 \\
+		 & & CWE-284 & 不当访问控制 \\
+		 & & CWE-862 & 缺失授权机制 \\
+		\cmidrule(lr){2-4}
+		 & \multirow{3}{*}{身份验证绕过} 
+		 & CWE-287 & 不当身份验证 \\
+		 & & CWE-290 & 硬编码密码进行身份验证 \\
+		 & & CWE-327 & 使用存在缺陷或高风险的加密算法 \\
+		\cmidrule(lr){2-4}
+		 & \multirow{3}{*}{输入验证不足} 
+		 & CWE-20 & 不当输入验证 \\
+		 & & CWE-74 & 输出内容中特殊元素的中和处理不当 \\
+		 & & CWE-79 & Web 页面生成过程中输入的中和处理不当 \\
+		\cmidrule(lr){2-4}
+		 & \multirow{3}{*}{授权验证不完善} 
+		 & CWE-285 & 授权验证不当 \\
+		 & & CWE-250 & 以非必要权限执行操作 \\
+		 & & CWE-268 & 特权操作执行不当 \\
+		\midrule
+		\multirow{9}{*}{敏感信息泄露} 
+		 & \multirow{3}{*}{API 端口暴漏} 
+		 & CWE-200 & 敏感信息泄露给未授权主体 \\
+		 & & CWE-358 & 动态识别资源的操作限制不当 \\
+		 & & CWE-276 & 默认权限配置错误 \\
+		\cmidrule(lr){2-4}
+		 & \multirow{3}{*}{日志泄露} 
+		 & CWE-532 & 敏感信息写入日志文件 \\
+		 & & CWE-214 & 存储/传输前敏感信息清除不当 \\
+		 & & CWE-497 & 敏感系统信息泄露至未授权控制域 \\
+		\cmidrule(lr){2-4}
+		 & \multirow{3}{*}{配置文件泄露} 
+		 & CWE-922 & 敏感信息存储不安全 \\
+		 & & CWE-200 & 敏感信息泄露给未授权主体 \\
+		 & & CWE-270 & 权限上下文切换错误 \\
+		\midrule
+		\multirow{6}{*}{代码注入} 
+		 & \multirow{3}{*}{命令注入} 
+		 & CWE-78 & 操作系统命令中特殊元素的中和处理不当 \\
+		 & & CWE-94 & 代码生成控制不当 \\
+		 & & CWE-601 & URL 重定向至不可信站点 \\
+		\cmidrule(lr){2-4}
+		 & \multirow{3}{*}{路径遍历} 
+		 & CWE-22 & 路径名限制不当，未限定在指定目录 \\
+		 & & CWE-36 & 绝对路径遍历 \\
+		 & & CWE-74 & 输出内容中特殊元素的中和处理不当 \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
 \chapter{CVE-2022-24768 复现步骤与策略清单}\label{app:cve-2022-24768}
 
 本附录给出案例一（CVE-2022-24768）的\textbf{复现详细步骤}与\textbf{纵深防御策略代码清单}，用于复核与工程复现。为降低对生产环境的风险，建议仅在隔离测试集群中执行。
