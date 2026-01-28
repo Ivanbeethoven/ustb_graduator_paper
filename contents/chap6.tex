@@ -1,8 +1,8 @@
 \chapter{案例分析}\label{chap:case}
-为验证本文提出的智能安全策略生成框架在真实云原生权限提升漏洞场景下的有效性，本章选取若干典型 CVE 案例进行深入分析。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{三维质量验证}三个阶段：首先在可控环境中重现漏洞攻击路径并确认风险；随后使用本文方法自动生成候选安全策略；最后从有效性（E）、无干扰性（I）、可部署性（D）三个维度对生成策略进行实证评估，以验证策略能否真实阻断攻击、是否引入业务干扰以及部署难度是否可控。
+为验证本文提出的多智能体协同的安全策略生成框架在真实云原生权限提升漏洞场景下的有效性，本章选取若干典型 CVE 案例进行深入分析。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{三维质量验证}三个阶段：首先在可控环境中重现漏洞攻击路径并确认风险；随后使用本文方法自动生成\textbf{监控策略}与\textbf{防护策略}候选集合；最后从有效性 $E$、无干扰性 $I$、可部署性 $D$ 三个维度对生成策略进行实证评估，以验证策略能否真实阻断攻击、是否引入业务干扰以及部署难度是否可控。
 
 
-\section{案例选择与实验设计}
+\section{案例分析实验设计}
 
 \subsection{CVE 案例选择标准}
 
@@ -17,7 +17,6 @@
 \textbf{（4）防控价值}：漏洞场景具有典型的临时防控需求（如修复补丁尚未发布、业务无法立即升级或需要多层防御），使得智能生成策略具有实际应用价值。
 
 
-% --- CVE 案例汇总表格（插入处）
 \begin{table}[htbp]
     \centering
     \small
@@ -34,8 +33,6 @@
         5 & CVE-2022-24877 & Flux (kustomize-controller) & 代码注入 & 路径遍历 & 案例五 \\
         6 & CVE-2022-29171 & Sourcegraph (gitserver) & 代码注入 & 命令注入 & 案例六 \\
         7 & CVE-2023-22482 & Argo CD (OIDC aud) & 安全逻辑缺陷 & 身份验证绕过 & 案例七 \\
-        \midrule
-        \multicolumn{6}{l}{\textit{注：一级/二级分类与第~\ref{chap:method}~章表~\ref{tab:cloud-native-vuln}一致，具体映射依据“分类漏洞.csv”中的标注结果。}} \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -43,13 +40,26 @@
 
 \subsection{实验环境与复现流程}
 
-\textbf{（1）环境搭建}。所有漏洞复现与策略验证在隔离的 Kubernetes 测试集群中进行，集群配置如下：
-\begin{itemize}
-    \item Kubernetes 版本：根据各 CVE 受影响版本动态切换（使用 Kind 或 Minikube 快速创建不同版本集群）；
-    \item 节点规模：3 节点集群（1 个控制平面节点 + 2 个工作节点），每个节点 4 核 CPU / 8GB 内存；
-    \item 网络插件与安全工具：根据案例需求部署 Calico（NetworkPolicy）、OPA/Gatekeeper、Kyverno、Falco 等；
-    \item 受影响应用：在集群中部署具有已知漏洞的应用版本（如特定版本的 Argo CD、Cilium 等）。
-\end{itemize}
+\textbf{（1）环境搭建}。所有漏洞复现与策略验证在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总如表~\ref{tab:chap6-env}。
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption{实验环境软硬件配置与工具版本汇总}
+    \label{tab:chap6-env}
+    \begin{tabularx}{\textwidth}{C{3.4cm} X}
+        \toprule
+        项目 & 配置 \\
+        \midrule
+        集群工具与版本 & Minikube v1.18.1；Kubernetes v1.18.3\\
+        节点规模与规格 & 1个控制节点与2个工作节点；每节点4核CPU/8GB内存 \\
+        CNI/网络策略 & Calico v3.28.2\\
+        准入控制 & OPA/Gatekeeper v3.14.0；Kyverno v1.11.0\\
+        运行时安全监控 & Falco v0.38.1 、Tetragen v1.6.0\\
+        包管理工具 & Helm v3（用于部分案例组件的 Helm Chart 部署与回滚）\\
+        \bottomrule
+    \end{tabularx}
+\end{table}
 
 \textbf{（2）漏洞复现流程}。对每个 CVE，按以下步骤进行复现：
 \begin{enumerate}
@@ -86,4 +96,4 @@
 \input{contents/chap6/case7.tex}
 
 \section{小节}
-通过本章的分析，我们可以得出所提智能安全策略生成框架能够有效应对多种云原生环境中的权限提升漏洞。通过对典型 CVE 案例的复现与分析，验证了自动生成的安全策略在真实攻击场景中的有效性与适用性，为云原生应用的安全防护提供了有力支持。
+通过本章的分析，本文所提多智能体协同的安全策略生成框架能够有效应对多种云原生环境中的权限提升漏洞。通过对典型 CVE 案例的复现与分析，验证了自动生成的\textbf{监控策略}与\textbf{防护策略}在真实攻击场景中的有效性与适用性，为云原生应用的安全防护提供了有力支撑。

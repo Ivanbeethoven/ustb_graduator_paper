@@ -6,7 +6,7 @@
 本章实验旨在验证所提方法在权限提升漏洞实时防控场景下的有效性与适用性，具体围绕以下研究问题展开：
 
 \paragraph{RQ1:}
-在权限提升漏洞的临时防控场景下,本文提出的方法不同步骤能否在有效性($E$)、无干扰性($I$)与可部署性($D$)三个维度上相对消融配置提供一致性增益?
+在权限提升漏洞的临时防控场景下,本文提出方法的不同步骤能否在有效性($E$)、无干扰性($I$)与可部署性($D$)三个维度上相对消融配置提供一致性增益?
 \paragraph{RQ2:}
 本文工作流的相对优势是否对不同生成模型与评审模型稳健,是否存在系统性的能力分层或偏好差异?
 \paragraph{RQ3:}
@@ -25,13 +25,11 @@
     \bicaption{实验采用的大语言模型基本信息}{Basic information of large language models used in experiments}
     \label{tab:llm-models-info}
     \renewcommand{\arraystretch}{1.3}
-    % 定义居中对齐的自动宽列格式 Y
-    \newcolumntype{Y}{>{\centering\arraybackslash}X}
-    \begin{tabularx}{0.85\linewidth}{YYYY}
+	\begin{tabularx}{0.85\linewidth}{*{4}{>{\centering\arraybackslash}X}}
     \toprule
     \textbf{模型代号} & \textbf{开发机构}  & \textbf{发布日期} & \textbf{参数规模} \\
     \midrule
-    Qwen3-Max & 阿里云  & 2025年9月 & 未公开 \\
+    Qwen3-Max & 阿里云  & 2025年9月 & 1000B+ \\
     Deepseekv3.1 & 深度求索  & 2025年9月 & 670B \\
     GPT-5 & OpenAI  & 2025年6月 & 未公开 \\
     Grok4 & xAI &  2025年7月 & 未公开 \\
@@ -40,7 +38,7 @@
     \end{tabularx}
 \end{table}
 
-评审阶段将上述五个模型作为评审模型，对 $\Pi_v$ 进行排名式评价。评价指标采用三维质量向量 $q(\pi)=(E(\pi),I(\pi),D(\pi))$，分别对应有效性、无干扰性与可部署性。为降低不同评审模型评分尺度差异带来的影响，本文以相对排序作为主要统计口径。
+评审阶段将上述五个模型作为评审模型，对 $\Pi_v$ 进行排名式评价。评价指标采用三维质量向量 $q(\pi)=(E(\pi),I(\pi),D(\pi))$，分别对应有效性、无干扰性与可部署性。为缓解大模型评分能力缺陷\cite{wu2024scoring}，降低不同评审模型评分尺度差异带来的影响，本文以相对排序作为效果评估质量。同时我们将所有评审模型的结果进行聚合，采用算术平均排名作为最终排序依据，以增强结果的稳健性与可解释性。
 
 为回答有关令牌消耗与大模型调用成本的问题，本文在生成与评审阶段记录每次调用的输入与输出的令牌数，并按漏洞样本（CVE）聚合统计令牌消耗；对于包含反馈迭代的配置，累计其多轮调用的令牌消耗。
 
@@ -66,86 +64,52 @@
 
 \section{RQ1：防控技术工作流整体优势}
 
-本章结果部分按研究问题组织。除非特别说明，统计结果均在 55 个漏洞样本上汇总，评审侧采用排名式结果作为主要口径。
+本节验证所提方法的完整工作流 \texttt{all} 相对于三项消融配置在三维质量指标上的一致性增益，并考察不同生成模型条件下的稳健性表现。除非特别说明，统计结果均在 55 个漏洞样本上汇总，评审侧采用排名式结果作为主要口径。
 
-\subsection{三维度总体表现}
-图\ref{fig:single-dim-method-avg} 给出不同方法配置在 $E/I/D$ 三个维度上的平均排名式结果。整体上，全量工作流（all）在有效性维度保持领先，同时在无干扰性与可部署性维度呈现出与有效性不同的取舍结构。为刻画样本层面的差异分布，图\ref{fig:heatmap-method-all} 进一步给出 all 配置在三个维度上的热力图总览。
+\subsection{方法配置的相对排名}
 
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[可部署性\label{fig:single-dim-method-avg-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/summary/single_dim_method_avg_可部署性.png}}\hfill
-	 \subfloat[无干扰性\label{fig:single-dim-method-avg-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/summary/single_dim_method_avg_无干扰性.png}}\hfill
-	 \subfloat[有效性\label{fig:single-dim-method-avg-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/summary/single_dim_method_avg_有效性.png}}}
-	\caption{不同方法配置在三个维度上的平均排名式评分结果（跨评审者汇总，三维度并列）。}\label{fig:single-dim-method-avg}
-\end{figure}
+图\ref{fig:method-ranking-overview}呈现四种方法配置在 $E$、$I$ 与 $D$ 三个维度上的排名分布，数值越小代表防控效果越优。统计流程如下：55 个权限提升漏洞实例分别经五个生成模型生成候选策略，继而由五个评审模型独立评审并给出排名，最终对所有评审模型的排名取算术平均作为该方法配置的综合排名。这一评审聚合机制可有效抑制单一评审模型的主观偏差，增强排名结果的统计稳健性。
 
 \begin{figure}[!ht]
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
 	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[可部署性\label{fig:heatmap-method-all-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/method/all/heatmap_method_all_可部署性.png}}\hfill
-	 \subfloat[无干扰性\label{fig:heatmap-method-all-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/method/all/heatmap_method_all_无干扰性.png}}\hfill
-	 \subfloat[有效性\label{fig:heatmap-method-all-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/method/all/heatmap_method_all_有效性.png}}}
-	\caption{全量方法配置（all）下三个维度的热力图总览（三维度并列）。}\label{fig:heatmap-method-all}
+	 \includegraphics[width=0.85\textwidth]{images/output_rank_order/method_rank_order.png}}
+	\caption{方法配置在三个维度上的排名对比。}\label{fig:method-ranking-overview}
 \end{figure}
 
-\subsection{有效性维度的消融贡献与稳定性}
-为更直接回答工作流设置对漏洞路径覆盖的贡献，本文以有效性维度作为核心观察对象。图\ref{fig:effectiveness-method-avg} 给出跨评审汇总后的方法配置平均排名，全量方法在有效性上整体领先。图\ref{fig:effectiveness-ablation-by-judge} 与图\ref{fig:effectiveness-ablation-by-generator} 分别从评审聚合与生成聚合两个视角展示消融差异，用于检验提升是否对评审模型与生成模型稳健。
+实验结果显示，完整工作流 \texttt{all} 在三维度上均居首位，综合平均排名为 $1.00$。消融检索增强模块后，\texttt{w/o rag} 的平均排名下滑至 $2.33$，反映检索增强对漏洞上下文理解与策略生成质量的显著贡献；移除思维链推导的 \texttt{w/o cot} 配置平均排名为 $2.67$，验证了分阶段推理对复杂漏洞防控策略生成的必要性；而移除基于评审反馈的迭代优化机制导致 \texttt{w/o feedback} 出现最严重的性能退化，平均排名降至 $4.00$，证实反馈闭环是提升策略质量的核心环节。
+
+进一步观察可发现，\texttt{w/o cot} 在 $E$ 与 $I$ 维度上均劣于 \texttt{w/o rag}，但在 $D$ 维度上略优，排名分别为 $2.0$ 与 $3.0$。这一现象可归因于思维链推导在明确漏洞路径后倾向于生成复杂度较高的策略，简化推导过程反而降低了部署负担。尽管存在单维度差异，综合三维表现，检索增强模块的整体贡献仍优于思维链推导模块。完整工作流在各维度上的排名均显著优于消融配置，特别是反馈迭代机制的缺失对三个维度均造成严重退化，凸显其作为工作流核心环节的关键作用。
+
+\subsection{生成模型的相对排名}
+
+图\ref{fig:generator-ranking-overview}呈现五个生成模型在三维度上的排名分布。统计流程与前述方法配置排名一致：每个生成模型在 55 个漏洞实例上生成的策略由五个评审模型独立排名后取算术平均，得到该生成模型在各维度上的综合排名。
 
 \begin{figure}[!ht]
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
 	 \setlength{\belowcaptionskip}{0pt}%
-	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_method_avg_有效性.png}}
-	\caption{有效性维度下，不同方法配置的平均排名式评分结果（跨评审者汇总）。}\label{fig:effectiveness-method-avg}
+	 \includegraphics[width=0.85\textwidth]{images/output_rank_order/profile_rank_order.png}}
+	\caption{生成模型在三个维度上的排名对比。}\label{fig:generator-ranking-overview}
 \end{figure}
 
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[all\label{fig:effectiveness-ablation-by-judge-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/method_bar_by_judge_all_有效性.png}}\hfill
-	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-by-judge-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_rag/method_bar_by_judge_w_o_rag_有效性.png}}\\
-	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-by-judge-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_cot/method_bar_by_judge_w_o_cot_有效性.png}}\hfill
-	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-by-judge-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_feedback/method_bar_by_judge_w_o_feedback_有效性.png}}}
-	\caption{有效性维度下，按评审模型聚合的消融对比（2×2 网格）。}\label{fig:effectiveness-ablation-by-judge}
-\end{figure}
+实验数据揭示，\texttt{DeepSeek 3.1} 在综合平衡性上表现最优，平均排名为 $1.67$，在 $I$ 与 $D$ 维度上均位列首位，排名均为 $1.0$，仅在 $E$ 维度上排名第三，排名为 $3.0$。这表征 DeepSeek 在生成策略时能够有效平衡漏洞防控效果与实际部署约束，规避过度复杂或侵入性强的策略设计。\texttt{Qwen3-Max} 在三维度上均保持中上水平，平均排名为 $2.67$，其在 $E$、$I$、$D$ 上的排名分别为 $4.0$、$2.0$、$2.0$，呈现较为均衡的能力分布。
 
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[all\label{fig:effectiveness-ablation-by-generator-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/method_bar_by_generator_all_有效性.png}}\hfill
-	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-by-generator-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_rag/method_bar_by_generator_w_o_rag_有效性.png}}\\
-	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-by-generator-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_cot/method_bar_by_generator_w_o_cot_有效性.png}}\hfill
-	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-by-generator-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_feedback/method_bar_by_generator_w_o_feedback_有效性.png}}}
-	\caption{有效性维度下，按生成模型聚合的消融对比（2×2 网格）。}\label{fig:effectiveness-ablation-by-generator}
-\end{figure}
+\texttt{GPT-5} 呈现显著的维度分化特征：在 $E$ 维度上排名首位，排名为 $1.0$，但在 $I$ 与 $D$ 维度上均排名垫底，均为 $5.0$。这一分化现象揭示 GPT-5 在生成策略时更注重漏洞防控的彻底性，倾向于采用严格的隔离与限制措施，但忽视了对业务系统的副作用与部署复杂度。与之形成对照，\texttt{Grok4} 在 $E$ 维度上排名最低，排名为 $5.0$，但在 $I$ 与 $D$ 维度上保持中游水平，排名均为 $3.0$，平均排名为 $3.67$，适用于对部署成本敏感、可容忍较弱防控强度的应急响应场景。
 
-\subsection{样本层面差异与离群}
-为检验提升是否在样本层面保持一致，并识别离群漏洞，图\ref{fig:effectiveness-ablation-heatmap} 给出四种方法配置在有效性维度上的热力图对照。
+\texttt{GLM-4.5} 的维度分化模式与 GPT-5 相似但程度较轻：在 $E$ 维度上排名第二，排名为 $2.0$，但在 $I$ 与 $D$ 维度上均排名第四，均为 $4.0$，平均排名为 $3.33$。从整体视角考察，五个生成模型在三维质量指标上表征出明显的能力分化与取舍倾向。DeepSeek 的均衡优势与 GPT-5 的维度分化现象在可视化结果中尤为清晰，为后续基于维度加权的多智能体策略组合提供了实证依据。
 
-\begin{figure}[!ht]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[all\label{fig:effectiveness-ablation-heatmap-all}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/all/heatmap_method_all_有效性.png}}\hfill
-	 \subfloat[w/o\_rag\label{fig:effectiveness-ablation-heatmap-no-rag}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_rag/heatmap_method_w_o_rag_有效性.png}}\\
-	 \subfloat[w/o\_cot\label{fig:effectiveness-ablation-heatmap-no-cot}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_cot/heatmap_method_w_o_cot_有效性.png}}\hfill
-	 \subfloat[w/o\_feedback\label{fig:effectiveness-ablation-heatmap-no-feedback}]{\includegraphics[width=0.49\textwidth]{images/plots/有效性/method/w_o_feedback/heatmap_method_w_o_feedback_有效性.png}}}
-	\caption{有效性维度下，四种方法配置的热力图对照（2×2 网格）。}\label{fig:effectiveness-ablation-heatmap}
-\end{figure}
+\subsection{关键结论}
 
-% TODO(图)：建议补充“胜率/优势幅度”类统计图，增强RQ1的定量说服力
-\begin{figure}[!ht]
-	\centering
-	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ1）}\par
-	建议图型：all 相对各消融的胜率（55个CVE上 all 排名优于对照的比例）与排名差值分布（箱线图）。\par
-	建议数据口径：按CVE聚合，维度分别为 $E/I/D$；评审侧可取5个评审模型的平均秩或多数表决秩。}}
-	\caption{全量工作流相对消融设置的胜率与优势幅度统计（待补图）。}\label{fig:rq1-winrate-delta-todo}
-\end{figure}
+基于上述排名统计，本节针对 RQ1 给出如下结论：
+
+\paragraph{方法工作流的一致性增益}
+完整工作流 \texttt{all} 在 $E$、$I$ 与 $D$ 三维度上均取得最优排名，综合平均排名为 $1.00$，显著优于任何消融配置。实验验证了检索增强、思维链推导与反馈迭代三个模块的协同作用能够为权限提升漏洞的临时防控提供一致性增益。其中，反馈迭代机制的缺失对三维度均造成最严重的性能退化，平均排名降至 $4.00$，证实其作为工作流核心环节的关键地位。
+
+\paragraph{生成模型的能力分化}
+五个生成模型在三维质量指标上表征出明显的能力分化：\texttt{DeepSeek 3.1} 在综合平衡性上表现最优，平均排名为 $1.67$，适用于对部署约束与业务连续性敏感的生产环境；\texttt{GPT-5} 在漏洞防控有效性上排名首位，但在 $I$ 与 $D$ 维度上表现不佳，平均排名为 $3.67$，适用于对安全性要求极高且可容忍较高部署成本的场景；\texttt{Grok4} 在 $E$ 维度上表现最弱，但在部署友好性上保持中游水平，可作为快速响应的轻量级方案。实验发现为多智能体协同策略提供了实证依据：在实际部署中，可依据具体漏洞的风险等级与业务约束动态选择或组合不同生成模型。
+  
 
 \section{RQ2：跨模型稳健性}
 
@@ -209,93 +173,119 @@
 
 \subsection{模型内容对其能力评估}
 
-为评估不同生成模型在策略生成过程中的稳定性与输出质量，本文统计了各模型在生成阶段触发重试的次数。重试机制主要针对三类失败情形：结构化输出的 JSON 格式错误（通常因字段缺失、括号不匹配或编码问题）、生成内容的语法错误（包括 YAML 语法错误、逻辑矛盾或不可解析的配置片段），以及内容违规（触发模型供应商的安全策略或内容审核机制）。表\ref{tab:model-retry-stats} 给出五个生成模型在 55 个漏洞样本全流程中的累计重试次数统计。
+为评估不同生成模型在策略生成过程中的稳定性与输出质量，本文统计了各模型在生成阶段触发重试的次数。重试机制主要针对三类失败情形：结构化输出的 JSON 格式错误（通常因字段缺失、括号不匹配或编码问题）、生成内容的语法错误（包括 YAML 语法错误、逻辑矛盾或不可解析的配置片段），以及内容违规（触发模型供应商的安全策略或内容审核机制）。为便于跨模型对比，本文将计数按固定分母 504 归一化为失误率（失败发生率）。表\ref{tab:model-retry-stats} 给出五个生成模型的失误率统计（=计数/504）。
 
-整体上，GPT-5 在三类错误上均无重试记录，表现出较高的生成鲁棒性；Grok和DeepSeek 的重试次数较少，输出稳定性良好；Qwen3 与 GLM-4.5 的重试次数相对较高，尤其在 JSON 格式错误上，GLM-4.5 达到 23 次，反映其在结构化输出约束下的遵循能力有待提升。语法错误维度上，GLM-4.5 同样表现出明显劣势，共计 10 次重试，而其余模型均在 5 次以下。值得注意的是，GLM-4.5 是唯一触发内容违规的模型（10 次），可能与其内容审核策略对高危漏洞描述配中的安全关键词过度敏感相关。该统计为模型选型与多智能体协同策略提供了量化参考：在资源受限或对输出稳定性敏感的场景下，优先选用 GPT-5、Grok 或 DeepSeek；而对于需要多样性候选集的场景，可将 Qwen3 与 GLM-4.5 纳入候选池，但需配置更宽松的重试预算与后处理容错机制。
+整体上，GPT-5 在三类错误上均无重试记录，表现出较高的生成鲁棒性；Grok 和 DeepSeek 的失误率较低，输出稳定性良好；Qwen3 与 GLM-4.5 的失误率相对较高，尤其在 JSON 格式错误上，GLM-4.5 的失误率为 4.56\%（=23/504），反映其在结构化输出约束下的遵循能力有待提升。语法错误维度上，GLM-4.5 同样表现出明显劣势（1.98\%=10/504），而其余模型均不超过 0.99\%（=5/504）。值得注意的是，GLM-4.5 是唯一触发内容违规的模型（1.98\%=10/504），可能与其内容审核策略对高危漏洞描述配中的安全关键词过度敏感相关。该统计为模型选型与多智能体协同策略提供了量化参考：在资源受限或对输出稳定性敏感的场景下，优先选用 GPT-5、Grok 或 DeepSeek；而对于需要多样性候选集的场景，可将 Qwen3 与 GLM-4.5 纳入候选池，但需配置更宽松的重试预算与后处理容错机制。
 
 \begin{table}[htb]
-    \centering
-    \bicaption{生成模型在策略生成过程中的重试次数统计}{Statistics of retry attempts during strategy generation across LLMs}
+	\centering
+	\bicaption{生成模型在策略生成过程中的重试失误率（\%）统计（=计数/504）}{Failure rates (\%) of retry-triggering errors during strategy generation across LLMs (=count/504)}
     \label{tab:model-retry-stats}
-    \renewcommand{\arraystretch}{1.3}
-    \begin{tabular}{lccccc}
+	\setlength{\tabcolsep}{8pt}
+	\renewcommand{\arraystretch}{1.2}
+	\small
+	\begin{tabularx}{0.95\linewidth}{>{\raggedright\arraybackslash}p{2.6cm} *{5}{>{\centering\arraybackslash}X}}
     \toprule
-    \textbf{错误类型} & \textbf{DeepSeek3.1} & \textbf{GLM-4.5} & \textbf{GPT-5} & \textbf{Grok4} & \textbf{Qwen3} \\
+	\textbf{错误类型} & \makecell{\textbf{DeepSeek}\\\textbf{3.1}} & \makecell{\textbf{GLM}\\\textbf{-4.5}} & \makecell{\textbf{GPT}\\\textbf{-5}} & \makecell{\textbf{Grok}\\\textbf{4}} & \makecell{\textbf{Qwen}\\\textbf{3}} \\
     \midrule
-    JSON 格式错误 & 5 & 23 & 0 & 5 & 13 \\
-    语法错误 & 3 & 10 & 0 & 0 & 5 \\
-    内容违规 & 0 & 10 & 0 & 0 & 0 \\
-    \midrule
-    \textbf{合计} & \textbf{8} & \textbf{43} & \textbf{0} & \textbf{5} & \textbf{18} \\
+	JSON 格式错误 & 0.99\% & 4.56\% & 0.00\% & 0.99\% & 2.58\% \\
+	语法错误 & 0.60\% & 1.98\% & 0.00\% & 0.00\% & 0.99\% \\
+	内容违规 & 0.00\% & 1.98\% & 0.00\% & 0.00\% & 0.00\% \\
+	\addlinespace[0.25em]\midrule
+	\textbf{合计} & \textbf{1.59\%} & \textbf{8.53\%} & \textbf{0.00\%} & \textbf{0.99\%} & \textbf{3.57\%} \\
     \bottomrule
-    \end{tabular}
+	\end{tabularx}
 \end{table}
 
 \section{RQ3：评价一致性与可信度}
 
-图\ref{fig:effectiveness-by-judge-summary} 给出有效性维度下按评审模型拆分的汇总结果，图\ref{fig:effectiveness-judge-heatmap} 进一步展示评审偏好结构。为将一致性讨论落到可计算的量化指标，本文计划补充评审间相关性统计与分布图，用于度量不同评审模型在候选排序上的一致性程度。
+本节聚焦于评审阶段的“排序式评价”是否具备足够的一致性，从而支撑前述跨评审聚合统计与反馈闭环（RQ1--RQ2）。直观而言，若不同评审者（评审模型）对候选项优劣的判断高度一致，则聚合后的排序结果更稳定、更可解释；反之，若一致性较弱，则需要警惕“评审者选择敏感性”，并进一步细化评价准则。
+
+\subsection{一致性度量与符号约定}
+在固定评价维度下，设共有 $n$ 个候选项（例如不同方法配置）与 $m$ 名评审者。候选项索引 $i=1,\dots,n$，评审者索引 $j=1,\dots,m$。令 $r_{ij}$ 表示评审者 $j$ 对候选项 $i$ 给出的名次（名次越小表示越优）。
+
+\textbf{Kendall's $W$（协调系数）} 用于刻画多评审者整体一致性，取值范围 $[0,1]$，$W=1$ 表示完全一致：
+\begin{equation}
+W = \frac{12\,S}{m^2\,(n^3-n)}
+\end{equation}
+其中
+\begin{equation}
+S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\frac{1}{n}\sum_{i=1}^{n}R_i.
+\end{equation}
+
+\textbf{两两 Spearman 等级相关系数} 用于刻画任意两名评审者排序趋势的一致性。对评审者 $j$ 与 $k$，其排名向量分别记为 $\mathbf{r}_j$ 与 $\mathbf{r}_k$，则
+\begin{equation}
+\rho_{jk}=\mathrm{corr}(\mathbf{r}_j,\mathbf{r}_k).
+\end{equation}
+当两位评审者排序趋势一致时，$\rho_{jk}$ 接近 $1$；当趋势相反时，$\rho_{jk}$ 接近 $-1$。
+
+\subsection{一致性统计结果}
+本文在 $E/I/D$ 三个维度内分别计算 Kendall's $W$ 与评审者两两 Spearman 相关系数，并汇总其分布统计。结果显示（见图\ref{fig:judge-corr-3d}--\ref{fig:judge-spearman-box}）：
+\begin{itemize}
+	\item \textbf{有效性}：一致性最高，$W=0.955$；Spearman 均值 $0.944$（中位数 $0.944$，最小 $0.904$，最大 $0.991$）。
+	\item \textbf{无干扰性}：一致性较高，$W=0.846$；Spearman 均值 $0.808$（中位数 $0.839$，最小 $0.585$，最大 $0.932$）。
+	\item \textbf{可部署性}：一致性相对较弱，$W=0.687$；Spearman 均值 $0.609$（中位数 $0.689$，最小 $0.238$，最大 $0.947$）。
+\end{itemize}
+总体结论为：一致性呈现“有效性 $>$ 无干扰性 $>$ 可部署性”的稳定梯度。
 
 \begin{figure}[!ht]
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
 	 \setlength{\belowcaptionskip}{0pt}%
-	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}
-	\caption{有效性维度下，不同评审模型的排名式评分汇总。}\label{fig:effectiveness-by-judge-summary}
+	 \subfloat[有效性\label{fig:judge-corr-eff}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_有效性.png}}\hfill
+	 \subfloat[无干扰性\label{fig:judge-corr-noint}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_无干扰性.png}}\hfill
+	 \subfloat[可部署性\label{fig:judge-corr-deploy}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_可部署性.png}}}
+	\caption{不同维度下评审者两两相关性热力图（Spearman）。}
+	\label{fig:judge-corr-3d}
 \end{figure}
 
 \begin{figure}[!ht]
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
 	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[\texttt{Qwen3}\label{fig:effectiveness-judge-heatmap-qwen3}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/ali-qwen/heatmap_ali-qwen_有效性.png}}\hfill
-	 \subfloat[\texttt{DeepSeek}\label{fig:effectiveness-judge-heatmap-deepseek}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/deepseek/heatmap_deepseek_有效性.png}}\hfill
-	 \subfloat[\texttt{GPT-5}\label{fig:effectiveness-judge-heatmap-gpt5}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/gpt5/heatmap_gpt5_有效性.png}}\\
-	 \subfloat[\texttt{Grok}\label{fig:effectiveness-judge-heatmap-grok}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/grok4/heatmap_grok4_有效性.png}}\hfill
-	 \subfloat[\texttt{GLM-4.6}\label{fig:effectiveness-judge-heatmap-glm46}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/heatmap/glm4.5/heatmap_glm4.5_有效性.png}}}
-	\caption{有效性维度下，不同评审模型的偏好结构热力图对照（3+2 网格）。}\label{fig:effectiveness-judge-heatmap}
+	 \subfloat[Kendall's $W$ 对比\label{fig:judge-kendalls-w}]{\includegraphics[width=0.49\textwidth]{images/plots/judge_consistency/judge_kendalls_w_by_dimension.png}}\hfill
+	 \subfloat[两两 Spearman 分布\label{fig:judge-spearman-box}]{\includegraphics[width=0.49\textwidth]{images/plots/judge_consistency/judge_spearman_box_by_dimension.png}}}
+	\caption{评审一致性统计汇总：整体一致性（$W$）与两两相关分布。}
+	\label{fig:judge-agreement-summary}
 \end{figure}
 
-% TODO(图)：评审间一致性量化（相关性/一致性系数）
 \begin{figure}[!ht]
 	\centering
-	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ3）}\par
-	建议图型：评审模型两两一致性热力图（Kendall's $\tau$ 或 Spearman $\rho$），分别对 $E/I/D$ 计算。\par
-	建议口径：对每个CVE的候选排序，先得到评审间相关，再在55个CVE上取均值或中位数。}}
-	\caption{评审模型两两一致性统计热力图（待补图）。}\label{fig:rq3-judge-agreement-heatmap-todo}
+	\includegraphics[width=0.86\linewidth]{images/plots/judge_consistency/judge_dispersion_by_dimension.png}
+	\caption{不同维度下评审分歧程度的汇总（跨评审者离散性统计量）。}
+	\label{fig:judge-dispersion}
 \end{figure}
 
-% TODO(图)：一致性分布，用于显示离群CVE
-\begin{figure}[!ht]
-	\centering
-	\fbox{\parbox{0.92\linewidth}{\textbf{TODO：待补图（RQ3）}\par
-	建议图型：每个CVE的一致性分数分布（箱线图/直方图），并标注一致性最低的若干样本用于案例解释。}}
-	\caption{按漏洞样本统计的评审一致性分布（待补图）。}\label{fig:rq3-judge-agreement-dist-todo}
-\end{figure}
+\subsection{讨论与启示}
+\textbf{维度差异}：有效性维度的一致性最高，说明评审者对“漏洞路径覆盖/处置有效性”的判定依据更一致；而可部署性维度的一致性相对较弱，通常涉及工程可行性、环境依赖、部署成本与运维复杂度等多因素权衡，不同评审者对权重与阈值的设定更易出现系统性差异。
+
+\textbf{对聚合与反馈闭环的影响}：较高的 $W$ 与较高的 Spearman 均值意味着跨评审聚合后的排序更稳定，可为 RQ1--RQ2 的结论提供可信支撑；对于一致性较弱的维度（如可部署性），后续可通过细化评价准则、增加案例边界说明，或采用鲁棒聚合策略降低对单一评审者偏好的敏感性。
+
+
 
 \section{RQ4：静态扫描的处置价值}
 
-为评估静态扫描工具对临时防控决策的支撑程度，本文选取 \texttt{kubescape}、\texttt{kubesec} 与 \texttt{kubelinter} 作为代表性基线，并纳入 \texttt{SLI-Kube} 作为对照，在同一批 Kubernetes 清单上对报告条目按统一风险类型口径归并统计，结果如表\ref{tab:risk-summary-four-tools} 所示。静态工具的报告更集中于资源基线与通用加固项，适合用于日常治理与基线巡检；但从 CVE 处置视角看，报告通常难以直接指向漏洞路径与触发前置条件，也难以形成包含验证与回滚边界的可执行动作序列，因此对补丁窗口期的直接支撑作用较弱。
+为评估静态扫描工具对临时防控决策的支撑程度，本文选取 \texttt{kubescape}、\texttt{kubesec} 与 \texttt{kubelinter} 作为代表性基线，并纳入 \texttt{SLI-Kube} 作为对照，在同一批 Kubernetes 清单上对报告条目按统一风险类型口径归并统计，结果如表\ref{tab:risk-summary-four-tools} 所示。整体上，静态工具的输出更偏向配置基线与通用加固项，适合用于日常治理与合规巡检；但从风险检测结果对具体 CVE 临时处置的直接支撑来看，其与本文统计的 55 个权限提升漏洞之间关联有限。对照分析显示，仅有 2 个漏洞样本 CVE\-2020\-4062 与 CVE\-2024\-31989 能在扫描报告中找到与触发前提一致的风险线索，且均属于缺乏网络隔离风险，对应表中的网络隔离项，分别由 \texttt{kubescape} 与 \texttt{SLI-Kube} 命中。除上述情形外，其余漏洞样本的关键攻击路径与触发条件通常未被静态扫描规则直接覆盖，难以在补丁窗口期形成可执行的处置依据。
 
 \begin{table}[t]
 \centering
 \small
-% 定义居中对齐的自动宽列格式 Y
-\newcolumntype{Y}{>{\centering\arraybackslash}X}
+% 注：列类型 Y 已在本章前部定义（避免重复定义产生 warning）
 % 将表格宽度设置为 \linewidth，第一列左对齐(l)，其余列均匀分布并居中(Y)
 \bicaption{静态扫描工具风险结果汇总}{Summary of risk types from static scanning tools}
-\begin{tabularx}{0.85\linewidth}{l Y Y Y Y}
+\begin{tabularx}{0.95\linewidth}{l *{5}{>{\centering\arraybackslash}X}}
 \toprule
-风险类型 & Kubescape & Kubesec & Kubelinter& SLI-Kube\\
+风险类型 & 关联一级分类 & Kubescape & Kubesec & Kubelinter & SLI-Kube\\
 \midrule
-资源配置缺失 & 110 & 47 & 73 & 0 \\
-非 Root 运行 & 54 & 53 & 51 & 0 \\
-根文件系统非只读 & 39 & 34 & 59 & 0 \\
-网络隔离 & 132 & 0 & 0 & 15 \\
-特权与提权 & 39 & 0 & 12 & 0 \\
-主机级暴露 & 30 & 0 & 9 & 3 \\
-身份与密钥 & 192 & 58 & 0 & 2 \\
-系统调用隔离 & 0 & 58 & 0 & 1 \\
-探针配置 & 92 & 0 & 15 & 0 \\
+资源配置缺失 & 配置缺陷 & 110 & 47 & 73 & 0 \\
+非 Root 运行 & 配置缺陷 & 54 & 53 & 51 & 0 \\
+根文件系统非只读 & 配置缺陷 & 39 & 34 & 59 & 0 \\
+网络隔离 & 配置缺陷 & 132 & 0 & 0 & 15 \\
+特权与提权 & 配置缺陷 & 39 & 0 & 12 & 0 \\
+主机级暴露 & 配置缺陷 & 30 & 0 & 9 & 3 \\
+身份与密钥 & 敏感信息泄露 & 192 & 58 & 0 & 2 \\
+系统调用隔离 & 配置缺陷 & 0 & 58 & 0 & 1 \\
+探针配置 & 配置缺陷 & 92 & 0 & 15 & 0 \\
 \bottomrule
 \end{tabularx}
 \label{tab:risk-summary-four-tools}
@@ -308,33 +298,51 @@
 度量与分析设计如下：
 
 \begin{table}[htb]
-    \centering
-    % 定义一个新的列格式 Y，基于 X 列格式但内容居中
-    \newcolumntype{Y}{>{\centering\arraybackslash}X}
-    
-    \bicaption{不同数据集与大模型下的平均Token消耗对比}{Comparison of average token usage across datasets and LLMs}
-    \label{tab:token_usage_wide}
-    
-    % 设置行高
-    \noindent\renewcommand{\arraystretch}{1.3}
-    
-    % 将宽度设为 \linewidth
-    \begin{tabularx}{\linewidth}{l Y Y Y Y Y Y}
-    \toprule
-    \multirow{2}{*}{\textbf{方法}} & \multicolumn{6}{c}{\textbf{单个CVE的平均Token输出消耗}} \\
-    \cmidrule(lr){2-7}
-    & Qwen3-max & DeepSeek & GLM-4.5 & GPT-5 & Grok-4 & \textbf{均值} \\
-    \midrule
-    All         & 2382.88 & 4606.87 & 2902.54 & 8874.71 & 2631.29 & \textbf{4279.65} \\
-    w/o CoT      & 1713.28 & 4048.21 & 2507.39 & 7571.79 & 2025.02 & \textbf{3573.14} \\
-    w/o Feedback & 1554.30 & 3578.10 & 2478.98 & 6547.50 & 1859.59 & \textbf{3203.69} \\
-    w/o RAG      & 2063.49 & 4359.79 & 2557.12 & 8411.06 & 2393.32 & \textbf{3956.95} \\
-    \textbf{均值} & \textbf{1928.74} & \textbf{4148.24} & \textbf{2611.51} & \textbf{7851.26} & \textbf{2227.31} & \textbf{3753.36} \\
-	\midrule
-	每千耗费(元)     & 0.012 & 0.003 & 0.002 & 0.07 & 0.06  & \textbf{--} \\
-	输出花费均值(元) & 0.03 & 0.014 & 0.006 & 0.62 & 0.158 & \textbf{--} \\
-    \bottomrule
-    \end{tabularx}
+\centering
+% 注：列类型 Y 已在本章前部定义（避免重复定义产生 warning）
+
+\bicaption{不同数据集与大模型下的平均Token消耗对比}{Comparison of average token usage across datasets and LLMs}
+\label{tab:token_usage_wide}
+
+% 设置行高与列间距
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\footnotesize
+
+% 自动生成：Token/成本统计表格
+% 依赖: \usepackage{booktabs} 以及 \usepackage{multirow}
+
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{1.8cm} r r r r r r}
+\toprule
+\textbf{方法} & \textbf{模型} & \makecell{\textbf{输入}\\\textbf{Token}} & \makecell{\textbf{输出}\\\textbf{Token}} & \makecell{\textbf{输入成本}\\\textbf{(CNY)}} & \makecell{\textbf{输出成本}\\\textbf{(CNY)}} & \makecell{\textbf{总成本}\\\textbf{(CNY)}} & \makecell{\textbf{平均成本}\\\textbf{(CNY)}} \\ 
+\midrule
+\multirow{5}{*}{\texttt{All}} & ali-qwen & 228,842 & 92,360 & 0.57 & 0.92 & 1.50 & \multirow{5}{*}{12.99} \\ 
+ & deepseek & 213,174 & 360,923 & 0.51 & 2.60 & 3.11 & \\ 
+ & glm4.5 & 217,216 & 158,493 & 0.17 & 0.32 & 0.49 & \\ 
+ & gpt5 & 376,812 & 672,931 & 3.30 & 47.11 & 50.40 & \\ 
+ & grok4 & 246,549 & 108,188 & 2.96 & 6.49 & 9.45 & \\ 
+\addlinespace[0.25em]\midrule
+\multirow{5}{*}{\texttt{W/O CoT}} & ali-qwen & 147,128 & 44,759 & 0.37 & 0.45 & 0.82 & \multirow{5}{*}{11.29} \\ 
+ & deepseek & 143,191 & 310,209 & 0.34 & 2.23 & 2.58 & \\ 
+ & glm4.5 & 138,905 & 141,923 & 0.11 & 0.28 & 0.39 & \\ 
+ & gpt5 & 201,623 & 646,417 & 1.76 & 45.25 & 47.01 & \\ 
+ & grok4 & 165,321 & 61,481 & 1.98 & 3.69 & 5.67 & \\ 
+\addlinespace[0.25em]\midrule
+\multirow{5}{*}{\texttt{W/O Feedback}} & ali-qwen & 129,241 & 44,841 & 0.32 & 0.45 & 0.77 & \multirow{5}{*}{9.88} \\ 
+ & deepseek & 120,138 & 280,609 & 0.29 & 2.02 & 2.31 & \\ 
+ & glm4.5 & 122,551 & 155,095 & 0.10 & 0.31 & 0.41 & \\ 
+ & gpt5 & 178,449 & 554,871 & 1.56 & 38.84 & 40.40 & \\ 
+ & grok4 & 145,538 & 62,736 & 1.75 & 3.76 & 5.51 & \\ 
+\addlinespace[0.25em]\midrule
+\multirow{5}{*}{\texttt{W/O RAG}} & ali-qwen & 184,820 & 46,291 & 0.46 & 0.46 & 0.92 & \multirow{5}{*}{11.10} \\ 
+ & deepseek & 170,295 & 318,002 & 0.41 & 2.29 & 2.70 & \\ 
+ & glm4.5 & 170,290 & 116,108 & 0.14 & 0.23 & 0.37 & \\ 
+ & gpt5 & 338,456 & 603,583 & 2.96 & 42.25 & 45.21 & \\ 
+ & grok4 & 203,726 & 64,326 & 2.44 & 3.86 & 6.30 & \\ 
+\addlinespace[0.25em]
+\bottomrule
+\end{tabular}
 \end{table}
+
 
 在实现层面，本文记录的令牌数不包括人工复核的人工工时成本，也未直接折算为云服务计费（可按厂商计费模型另行转换）。下列图表与表格为基于上述口径的结果占位，后续将以实测统计替换占位内容。

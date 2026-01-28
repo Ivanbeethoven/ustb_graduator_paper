@@ -22,11 +22,21 @@ c = \{(t_i,\; \text{src}_i)\}_{i=1}^{n}
 \]
 其中 $t_i$ 为片段内容，$\text{src}_i$ 为来源标识（例如文档路径、公告链接等）。
 
-	\textbf{定义 3（安全策略）}：令 $\Pi$ 表示安全策略空间，每个策略 $\pi \in \Pi$ 是一个结构化对象，包含三个核心字段：
+	\textbf{定义 3（安全策略）}：令 $\Pi$ 表示安全策略空间，每个策略 $\pi \in \Pi$ 是一个结构化对象。从防控机制的作用时机与机理考量，安全策略可划分为\textbf{监控策略} $\pi_{\mathrm{mon}}$ 与\textbf{防护策略} $\pi_{\mathrm{prot}}$ 两类，即：
 \[
-\pi = \langle \text{layer},\; \text{method},\; \text{actions} \rangle
+\Pi = \Pi_{\mathrm{mon}} \cup \Pi_{\mathrm{prot}}
 \]
-其中 $\text{layer}$ 描述防控所在的技术层面（例如身份与权限、网络隔离、运行时检测等），$\text{method}$ 是防控方法的分类或摘要说明，$\text{actions}$ 是具体可执行的防控操作序列，详见定义 3.1。
+其中 $\Pi_{\mathrm{mon}}$ 为监控策略集合，$\Pi_{\mathrm{prot}}$ 为防护策略集合，且 $\Pi_{\mathrm{mon}} \cap \Pi_{\mathrm{prot}} = \emptyset$。任一策略 $\pi$ 均包含四个核心字段：
+\[
+\pi = \langle \text{type},\; \text{layer},\; \text{method},\; \text{actions} \rangle
+\]
+其中：
+\begin{itemize}
+    \item $\text{type} \in \{\text{monitoring}, \text{protection}\}$ 指明策略类型：\textit{monitoring} 表示监控策略，侧重运行时异常行为的感知与取证；\textit{protection} 表示防护策略，侧重事前阻断与攻击面收敛。
+    \item $\text{layer}$ 描述防控所在的技术层面（例如身份与权限、网络隔离、运行时检测、审计与日志等）。
+    \item $\text{method}$ 是防控方法的分类或摘要说明，用于快速理解防控策略的整体思路。
+    \item $\text{actions}$ 是具体可执行的防控操作序列，详见定义 3.1。
+\end{itemize}
 
 	\textbf{定义 3.1（防控操作序列）\label{def:action_sequence}}：定义 $\text{actions}$ 为一个有序的防控操作集合：
 \[
@@ -42,7 +52,7 @@ c = \{(t_i,\; \text{src}_i)\}_{i=1}^{n}
 \[
 q(\pi) = (E(\pi),\; I(\pi),\; D(\pi))\in[0,1]^3
 \]
-其中 $E$ 为有效性（Effectiveness），指覆盖攻击面/阻断关键路径的程度，$I$ 为无干扰性（Interference），意为对业务的副作用与误报风险越低越好，$D$ 为可部署性（Deployability），评价某个安全策略中的执行步骤是否清晰、可操作且可验证。
+其中 $E$ 为有效性（Effectiveness），度量策略 $\pi$ 覆盖攻击面、阻断关键路径的程度；$I$ 为无干扰性（Interference），衡量对业务的副作用与误报风险的反向指标（值越高表示干扰越低）；$D$ 为可部署性（Deployability），评估策略 $\pi$ 中的执行步骤是否清晰、可操作且可验证。
 
 	\textbf{定义 5（维度评分尺度）}：由定义 4 可知，三维质量向量 $q(\pi)$ 的每一维均可视为从策略空间到区间 $[0,1]$ 的分量函数。对任一维度 $\delta\in\{E,I,D\}$，定义维度评分函数
 \[
@@ -186,7 +196,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 \section{基于多智能体协同的策略生成与优化}
 
 
-策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，生成候选策略集合 $\Pi_v$（图\ref{fig:method}）。流程由四类智能体分工完成：安全知识智能体整理证据；漏洞分析智能体给出结构化分析；策略生成智能体产出候选；策略评审与优化智能体基于评审反馈修订，以降低误报与运维噪声并提升可部署性。
+策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，生成候选策略集合 $\Pi_v=\Pi_{\mathrm{mon}}\cup\Pi_{\mathrm{prot}}$（图\ref{fig:method}），其中 $\Pi_{\mathrm{mon}}$ 为监控策略子集，$\Pi_{\mathrm{prot}}$ 为防护策略子集。流程由四类智能体分工完成：安全知识智能体整理证据；漏洞分析智能体给出结构化分析；策略生成智能体产出候选（包括监控策略与防护策略）；策略评审与优化智能体基于评审反馈修订，以降低误报与运维噪声并提升可部署性。
 
 \begin{figure}[h]
     \centering
@@ -210,7 +220,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 基于提供的漏洞信息和相关知识，生成一个完整的JSON对象，严格遵循下面给出的结构规范。
 
 ## 工具提示
-可选用 OPA、Kyverno、Falco、NetworkPolicy 等工具，并在 mitigation 字段写明工具与作用。
+可选用 OPA、Kyverno、Falco、Tetragon、NetworkPolicy 等工具，并在 mitigation 字段写明工具与作用。其中 Tetragon 可同时实现监控策略（进程/系统调用/I/O检测）与防护策略（内核层阻断）。
 
 ## 输出规则
 1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
@@ -300,44 +310,41 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
     "risk_category": "string - 必须是以下之一: 内部权限失控|过度权限配置|代码注入|敏感信息泄露|缺乏网络隔离|Kubernetes 漏洞|容器运行时漏洞",
     "mitigation": {
         "layer": "string - 安全层级: 身份与权限|网络|运行时|策略执行",
-        "method": "string - 具体方法，如: 设置Falco规则|应用 NetworkPolicy|配置 Kyverno|部署 OPA Gatekeeper",
-        "action": "string - 详细执行步骤，包含YAML配置片段"
+        "method": ["string - 具体方法与机理说明（需与 action 一一对应）"],
+        "action": ["string - YAML/CLI 片段（仅代码/命令；换行用\\n；需与 method 一一对应）"]
     }
 }
 
 ## 工具提示
-你可以结合分析和选型结果，灵活选择并说明如 OPA、Kyverno、Falco、NetworkPolicy 等主流安全工具。建议在 mitigation 字段中明确工具名称及其作用，但不强制限定。
+你可以结合分析和选型结果，灵活选择并说明如 OPA、Kyverno、Falco、Tetragon、NetworkPolicy 等主流安全工具。建议在 mitigation 字段中明确工具名称及其作用，但不强制限定。特别注意，Tetragon 可同时实现监控与防护，适用于需要闭环响应的场景。
 
 ## 输出规则
 1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
 2. 严格格式：字段、层级、顺序必须与上方 schema/示例一致，所有字符串使用双引号并保持合法 JSON。
-3. 信息缺失：无法确定时写 "(info needed)"，并在字段或 assumptions 中说明假设。
+3. 信息缺失：无法确定时写 "(info needed)"，并在对应字段中说明必要假设。
 4. 配置转义：YAML/CLI 片段的换行统一写成 `\\n`。
 5. 具象缓解：禁止仅写“升级补丁”，需给出可执行的控制措施与配置步骤（如适用）。
 6. 一致性：内容必须与输入/分析/评审结论一致，禁止引入无依据内容。
 \end{Verbatim}
 \end{PromptBox}
 
-为保证与本文形式化定义一致，策略内容采用 \texttt{layer/method/actions} 的表达方式：其中 \texttt{layer} 与 \texttt{method} 描述防控所在安全域与方法类别；\texttt{actions} 以可执行步骤序列承载具体控制措施。在工程化输出中，\texttt{actions} 可等价展开为策略 JSON 的 \texttt{mitigation.action} 字段，采用“1.. 2..”的步骤格式，并包含验证要点与回滚边界；当需要给出 YAML/CLI 片段时，统一使用转义换行 \texttt{\textbackslash n} 以保持 JSON 合法性。
+为保证与本文形式化定义一致，策略内容采用 \texttt{layer/method/action} 的表达方式：其中 \texttt{layer} 描述防控所在安全域；\texttt{method} 给出每条控制措施的工具/控制点与机理摘要；\texttt{action} 承载与之对应的可执行配置片段（YAML/CLI），二者以数组下标一一对齐，共同构成可执行的动作序列。当需要给出多条措施时，统一使用转义换行 \texttt{\textbackslash n} 以保持 JSON 合法性。
 
 \begin{itemize}
-    \item \textbf{layer 字段}：防控所在的技术层面，用于分类防控策略所涉及的安全域，包括但不限于：
+    \item \textbf{layer 字段}：防控所在的技术层面，用于分类防控策略所涉及的安全域。根据策略类型 $\text{type}$ 的不同，$\text{layer}$ 可分为：
     \begin{itemize}
-        \item 身份与权限：RBAC、认证强化、ServiceAccount管理等；
-        \item 网络隔离：防火墙规则、NetworkPolicy、流量隔离等；
-        \item 运行时检测：容器监控、系统调用检测、入侵检测等；
-        \item 审计与日志：日志记录、事件审计、合规监控等。
+        \item \textit{监控策略层}：运行时检测、事件观测、证据留痕等；
+        \item \textit{防护策略层}：身份与权限、网络隔离、准入控制等。
     \end{itemize}
     \item \textbf{method 字段}：防控方法的摘要或分类，用于快速理解防控策略的整体思路，例如：
     \begin{itemize}
-        \item 网络隔离与认证强化；
-        \item 权限最小化与配置加固；
-        \item 检测与阻断相结合。
+        \item \textit{监控策略}：实时行为监测与告警、异常访问检测与取证等；
+        \item \textit{防护策略}：网络隔离与认证强化、权限最小化与配置加固、准入约束与阻断等。
     \end{itemize}
     % 在“定义 3.1（防控操作序列）”处添加 \label{def:action_sequence} 以便下方引用
-    \item \textbf{actions 字段}：具体可执行的操作序列，遵循定义 3.1（见定义~\ref{def:action_sequence}），包含：
+    \item \textbf{action 字段}：与 \texttt{method} 一一对应的可执行片段序列，遵循定义 3.1（见定义~\ref{def:action_sequence}），包含：
     \begin{itemize}
-        \item 对应的安全工具或修改对象（如Cisco DNA Center、Kubernetes RBAC配置）；
+        \item 对应的安全工具或修改对象（如 Falco规则、Tetragon Tracing Policy、Kyverno准入策略、NetworkPolicy、Kubernetes RBAC配置）；
         \item 具体的执行步骤，包括命令、参数、验证方式；
         \item 副作用评估与回滚方案。
     \end{itemize}
@@ -455,7 +462,8 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 当检测到语法错误或不满足最低格式约束时，MCP 将返回结构化错误信息（错误类型、定位位置、最小修复建议等）。策略生成智能体把该错误信息作为反馈输入，触发对相关片段的\textbf{定向迭代修正}：仅修改出错片段及其必要上下文，保持其他已通过检查的内容不被无关改写；修正后再次调用 MCP 复检。该迭代过程设置最大轮次上限，以避免无限循环；若达到迭代上限仍无法通过检查，则将该候选标记为需人工复核或需补充信息，并在后续质量评价环节中置末位，以保证最终交付策略具备基本可部署性。
 
 \section{策略评估与质量控制}
-该阶段对候选策略集合进行结构化评价，输出三维质量向量 $q(\pi)$ 及其在各维度上的排名结果，整体流程遵循结构化输入$\to$规则化校验$\to$证据支撑的结论的路径，以提高结论的可验证性与可复核性。
+该阶段对候选策略集合进行结构化评价，输出三维质量向量 $q(\pi)$ 及其在各维度上的排名结果，整体流程遵循结构化输入$\to$规则化校验$\to$证据支撑的结论的路径，以提高结论的可验证性与可复核性。相较于绝对分值评定，基于排序的评判方式在 LLM-as-a-Judge 场景下通常更具说服力与稳定性。绝对评分要求模型在不同样本之间维持一致且可解释的评分尺度，而已有研究表明，LLM 在打分过程中并未形成稳定的内部评分函数，而是更多依赖启发式决策策略~\cite{wu2024scoring}。在大规模写作评估任务中，Velez 等发现 LLM 在相对排序任务上的一致性显著优于绝对评分，其评分结果也更接近人类评估者的判断~\cite{velez2025writing}。此外，绝对评分更容易受到文本长度、表达风格及答案顺序等非语义因素的干扰，从而导致系统性偏置甚至可被对抗性操控~\cite{wang2023fair,hwang2025persuasion}。相比之下，排序性评判通过将评估问题简化为局部比较，有效降低了模型的认知与建模负担，并在一定程度上缓解了评分尺度漂移与偏置累积问题。因此，现有工作普遍倾向于采用成对比较或排序机制作为 LLM 评判的基础形式，而非直接依赖绝对分值输出~\cite{liu2023geval,wang2025trustjudge}。
+
 
 \subsection{评价算子}
 

@@ -56,10 +56,13 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 
 \subsection{策略部署}
 
-本案例的治理重点是\textbf{移除不必要的 Secrets 读取权限}并\textbf{防止权限回归}：
-对系统组件而言，升级补丁固然重要，但“RBAC 基线治理 + 准入策略 + 审计检测”能够在补丁不可立即应用或配置漂移场景下提供纵深防护。
+本案例侧重\textbf{移除不必要的 Secrets 读取权限}并\textbf{防止权限回归}：对系统组件而言，升级补丁固然重要，但通过\textbf{防护策略}（RBAC 基线治理 + 准入策略）与\textbf{监控策略}（审计检测）的组合能够在补丁不可立即应用或配置漂移场景下提供纵深防护。
 
-\textbf{策略概述}：从身份与权限、策略执行、审计与检测、网络收敛以及秘密治理等层面协同落地。核心方法包括对 CSI 相关 RBAC 进行最小化与清理，按需评估 ServiceAccount 硬化措施，在准入侧阻断再次引入含 \texttt{secrets} 读取动词的 ClusterRole，并在审计侧对 \texttt{secrets} 的枚举行为建立可观测与告警。必要时可进一步收敛 CSI 工作负载的出站访问面。
+\textbf{策略概述}：从\textbf{防护策略}（身份与权限、策略执行、网络收敛）与\textbf{监控策略}（审计与检测）等层面协同落地。核心方法包括：
+\begin{itemize}
+    \item \textbf{防护策略}：对 CSI 相关 RBAC 进行最小化与清理，按需评估 ServiceAccount 硬化措施；在准入侧阻断再次引入含 $\texttt{secrets}$ 读取动词的 ClusterRole；必要时进一步收敛 CSI 工作负载的出站访问面。
+    \item \textbf{监控策略}：对 $\texttt{secrets}$ 的枚举行为建立可观测与告警。
+\end{itemize}
 
 \textbf{策略配置与部署步骤}：为避免正文过长，RBAC 最小化示例、准入控制规则、审计策略片段与验证命令见附录\ref{app:cve-2023-30512}。
 

@@ -108,6 +108,38 @@
   note         = {Accessed: January 15, 2026}
 }
 
+@misc{tetragon2025,
+  author       = {{Cilium}},
+  title        = {Tetragon: eBPF-based Security Observability and Runtime Enforcement},
+  year         = {2025},
+  howpublished = {Available online: \url{https://tetragon.io/docs/overview/}},
+  note         = {Accessed: January 26, 2026}
+}
+
+@misc{falco2025,
+  author       = {{Falco (CNCF)}},
+  title        = {Falco: Cloud Native Runtime Security},
+  year         = {2025},
+  howpublished = {Available online: \url{https://falco.org/}},
+  note         = {Accessed: January 26, 2026}
+}
+
+@misc{opa2025,
+  author       = {{Open Policy Agent (CNCF)}},
+  title        = {Open Policy Agent: Policy-based control for cloud native environments},
+  year         = {2025},
+  howpublished = {Available online: \url{https://www.openpolicyagent.org/}},
+  note         = {Accessed: January 26, 2026}
+}
+
+@misc{kyverno2025,
+  author       = {{Kyverno (CNCF)}},
+  title        = {Kyverno: Kubernetes Native Policy Management},
+  year         = {2025},
+  howpublished = {Available online: \url{https://kyverno.io/}},
+  note         = {Accessed: January 26, 2026}
+}
+
 @misc{kubescore2025,
   author       = {{kube-score}},
   title        = {kube-score: Kubernetes object analysis tool for best practices},
@@ -195,6 +227,8 @@
   doi={10.1109/SANER53432.2022.00057},
   ISSN={1534-5351},
   month={March},}
+
+
 @inproceedings{pecka2022privilege,
 author = {Pecka, Nicholas and Ben Othmane, Lotfi and Valani, Altaz},
 title = {Privilege Escalation Attack Scenarios on the DevOps Pipeline Within a Kubernetes Environment},
@@ -215,23 +249,26 @@ series = {ICSSP '22}
 
 
 
-@inproceedings{k8smanifests2023,
-author = {Yang, Nanzi and Shen, Wenbo and Li, Jinku and Liu, Xunqi and Guo, Xin and Ma, Jianfeng},
-title = {Take Over the Whole Cluster: Attacking Kubernetes via Excessive Permissions of Third-party Applications},
+@article{k8smanifests2023,
+author = {Rahman, Akond and Shamim, Shazibul Islam and Bose, Dibyendu Brinto and Pandita, Rahul},
+title = {Security Misconfigurations in Open Source Kubernetes Manifests: An Empirical Study},
 year = {2023},
-isbn = {9798400700507},
+issue_date = {July 2023},
 publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
-url = {https://doi.org/10.1145/3576915.3623121},
-doi = {10.1145/3576915.3623121},
-abstract = {As the dominant container orchestration system, Kubernetes is widely used by many companies and cloud vendors. It runs third-party add-ons and applications (termed third-party apps) on its control plane to manage the whole cluster. The security of these third-party apps is critical to the whole cluster but has not been systematically studied so far.Therefore, this paper analyzes the security of third-party apps and reveals that third-party apps are granted excessive critical permissions, which can be exploited by an attacker to escape from the worker node and take over the whole Kubernetes cluster. Even worse, excessive permissions of different third-party apps can be chained together to turn non-critical issues into severe attack vectors. To systematically analyze the exploitability of excessive permissions, we design three strategies based on different attacking paths. These three strategies can steal the cluster admin permission with the DaemonSet of a third-party app directly, or via the same app's or another app's critical component indirectly.We investigate the security impact of excessive permission attacks in real production environments. We analyze all third-party apps in CNCF and show that 51 of 153 (33.3\%) ones have potential security risks. We further scan Kubernetes services provided by the top four cloud vendors. The results show that all of them are vulnerable to excessive permission attacks. We report all our findings to the corresponding teams and get eight new CVEs from communities and a security bounty from Google.},
-booktitle = {Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security},
-pages = {3048–3062},
-numpages = {15},
-keywords = {excessive permission, kubernetes, third-party application},
-location = {Copenhagen, Denmark},
-series = {CCS '23}
+volume = {32},
+number = {4},
+issn = {1049-331X},
+url = {https://doi.org/10.1145/3579639},
+doi = {10.1145/3579639},
+abstract = {Context: Kubernetes has emerged as the de-facto tool for automated container orchestration. Business and government organizations are increasingly adopting Kubernetes for automated software deployments. Kubernetes is being used to provision applications in a wide range of domains, such as time series forecasting, edge computing, and high-performance computing. Due to such a pervasive presence, Kubernetes-related security misconfigurations can cause large-scale security breaches. Thus, a systematic analysis of security misconfigurations in Kubernetes manifests, i.e., configuration files used for Kubernetes, can help practitioners secure their Kubernetes clusters.Objective: The goal of this paper is to help practitioners secure their Kubernetes clusters by identifying security misconfigurations that occur in Kubernetes manifests.Methodology: We conduct an empirical study with 2,039 Kubernetes manifests mined from 92 open-source software repositories to systematically characterize security misconfigurations in Kubernetes manifests. We also construct a static analysis tool called Security Linter for Kubernetes Manifests (SLI-KUBE) to quantify the frequency of the identified security misconfigurations.Results: In all, we identify 11 categories of security misconfigurations, such as absent resource limit, absent securityContext, and activation of hostIPC. Specifically, we identify 1,051 security misconfigurations in 2,039 manifests. We also observe the identified security misconfigurations affect entities that perform mesh-related load balancing, as well as provision pods and stateful applications. Furthermore, practitioners agreed to fix 60\% of 10 misconfigurations reported by us.Conclusion: Our empirical study shows Kubernetes manifests to include security misconfigurations, which necessitates security-focused code reviews and application of static analysis when Kubernetes manifests are developed.},
+journal = {ACM Trans. Softw. Eng. Methodol.},
+month = may,
+articleno = {99},
+numpages = {36},
+keywords = {Configuration, container orchestration, devops, devsecops, empirical study, Kubernetes, misconfiguration, security}
 }
+
 @inproceedings{shamim2025dastk8s,
 author = {Shamim, Shazibul Islam and Hu, Hanyang and Rahman, Akond},
 title = {Dynamic Application Security Testing for Kubernetes Deployment: An Experience Report from Industry},
@@ -465,7 +502,7 @@ pages={142–148}}
 @article{Minna_2021,
   title={Understanding the Security Implications of Kubernetes Networking}, 
   author={Minna, Francesco and Blaise, Agathe and Rebecchi, Filippo and Chandrasekaran, Balakrishnan and Massacci, Fabio},
-  journal={IEEE Security & Privacy}, 
+  journal={IEEE Security \& Privacy}, 
   year={2021},
   volume={19},
   number={5},
@@ -479,7 +516,7 @@ pages={142–148}}
 
 @INPROCEEDINGS{Budigiri_2021,
   author={Budigiri, Gerald and Baumann, Christoph and Mühlberg, Jan Tobias and Truyen, Eddy and Joosen, Wouter},
-  booktitle={2021 Joint European Conference on Networks and Communications & 6G Summit (EuCNC/6G Summit)}, 
+  booktitle={2021 Joint European Conference on Networks and Communications \& 6G Summit (EuCNC/6G Summit)}, 
   title={Network Policies in Kubernetes: Performance Evaluation and Security Analysis}, 
   year={2021},
   volume={},
@@ -622,7 +659,7 @@ series = {ASPLOS '19}
 }
 @INPROCEEDINGS{Zhu_2022,
   author={Zhu, Hui and Gehrmann, Christian},
-  booktitle={2022 14th International Conference on COMmunication Systems & NETworkS (COMSNETS)}, 
+  booktitle={2022 14th International Conference on COMmunication Systems \& NETworkS (COMSNETS)}, 
   title={Kub-Sec, an automatic Kubernetes cluster AppArmor profile generation engine}, 
   year={2022},
   volume={},
@@ -695,3 +732,63 @@ series = {WOC '19}
   publisher={Springer},
   abstract="Helm is a package manager that allows defining, installing, and upgrading applications with Kubernetes (K8s), a popular container orchestration platform. A Helm chart is a collection of files describing all dependencies, resources, and parameters required for deploying an application within a K8s cluster. This study aimed to mine and empirically evaluate the security of Helm charts, comparing the performance of existing tools in terms of misconfigurations reported by policies available by default, and measuring to what extent LLMs could be used for removing misconfigurations. For these reasons, we proposed a pipeline to mine Helm charts from Artifact Hub, a popular centralized repository, and analyze them using state-of-the-art open-source tools like Checkov and KICS. First, the pipeline runs several chart analyzers and identifies the common and unique misconfigurations reported by each tool. Secondly, it uses LLMs to suggest a mitigation for each misconfiguration. Finally, the LLM refactored chart previously generated is analyzed again by the same tools to see whether it satisfies the tool’s policies. We also performed a manual analysis on a subset of charts to evaluate whether there are false positive misconfigurations from the tool’s reporting and in the LLM refactoring. We found that (i) there is a significant difference between LLMs, (ii) providing a snippet of the YAML template as input might be insufficient compared to all resources, and (iii) even though LLMs can generate correct fixes, they may also delete other irrelevant configurations that break the application."
 }
+
+
+
+@article{wu2024scoring,
+  title={Unveiling scoring processes: Dissecting the differences between llms and human graders in automatic scoring},
+  author={Wu, Xuansheng and Saraf, Padmaja Pravin and Lee, Gyeonggeon and Latif, Ehsan and Liu, Ninghao and Zhai, Xiaoming},
+  journal={Technology, Knowledge and Learning},
+  pages={1--16},
+  year={2025},
+  publisher={Springer}
+}
+
+@article{wang2023fair,
+  title={Large Language Models are not Fair Evaluators},
+  author={Wang, Peiyi and Li, Lei and others},
+  journal={arXiv preprint arXiv:2305.17926},
+  year={2023}
+}
+
+@article{velez2025writing,
+  title={Evaluating Large Language Models as Raters in Large-Scale Writing Assessments},
+  author={Velez, Jorge and others},
+  journal={Learning and Instruction},
+  year={2025}
+}
+@article{hwang2025persuasion,
+  title={Can you trick the grader? adversarial persuasion of llm judges},
+  author={Hwang, Yerin and Lee, Dongryeol and Kang, Taegwan and Kim, Yongil and Jung, Kyomin},
+  journal={arXiv preprint arXiv:2508.07805},
+  year={2025}
+}
+
+@article{liu2023geval,
+  title={G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment},
+  author={Liu, Yang and others},
+  journal={arXiv preprint arXiv:2303.16634},
+  year={2023}
+}
+
+
+@article{wang2025trustjudge,
+  title={TRUSTJUDGE: Inconsistencies of LLM-as-a-Judge and How to Alleviate Them},
+  author={Wang, Yidong and Song, Yunze and Zhu, Tingyuan and Zhang, Xuanwang and Yu, Zhuohao and Chen, Hao and Song, Chiyu and Wang, Qiufeng and Wang, Cunxiang and Wu, Zhen and others},
+  journal={arXiv preprint arXiv:2509.21117},
+  year={2025}
+}
+
+@ARTICLE{clinical2025rubric,
+  author={Latif, Atif and Kim, Jihie},
+  journal={IEEE Access}, 
+  title={Evaluation and Analysis of Large Language Models for Clinical Text Augmentation and Generation}, 
+  year={2024},
+  volume={12},
+  number={},
+  pages={48987-48996},
+  abstract={A major challenge in deep learning (DL) model training is data scarcity. Data scarcity is commonly found in specific domains, such as clinical or low-resource languages, that are not vastly explored in AI research. In this paper, we investigate the generation capability of large language models such as Text-To-Text Transfer Transformer (T5) and Bidirectional and Auto-Regressive Transformers (BART) for Clinical Health-Aware Reasoning across Dimensions (CHARDAT) dataset by applying the ChatGPT augmentation technique. We employed ChatGPT to rephrase each instance of the training set into conceptually similar but semantically different samples and augmented them to the dataset. This study aims to investigate the utilization of large language models, ChatGPT in particular, for data augmentation to overcome the limited availability in the clinical domain. In addition to the ChatGPT augmentation, we applied other augmentation techniques, such as easy data augmentation (EDA) and an easier data augmentation (AEDA), to clinical data. ChatGPT comprehended the contextual significance of sentences within the dataset and successfully modified English terms but not clinical terms. The original CHARDAT datasets represent 52 health conditions across three clinical dimensions, i.e., Treatments, Risk Factors, and Preventions. We compared the outputs for different augmentation techniques and evaluated their relative performance. Additionally, we examined how these techniques perform with different pre-trained language models, assessing their sensitivity in various contexts. Despite the relatively small size of the CHARDAT dataset, our results demonstrated that augmentation methods like ChatGPT augmentation surpassed the efficiency of the previously employed back-translation augmentation. Specifically, our findings revealed that the BART model resulted in superior performance, achieving a rouge score of 52.35 for ROUGE-1, 41.59 for ROUGE-2, and 50.71 for ROUGE-L.},
+  keywords={Task analysis;Chatbots;Data models;Data augmentation;Training;Diseases;Cognition;Large language models;Text mining;Data analysis;Data integrity;Clinical trials;BART;large language models;T5;text augmentation;text mining},
+  doi={10.1109/ACCESS.2024.3384496},
+  ISSN={2169-3536},
+  month={},}
