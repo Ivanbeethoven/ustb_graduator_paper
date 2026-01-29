@@ -23,7 +23,7 @@
 Kubernetes 是面向容器工作负载的编排系统,源自于谷歌内部的虚拟化编排系统Borg\cite{Verma_2015}并在2014年正式对外开源。其核心思想是以\textbf{声明式 API}描述期望状态，再由控制平面持续驱动实际状态向期望状态收敛\cite{kubernetes2024}。
 \begin{figure}[tbp]
     \centering
-    \includegraphics[width=1\textwidth]{images/k8s.png}
+    \includegraphics[width=0.8\textwidth]{images/k8s.png}
     \caption{Kubernetes 体系结构示意}\label{fig:k8s-arch}
 \end{figure}
 图\ref{fig:k8s-arch}所示 Kubernetes 的体系结构示意图，一个Kubernetes集群由\textbf{控制平面}与多个\textbf{工作节点}构成。控制平面负责提供控制接口、调度与集群控制逻辑，其中：\textit{API Server}是所有资源访问与状态变更的统一入口，基于键值数据库ETCD承担认证、授权、准入与资源对象持久化等关键职责；\textit{调度器}根据资源请求、亲和/反亲和等约束为待调度Pod选择工作节点；\textit{控制器}基于不同资源对象的当前状态触发协调动作以达到期望状态。工作节点侧，\textit{kubelet}负责与API Server通信并维护调度到本节点的容器运行，\textit{容器运行时}负责拉取镜像、创建容器并管理生命周期，\textit{kube-proxy}负责服务转发与网络规则的实现。
@@ -32,7 +32,9 @@ Kubernetes通过一系列持久化\textbf{资源对象}实现对集群多种资�
 
 
 \subsection{Kubernetes 权限模型}
-基于角色的访问控制即 $RBAC$ 构成了 $Kubernetes$ 系统授权机制的核心架构\cite{kubernetes2024}。如图\ref{fig:k8s-rbac-yaml}所示，该模型以 $ServiceAccount$ 作为工作负载的身份主体，并将权限抽象为 $Role$ 或 $ClusterRole$ 定义的规则集合。这些规则从 $apiGroups$ 与 $resources$、操作动词 $verbs$ 以及 $namespace$ 或 $cluster$ 作用域等维度，精确界定了允许的操作边界。通过 $RoleBinding$ 或 $ClusterRoleBinding$ 将身份主体与角色进行关联，主体方可获得针对特定资源的访问能力。在此基础上，$Namespace$ 实现了租户与资源域的逻辑隔离，而 $NetworkPolicy$ 机制则通过收敛网络可达性，有效抑制了集群内部的横向移动风险。在实践中，$RBAC$ 遵循声明式配置范式，通过 $YAML$ 清单定义规则映射，从而确保了权限管理过程的规范化与自动化。
+基于角色的访问控制即 $\mathrm{RBAC}$ 构成了 $\mathrm{Kubernetes}$ 系统授权机制的核心架构\cite{kubernetes2024}。该模型以 $\mathrm{ServiceAccount}$ 作为工作负载的身份主体，并将权限抽象为 $\mathrm{Role}$ 或 $\mathrm{ClusterRole}$ 定义的规则集合。这些规则从 $\mathrm{apiGroups}$ 与 $\mathrm{resources}$、操作动词 $\mathrm{verbs}$ 以及 $\mathrm{namespace}$ 或 $\mathrm{cluster}$ 作用域等维度，精确界定了允许的操作边界。通过 $\mathrm{RoleBinding}$ 或 $\mathrm{ClusterRoleBinding}$ 将身份主体与角色进行关联，主体方可获得针对特定资源的访问能力。在此基础上，$\mathrm{Namespace}$ 实现了租户与资源域的逻辑隔离，而 $\mathrm{NetworkPolicy}$ 机制则通过收敛网络可达性，有效抑制了集群内部的横向移动风险。在实践中，$\mathrm{RBAC}$ 遵循声明式配置范式，通过 $\mathrm{YAML}$ 清单定义规则映射，从而确保了权限管理过程的规范化与自动化。
+
+如图~\ref{fig:k8s-rbac-yaml}所示，该配置示例展示了典型的 $\mathrm{RBAC}$ 权限授予过程：首先创建名为 $\mathrm{kada}$ 的 $\mathrm{ServiceAccount}$，随后定义名为basic-operation的 $\mathrm{Role}$ 对象并在其 $\mathrm{rules}$ 字段中指定资源范围与操作权限——此处授予了针对 $\mathrm{pods}$ 与 $\mathrm{secrets}$ 两类资源的 $\mathrm{get}$、$\mathrm{list}$、$\mathrm{create}$ 操作能力；最终通过 $\mathrm{RoleBinding}$ 将该 $\mathrm{Role}$ 绑定至 $\mathrm{kada}$ 账户，完成权限授予链路。此配置模式在第三方应用接入场景中较为常见，但若规则设计不当，过度授予的资源访问能力可能为权限提升攻击提供利用路径。
 \begin{figure}[tbp]
     \centering
     \includegraphics[width=0.95\textwidth]{images/yaml.png}
@@ -41,7 +43,7 @@ Kubernetes通过一系列持久化\textbf{资源对象}实现对集群多种资�
 
 \subsection{Kubernetes 权限提升漏洞}
 
-权限提升（Privilege Escalation）指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置，将自身权限提升到更高等级的过程。在 Kubernetes 场景下，权限提升既可能表现为授权范围扩大（例如能够访问更多 Kubernetes API，这通常由 RBAC 规则决定），也可能表现为节点侧系统权限提升（例如获得节点上的 root 权限），从而对更大范围的资源与工作负载产生影响。
+权限提升（Privilege Escalation）指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置，将自身权限提升到更高等级的过程\cite{mead2003computer}。在 Kubernetes 场景下，权限提升既可能表现为授权范围的的扩大或横向获取，也可能表现为节点侧系统权限提升（例如获得节点上的 root 权限），从而对更大范围的资源与工作负载产生影响。
 
 在云原生环境中，权限提升的危害往往具有更强的放大效应。一方面，单个节点通常承载多个 Pod，节点侧提权成功后，攻击者可能对同节点上的多个工作负载实施窃取敏感信息、篡改运行环境或注入恶意组件等行为。另一方面，Kubernetes 的资源对象与运维动作高度集中且自动化；当攻击者获得更高权限后，可能进一步读取 $\texttt{Secret}$、创建高权限工作负载、修改\textbf{网络防护策略}或部署守护进程，进而将影响从单一应用扩展到集群层面的安全与稳定。因此，权限提升漏洞不仅是单点缺陷，还可能引发平台级安全事件与隔离失效。
 
@@ -55,7 +57,7 @@ Kubernetes通过一系列持久化\textbf{资源对象}实现对集群多种资�
 
 
 \section{云原生安全工具}
-在补丁未就绪或难以及时升级的阶段，生产环境往往需要依赖可快速下发、可验证且可回滚的控制手段来降低风险暴露面。从防控机制的作用时机与机理考量，云原生安全工具可划分为\textbf{监控策略}与\textbf{防护策略}两个互补层次：
+在补丁未就绪或难以及时升级的阶段，生产环境往往需要依赖可快速下发的控制手段来降低风险暴露面。从防控机制的作用时机与机理考量，云原生安全工具可划分为\textbf{监控策略}与\textbf{防护策略}两个互补层次：
 \begin{itemize}
     \item \textbf{监控策略}在不中断业务的前提下对异常行为进行告警与取证，主要涵盖运行时检测与审计、静态扫描与配置审计；
     \item \textbf{防护策略}在风险入口处主动阻断与收敛政击面，包括准入与配置约束、网络隔离与最小连通；
@@ -166,11 +168,48 @@ Kubernetes 场景下的权限与安全风险往往因配置项繁多、组件生
 
 在缓解与防护方面，研究工作一方面尝试提升授权约束粒度，另一方面将分析视角扩展至流水线与运维链路。Pecka 等\cite{pecka2022privilege}从 DevOps 流水线视角构建并分析典型 Kubernetes 环境威胁，提出滥用部署权限、篡改构建产物、暴露内部 IP 以及从 CRUD 权限账号提升至 root 等攻击场景，强调仅部署 DevSecOps 工具并不足以替代对流水线与集群治理的整体性安全设计。Cesarano 与 Natella\cite{cesarano2025kubefence}指出仅依赖 RBAC 难以对 API 请求的规格属性进行足够细粒度约束。为此，该研究提出 KubeFence，通过分析可信仓库中的 Operator 及其配置，为特定客户端工作负载生成更细粒度的 API 过滤策略，以限制不必要的 API 功能并收敛攻击面。
 
-在节点侧强制执行与运行时约束方面，Zhu 与 Gehrmann\cite{Zhu_2022}提出 Kub-Sec，通过分布式采集工作负载行为并集中生成 AppArmor 配置文件，实现对应用容器的细粒度系统调用与资源访问约束，并尝试在不显著干扰服务的前提下执行策略。该方向与本文关注的漏洞利用特征驱动的可执行防控策略之间具有互补关系。前者强调从行为数据自动生成主机侧约束，后者强调在补丁窗口期基于可利用性证据生成可验证、可回滚的策略化防控方案。
+在节点侧强制执行与运行时约束方面，Zhu 与 Gehrmann\cite{Zhu_2022}提出 Kub-Sec，通过分布式采集工作负载行为并集中生成 AppArmor 配置文件，实现对应用容器的细粒度系统调用与资源访问约束，并尝试在不显著干扰服务的前提下执行策略。该方向与本文关注的漏洞利用特征驱动的可执行防控策略之间具有互补关系。前者强调从行为数据自动生成主机侧约束，后者强调在补丁窗口期基于可利用性证据生成面向工程落地的策略化防控方案。
 
 从降低节点侧内核暴露面的角度，Le 等\cite{Le_2023}提出面向系统调用暴露度量的调度方法，通过将工作负载调度至对高风险系统调用暴露更少的节点，以限制邻近工作负载攻击对集群的影响范围。该研究表明，在补丁窗口期除策略约束外，还可结合调度与资源编排层面的机制进一步收敛攻击面。
 
-在工程工具层面，KubiScan\cite{kubiscan2024}、Krane\cite{krane2024}、RBAC Police\cite{paloalto2024}等为权限与资源审计提供了可用手段，Kubescape\cite{kubescape2025}、Trivy\cite{trivy2025}、kube-score\cite{kubescore2025}等常用于静态扫描与基线核查。现有研究与工具共同表明：将攻击模型、检测方法与硬化策略转化为可快速部署、可验证且可回滚的工程方案，仍需在工具集成、误报控制与业务可用性之间进行系统权衡。
+在工程工具层面，KubiScan\cite{kubiscan2024}、Krane\cite{krane2024}、RBAC Police\cite{paloalto2024}等为权限与资源审计提供了可用手段，Kubescape\cite{kubescape2025}、Trivy\cite{trivy2025}、kube-score\cite{kubescore2025}等常用于静态扫描与基线核查。为便于工程落地与能力对照，表\ref{tab:k8s-security-scan-tools}对 Kubernetes 常见安全扫描/审计工具进行分类整理。现有研究与工具共同表明：将攻击模型、检测方法与硬化策略转化为可快速部署的工程方案，仍需在工具集成、误报控制与业务可用性之间进行系统权衡。
+
+\begin{table}[!hbtp]
+    \centering
+    \caption{Kubernetes 常见安全扫描与审计工具分类整理}\label{tab:k8s-security-scan-tools}
+    \renewcommand{\arraystretch}{1.25}
+    \setlength{\tabcolsep}{2mm}
+    \small
+    \begin{tabular}{>{\centering\arraybackslash}m{2.7cm}m{4.3cm}>{\raggedright\arraybackslash}m{7.0cm}}
+    \toprule
+    \textbf{类别} & \textbf{代表性工具（示例）} & \textbf{主要能力与适用场景}\\
+    \midrule
+    镜像/依赖漏洞扫描
+    & \texttt{Trivy}、\texttt{Grype}、\texttt{Clair}、\texttt{Snyk}（商业）
+    & 解析镜像/依赖清单并匹配 CVE；常作为 CI 门禁或制品仓库准入检查，输出漏洞等级、受影响版本与修复建议。\\
+    \midrule
+    SBOM 生成与供应链
+    & \texttt{Syft}、\texttt{CycloneDX}、\texttt{cosign}
+    & 生成 SBOM（如 SPDX/CycloneDX）并对制品签名与验证；用于提升漏洞告警可追溯性与供应链完整性校验。\\
+    \midrule
+    清单/Helm 静态扫描
+    & \texttt{kubescape}、\texttt{kube-score}、\texttt{kube-linter}、\texttt{Polaris}、\texttt{kubesec}、\texttt{datree}
+    & 针对 Kubernetes YAML/Helm 进行规则化检查（特权容器、hostPath、资源限制、明文密钥、PSS 违规等），适合代码评审与部署前基线核查。\\
+    \midrule
+    IaC 扫描（Terraform 等）
+    & \texttt{Checkov}、\texttt{KICS}、\texttt{tfsec}
+    & 面向 IaC 模板（Terraform/K8s YAML/Dockerfile 等）做合规与弱配置扫描；常用于 DevSecOps 流水线的“左移”治理。\\
+    \midrule
+    RBAC/权限审计
+    & \texttt{KubiScan}、\texttt{Krane}、\texttt{RBAC Police}、\texttt{kubeaudit}、\texttt{rakkess}、\texttt{kubectl-who-can}
+    & 盘点集群内角色/绑定/服务账户权限，识别过宽授权与高危动词；支持“谁能做什么”查询与权限差分核查。\\
+    \midrule
+    基线核查与 CIS 审计
+    & \texttt{kube-bench}、\texttt{Kubescape}、\texttt{OpenSCAP}（可选）
+    & 基于 CIS Benchmark 等标准对控制平面/节点配置开展核查，输出不合规项与修复建议，适用于周期性审计与合规检查。\\
+    \bottomrule
+    \end{tabular}
+\end{table}
 
 
 \subsection{本课题组研究基础}
