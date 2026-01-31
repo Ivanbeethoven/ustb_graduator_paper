@@ -1,0 +1,6 @@
+dimension,judge,weight
+all,ali-qwen,0.1270980569464829
+all,deepseek,1.1747953615362982e-18
+all,glm4.5,0.0
+all,gpt5,0.8729019430535172
+all,grok4,0.0

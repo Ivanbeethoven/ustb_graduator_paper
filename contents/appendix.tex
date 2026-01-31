@@ -491,7 +491,7 @@ spec:
 
 本附录给出案例二（CVE-2025-2241）的\textbf{复现要点}与\textbf{缓解策略清单}，用于复核与工程落地。该漏洞属于\textbf{敏感信息泄漏}：vCenter 凭据出现在 Hive 的 \texttt{ClusterProvision} 对象可读字段中，导致“无 \texttt{Secret} 权限也可读到凭据”的旁路风险。请仅在隔离测试环境中操作。
 
-\section{漏洞复现详细步骤（受控测试）}\label{app:cve-2025-2241-repro}
+\section{漏洞复现详细步骤}\label{app:cve-2025-2241-repro}
 
 \textbf{前提条件}
 \begin{itemize}
@@ -798,7 +798,7 @@ spec:
 本附录给出案例三（CVE-2023-30512，CubeFS CSI 插件过度授权导致的集群权限提升风险）的\textbf{验证性复现}与\textbf{策略清单}。
 为避免提供可被滥用的细粒度利用操作，复现部分以“权限证据 + 受控权限验证”为主，重点证明 CSI ServiceAccount 被绑定了不必要的 \texttt{secrets} 读取能力；策略部分给出可落地的 RBAC 收敛、准入防回归与审计检测。
 
-\section{漏洞复现详细步骤（验证性复现）}
+\section{漏洞复现详细步骤}
 
 \textbf{变量约定（按实际替换）}
 \begin{Verbatim}[breaklines,breakanywhere]
@@ -995,7 +995,7 @@ EOF
 本附录给出案例四（CVE-2020-4062，Conjur OSS Helm Chart 旧版本缺失网络隔离导致 Postgres 在集群内可达）的\textbf{复现要点}与\textbf{缓解策略清单}。
 考虑到该问题涉及数据库直连带来的敏感数据风险，复现环节仅进行网络暴露面验证，用于确认 5432 端口在集群内的可达性以及网络策略的生效性，不展开数据库操作细节。
 
-\section{漏洞复现详细步骤：受控测试}
+\section{漏洞复现详细步骤}
 
 \textbf{前提条件}
 \begin{itemize}
@@ -1029,10 +1029,7 @@ kubectl -n $NAMESPACE get networkpolicy
 
 \section{策略代码清单}
 
-\subsection{1）根本修复：升级 Chart}
-将 Conjur OSS Helm Chart 升级到 \texttt{2.0.0} 或更高版本，使其默认包含更严格的 NetworkPolicy。
-
-\subsection{2）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
+\subsection{1）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
 下述策略在命名空间内实现两点：其一，默认拒绝 Postgres Pod 的入站流量；其二，仅允许 Conjur Server 访问 Postgres 的 5432 端口。
 其中标签选择器需与实际部署对象一致，示例使用 \texttt{app\allowbreak=\allowbreak conjur\allowbreak-\allowbreak oss} 与 \texttt{app\allowbreak=\allowbreak conjur\allowbreak-\allowbreak oss\allowbreak-\allowbreak postgres}，可按实际标签调整。
@@ -1084,7 +1081,7 @@ kubectl -n conjur-vuln get networkpolicy
 # 从 Conjur Server 到 Postgres 5432 的连通性应成功
 \end{Verbatim}
 
-\subsection{3）命名空间隔离与 RBAC 收敛}
+\subsection{2）命名空间隔离与 RBAC 收敛}
 \begin{itemize}
 	\item 将 Conjur 部署在独立命名空间，并通过 NetworkPolicy 限制跨命名空间访问。
 	\item 收敛对数据库凭据相关 Secret 的读取权限，降低网络可达与凭据可读叠加带来的风险。
@@ -1096,7 +1093,7 @@ kubectl -n conjur-vuln get networkpolicy
 本附录给出案例五（CVE-2022-24877，Flux \texttt{kustomize\allowbreak-controller} 通过恶意 \texttt{kustomization\allowbreak.yaml} 触发路径穿越，导致控制器 Pod 文件系统敏感数据暴露，并在多租户部署中可能引发权限提升）的\textbf{验证性复现}与\textbf{缓解策略清单}。
 为避免提供可直接滥用的利用细节，复现部分以“路径越界行为证据与判据”为主，不提供可复用的攻击脚本。
 
-\section{漏洞复现详细步骤：验证性复现}
+\section{漏洞复现详细步骤}
 
 \textbf{复现目标}
 验证控制器在构建过程中是否会因配置文件中的异常路径引用而产生目录边界越界读取风险。
@@ -1122,12 +1119,9 @@ kubectl -n conjur-vuln get networkpolicy
 
 \section{策略代码清单（优先级方案）}
 
-本节选取对该类风险\textbf{最直接且工程可落地}的缓解措施：版本升级与 CI/CD 前置校验，并辅以多租户下的变更治理与运行时硬化。
+本节选取对该类风险\textbf{最直接且工程可落地}的缓解措施：CI/CD 前置校验，并辅以多租户下的变更治理与运行时硬化。
 
-\subsection{1）根本修复：升级到修复版本}
-优先升级 \texttt{kustomize\allowbreak-controller} 至 \texttt{v0.24.0} 或更高版本，或升级 \texttt{flux2} 至 \texttt{v0.29.0} 或更高版本。升级应配套回归验证构建与同步流程的兼容性。
-
-\subsection{2）工作区缓解：在 CI/CD 中校验 \texttt{kustomization\allowbreak.yaml} 路径策略}
+\subsection{1）工作区缓解：在 CI/CD 中校验 \texttt{kustomization\allowbreak.yaml} 路径策略}
 
 在补丁窗口期或多团队协作场景下，可在 CI/CD 流水线中加入配置校验门禁。
 校验对象为 \texttt{kustomization\allowbreak.yaml}，要求其资源路径满足安全策略，例如：禁止绝对路径风格、禁止父目录引用、限制引用的文件类型与目录范围。
@@ -1161,7 +1155,7 @@ risky_path(p) {
 
 说明：为降低误报，可进一步将 \texttt{contains(p,"..") } 改为按路径分段匹配“父目录段”，并对允许的相对路径前缀建立白名单。
 
-\subsection{3）多租户变更治理与运行时硬化（纵深防御）}
+\subsection{2）多租户变更治理与运行时硬化（纵深防御）}
 在多租户集群中，应严格控制谁可以向 Flux 同步源提交变更、谁可以修改 Flux 相关资源，并通过代码评审与分支保护降低恶意配置进入同步面的概率。
 同时可对控制器工作负载启用非特权运行、只读根文件系统、默认 seccomp 配置与能力集收敛，以降低异常路径下的后续风险。
 
@@ -1171,11 +1165,11 @@ risky_path(p) {
 本附录给出案例六（CVE-2022-29171，Sourcegraph 在 Gitolite 与 Phabricator 联动集成中存在配置驱动的命令执行风险）的\textbf{验证性复现}与\textbf{缓解策略清单}。
 为避免提供可直接滥用的利用细节，复现部分以执行路径证据与回归判据为主，不给出可直接用于远程执行的命令载荷与请求模板。
 
-\section{漏洞复现详细步骤：验证性复现}
+\section{漏洞复现详细步骤}
 
 \textbf{复现目标}
-验证在受影响版本（\texttt{<\allowbreak 3.38.\allowbreak 0}）中，特定集成配置项（\texttt{callsign\allowbreak Command}）是否会被 \texttt{gitserver} 在处理仓库元数据获取流程时执行。
-复现以日志、审计与可观测证据为主，并在升级或禁用集成后复测，确认风险被消除。
+验证在受影响版本中，特定集成配置项（\texttt{callsign\allowbreak Command}）是否会被 \texttt{gitserver} 在处理仓库元数据获取流程时执行。
+复现以日志、审计与可观测证据为主，并在禁用集成后复测，确认风险被消除。
 
 \textbf{环境与前提}
 仅在隔离测试环境开展。前置条件包括：
@@ -1190,25 +1184,21 @@ risky_path(p) {
 	\item 在管理面将 Gitolite 与 Phabricator 集成配置为可用状态，保证仓库元数据获取流程可被触发。
 	\item 在严格受控条件下对 \texttt{callsignCommand} 进行\textbf{无害探针式}变更（例如仅返回固定标识、且不访问外部网络、不读取敏感文件）。
 	\item 触发一次与该集成相关的元数据获取/同步流程，并观察 \texttt{gitserver} 日志、任务记录或审计日志中是否出现外部命令执行的迹象。
-	\item 升级至 \texttt{>= 3.38.0} 或禁用 Gitolite code host 后重复触发流程，确认相同迹象不再出现。
+	\item 禁用 Gitolite code host 后重复触发流程，确认相同迹象不再出现。
 \end{enumerate}
 
 \textbf{证据判据与逻辑解释}
 若在受影响版本中，\texttt{gitserver} 的运行日志或可观测数据中出现因集成配置而执行外部命令的明确迹象，可判定存在执行面风险。
-升级至修复版本或禁用相关集成后，该执行路径应被移除或被显式限制；若仍可观察到可疑执行迹象，则需进一步检查是否存在配置残留、版本回退或旁路路径。
+禁用相关集成后，该执行路径应被移除或被显式限制；若仍可观察到可疑执行迹象，则需进一步检查是否存在配置残留或旁路路径。
 
 \section{策略清单}
 
-本节仅选取 4 条对该类风险最直接且工程可落地的策略：版本升级、功能禁用、网络隔离与权限分离/暴露面收敛。
+本节仅选取 3 条对该类风险最直接且工程可落地的策略：功能禁用、网络隔离与权限分离/暴露面收敛。
 
-\subsection{1）根本修复：升级到修复版本}
-优先将 Sourcegraph 升级至 \texttt{3.38.0} 或更高版本，并在升级后复测验证：相关集成流程不再触发外部命令执行路径。
-
-\subsection{2）快速缓解：禁用或移除 Gitolite code host（若业务允许）}
+\subsection{1）快速缓解：禁用或移除 Gitolite code host（若业务允许）}
 若业务不依赖 Gitolite，可移除所有 Gitolite code host 配置并保持禁用状态，从输入面直接消除 \texttt{callsignCommand} 的风险来源。
-该措施不应替代升级，但可作为补丁窗口期的快速收敛方案。
 
-\subsection{3）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
+\subsection{2）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
 在 Kubernetes 部署中，建议对 \texttt{gitserver} 应用 NetworkPolicy：仅允许 Sourcegraph 内部必要组件访问其入站端口；出站仅放通 DNS 与必要的代码托管出口。
 该策略用于降低内部拓扑信息被获取后的横向触达能力，并为权限误授提供纵深缓冲。
 
@@ -1277,7 +1267,7 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 \textbf{验证要点}
 建议先在预生产灰度启用，并结合 \texttt{gitserver} 的错误日志与调用链路指标观察误拦截情况。对确需访问的代码托管出口，按最小集合逐项放通，并保留变更记录。
 
-\subsection{4）权限分离与暴露面收敛：限制管理面与观测面的高权限}
+\subsection{3）权限分离与暴露面收敛：限制管理面与观测面的高权限}
 严格限制可编辑外部服务配置（尤其是 Gitolite code host 配置）的主体数量，并启用变更审批与审计。
 同时收敛 Grafana 的暴露面，例如仅内网访问、受控 Ingress、强认证与最小管理员集合，并将 Grafana 管理员与 Sourcegraph 站点管理员职责分离，避免观测面权限放大攻击链的信息优势。
 
@@ -1290,10 +1280,10 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 本附录给出案例七（CVE-2023-22482，Argo CD 在 OIDC 场景下未校验令牌受众 \texttt{aud}，导致跨受众令牌可能被接受）的\textbf{验证性复现}与\textbf{缓解策略清单}。
 为避免提供可直接复用的越权访问细节，复现部分以配置证据、令牌声明证据与接口返回判据为主，不展开可直接用于获取令牌与构造请求的具体命令。
 
-\section{漏洞复现详细步骤：验证性复现}
+\section{漏洞复现详细步骤}
 
 \textbf{复现目标}
-验证在受影响版本中，Argo CD 是否会接受 \texttt{aud} 不匹配但签名与发行者合法的 OIDC 令牌，并据此返回受 RBAC 控制的资源响应；在升级到修复版本后，同一条件应被拒绝。
+验证在受影响版本中，Argo CD 是否会接受 \texttt{aud} 不匹配但签名与发行者合法的 OIDC 令牌，并据此返回受 RBAC 控制的资源响应。
 
 \textbf{环境与前提}
 仅在隔离测试环境开展。前置条件包括：
@@ -1308,29 +1298,24 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 	\item 获取一枚由同一 OIDC 提供方签发、但 \texttt{aud} 指向其他受众的有效令牌。该令牌应满足验签可通过且包含可用于 RBAC 映射的 \texttt{groups} 声明。
 	\item 提取令牌声明证据：对该令牌解析其 payload，保留 \texttt{iss}、\texttt{aud}、\texttt{exp} 与 \texttt{groups} 等字段的记录，证明其受众并非 Argo CD。
 	\item 使用该令牌访问 Argo CD 的受保护接口，选择一个只读且便于判定的 API 作为验证点，记录响应结果与 Argo CD 侧日志。
-	\item 回归验证：将 Argo CD 升级到修复版本分支后重复上述验证点。期望行为是请求在校验阶段被拒绝，且日志中出现与令牌校验失败相关的记录。
 \end{enumerate}
 
 \textbf{证据判据与逻辑解释}
 若在受影响版本中，Argo CD 在验签通过的前提下接受 \texttt{aud} 不匹配的令牌，并返回受 RBAC 控制的资源响应，可判定存在受众校验缺失。
-升级到修复版本后，相同条件应被拒绝；若仍被接受，则需检查是否存在版本未生效、配置未加载或旁路访问路径。
 
 \section{策略清单}
 
-本节仅选取 4 条对该类风险最直接且工程可落地的策略：版本升级、身份提供方客户端隔离、前置受众校验与 RBAC 收敛。
+本节仅选取 3 条对该类风险最直接且工程可落地的策略：身份提供方客户端隔离、前置受众校验与 RBAC 收敛。
 
-\subsection{1）根本修复：升级到修复版本}
-优先将 Argo CD 升级至修复版本分支，例如 \texttt{2.5.6} 及以上，或对应分支的 \texttt{2.3.13}/\texttt{2.4.19}/\texttt{2.6.0-rc3} 及以上版本。升级后执行回归验证，确认 \texttt{aud} 不匹配的令牌在校验阶段被拒绝。
-
-\subsection{2）身份提供方治理：独立客户端与唯一受众}
+\subsection{1）身份提供方治理：独立客户端与唯一受众}
 为 Argo CD 配置独立 OIDC 客户端与唯一受众标识，避免与其他业务系统共享同一受众空间。
 同时对该客户端签发的 \texttt{groups} 声明进行裁剪，确保仅包含与 Argo CD 授权相关的组，并建立清晰的组命名规范，避免跨系统复用带来的权限含义漂移。
 
-\subsection{3）入口补偿控制：前置强制校验 \texttt{aud}}
+\subsection{2）入口补偿控制：前置强制校验 \texttt{aud}}
 在 Argo CD 前置入口（如 API 网关或反向代理）对令牌进行一致性校验，至少包含发行者、签名与受众校验。
-该措施可在升级窗口期降低跨受众令牌复用风险，但不应替代版本修复；落地时应提供灰度与回滚机制，并覆盖 Web 与自动化访问路径。
+落地时应提供灰度与回滚机制，并覆盖 Web 与自动化访问路径。
 
-\subsection{4）权限收敛：RBAC 最小化与项目边界约束}
+\subsection{3）权限收敛：RBAC 最小化与项目边界约束}
 收敛 \texttt{argocd\allowbreak-rbac\allowbreak-cm} 中的角色授权，将高权限组限制在最小集合，并通过 AppProject 限定可部署的命名空间、资源类型与来源仓库。
 同时将关键接口的访问失败与异常登录事件纳入审计与告警，以便在令牌泄露或误用时快速发现与止血。
 

@@ -1,0 +1,4111 @@
+{
+  "per_method": {
+    "all": {
+      "有效性": {
+        "count": 78064,
+        "avg_rank": 7.146341463414634,
+        "first_count": 12544,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 22.182314448677726
+      },
+      "无干扰性": {
+        "count": 78064,
+        "avg_rank": 9.346484935437589,
+        "first_count": 5544,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 30.321124660098274
+      },
+      "可部署性": {
+        "count": 78064,
+        "avg_rank": 9.754662840746054,
+        "first_count": 5712,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 33.81498901830095
+      }
+    },
+    "no_cot": {
+      "有效性": {
+        "count": 78176,
+        "avg_rank": 12.242120343839542,
+        "first_count": 560,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 30.821033899547533
+      },
+      "无干扰性": {
+        "count": 78120,
+        "avg_rank": 10.678136200716846,
+        "first_count": 4760,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 34.40894849757368
+      },
+      "可部署性": {
+        "count": 78120,
+        "avg_rank": 9.834408602150537,
+        "first_count": 7000,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 35.45860099433679
+      }
+    },
+    "no_rag": {
+      "有效性": {
+        "count": 78064,
+        "avg_rank": 8.693687230989957,
+        "first_count": 2072,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 22.575469474622146
+      },
+      "无干扰性": {
+        "count": 78120,
+        "avg_rank": 10.23942652329749,
+        "first_count": 3472,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 31.661671355713736
+      },
+      "可部署性": {
+        "count": 78120,
+        "avg_rank": 10.957706093189964,
+        "first_count": 1624,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 31.13727932580146
+      }
+    },
+    "no_feedback": {
+      "有效性": {
+        "count": 78120,
+        "avg_rank": 13.903225806451612,
+        "first_count": 448,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 28.28525841137888
+      },
+      "无干扰性": {
+        "count": 78120,
+        "avg_rank": 11.72831541218638,
+        "first_count": 1848,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 33.62726275355926
+      },
+      "可部署性": {
+        "count": 78120,
+        "avg_rank": 11.445878136200717,
+        "first_count": 1288,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 30.446353977976653
+      }
+    }
+  },
+  "per_profile": {
+    "ali-qwen": {
+      "有效性": {
+        "count": 62496,
+        "avg_rank": 12.841397849462366,
+        "first_count": 0,
+        "min_rank": 2,
+        "max_rank": 20,
+        "var_rank": 26.69258729332502
+      },
+      "无干扰性": {
+        "count": 62496,
+        "avg_rank": 9.436379928315413,
+        "first_count": 4704,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 32.824805533068485
+      },
+      "可部署性": {
+        "count": 62496,
+        "avg_rank": 8.67383512544803,
+        "first_count": 7560,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 31.32013977210215
+      }
+    },
+    "deepseek": {
+      "有效性": {
+        "count": 62552,
+        "avg_rank": 11.511190689346464,
+        "first_count": 280,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 23.571271366502234
+      },
+      "无干扰性": {
+        "count": 62496,
+        "avg_rank": 8.380824372759857,
+        "first_count": 4424,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 28.364829427936392
+      },
+      "可部署性": {
+        "count": 62496,
+        "avg_rank": 6.799283154121864,
+        "first_count": 5880,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 23.57261597358974
+      }
+    },
+    "glm4.5": {
+      "有效性": {
+        "count": 62496,
+        "avg_rank": 10.872759856630825,
+        "first_count": 168,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 23.58954471295529
+      },
+      "无干扰性": {
+        "count": 62496,
+        "avg_rank": 10.919354838709678,
+        "first_count": 1624,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 23.330413920685512
+      },
+      "可部署性": {
+        "count": 62496,
+        "avg_rank": 10.74910394265233,
+        "first_count": 560,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 21.13776801428357
+      }
+    },
+    "gpt5": {
+      "有效性": {
+        "count": 62440,
+        "avg_rank": 3.7354260089686098,
+        "first_count": 15176,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 14.596368316273564
+      },
+      "无干扰性": {
+        "count": 62440,
+        "avg_rank": 13.10134529147982,
+        "first_count": 3528,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 41.82739729335064
+      },
+      "可部署性": {
+        "count": 62440,
+        "avg_rank": 15.674439461883408,
+        "first_count": 672,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 20.698494640957243
+      }
+    },
+    "grok4": {
+      "有效性": {
+        "count": 62440,
+        "avg_rank": 13.522869955156951,
+        "first_count": 0,
+        "min_rank": 3,
+        "max_rank": 20,
+        "var_rank": 16.279970238693448
+      },
+      "无干扰性": {
+        "count": 62496,
+        "avg_rank": 10.655913978494624,
+        "first_count": 1344,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 27.27587004278088
+      },
+      "可部署性": {
+        "count": 62496,
+        "avg_rank": 10.599462365591398,
+        "first_count": 952,
+        "min_rank": 1,
+        "max_rank": 20,
+        "var_rank": 25.6056986356812
+      }
+    }
+  },
+  "per_judge": {
+    "ali-qwen": {
+      "per_method": {
+        "all": {
+          "有效性": {
+            "count": 15400,
+            "avg_rank": 8.02909090909091,
+            "first_count": 2688,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.43551735536703
+          },
+          "无干扰性": {
+            "count": 15400,
+            "avg_rank": 8.541818181818181,
+            "first_count": 1512,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 33.90643305785155
+          },
+          "可部署性": {
+            "count": 15400,
+            "avg_rank": 8.02909090909091,
+            "first_count": 1904,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 37.773699173548614
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 15456,
+            "avg_rank": 11.945652173913043,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.565886893510328
+          },
+          "无干扰性": {
+            "count": 15400,
+            "avg_rank": 11.2,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.02545454545646
+          },
+          "可部署性": {
+            "count": 15400,
+            "avg_rank": 10.68,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.10850909090855
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 15344,
+            "avg_rank": 8.277372262773723,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.098247109595956
+          },
+          "无干扰性": {
+            "count": 15400,
+            "avg_rank": 9.323636363636364,
+            "first_count": 896,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.917077685950762
+          },
+          "可部署性": {
+            "count": 15400,
+            "avg_rank": 10.207272727272727,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 29.087947107438083
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 15400,
+            "avg_rank": 13.734545454545454,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 27.278624793388815
+          },
+          "无干扰性": {
+            "count": 15400,
+            "avg_rank": 12.934545454545454,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.515715702480485
+          },
+          "可部署性": {
+            "count": 15400,
+            "avg_rank": 13.083636363636364,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 23.131186776859128
+          }
+        }
+      },
+      "per_profile": {
+        "ali-qwen": {
+          "有效性": {
+            "count": 12320,
+            "avg_rank": 13.672727272727272,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 14.874710743801602
+          },
+          "无干扰性": {
+            "count": 12320,
+            "avg_rank": 8.89090909090909,
+            "first_count": 1624,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.560826446280664
+          },
+          "可部署性": {
+            "count": 12320,
+            "avg_rank": 7.709090909090909,
+            "first_count": 2072,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.93355371900936
+          }
+        },
+        "deepseek": {
+          "有效性": {
+            "count": 12376,
+            "avg_rank": 10.79185520361991,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 21.694232304825977
+          },
+          "无干扰性": {
+            "count": 12320,
+            "avg_rank": 8.422727272727272,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.516756198347295
+          },
+          "可部署性": {
+            "count": 12320,
+            "avg_rank": 7.4818181818181815,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.240578512397303
+          }
+        },
+        "glm4.5": {
+          "有效性": {
+            "count": 12320,
+            "avg_rank": 10.454545454545455,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 26.675206611569596
+          },
+          "无干扰性": {
+            "count": 12320,
+            "avg_rank": 11.154545454545454,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.367024793388328
+          },
+          "可部署性": {
+            "count": 12320,
+            "avg_rank": 10.922727272727272,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 22.644028925619555
+          }
+        },
+        "gpt5": {
+          "有效性": {
+            "count": 12320,
+            "avg_rank": 3.772727272727273,
+            "first_count": 3080,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 15.830165289256247
+          },
+          "无干扰性": {
+            "count": 12320,
+            "avg_rank": 13.327272727272728,
+            "first_count": 728,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 38.74743801652739
+          },
+          "可部署性": {
+            "count": 12320,
+            "avg_rank": 16.645454545454545,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 8.692479338844825
+          }
+        },
+        "grok4": {
+          "有效性": {
+            "count": 12264,
+            "avg_rank": 13.821917808219178,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 20.776505911052855
+          },
+          "无干扰性": {
+            "count": 12320,
+            "avg_rank": 10.704545454545455,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.689979338842342
+          },
+          "可部署性": {
+            "count": 12320,
+            "avg_rank": 9.74090909090909,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 23.31923553718979
+          }
+        }
+      }
+    },
+    "grok4": {
+      "per_method": {
+        "all": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 7.175,
+            "first_count": 2464,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.844375000000348
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 9.707142857142857,
+            "first_count": 1288,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 33.54280612245004
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 10.807142857142857,
+            "first_count": 672,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 34.26280612245515
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 12.42142857142857,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 34.10096938775822
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.689285714285715,
+            "first_count": 896,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 34.53559948979755
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 9.635714285714286,
+            "first_count": 1680,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 36.295867346936916
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 8.689285714285715,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.37845663265371
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.153571428571428,
+            "first_count": 616,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 32.98713010203952
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 11.167857142857143,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 32.225395408165404
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 13.714285714285714,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.31836734693671
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 11.45,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.247500000001313
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 10.389285714285714,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.916313775509312
+          }
+        }
+      },
+      "per_profile": {
+        "ali-qwen": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 13.339285714285714,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 27.545599489795872
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 9.428571428571429,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 33.43239795918516
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 8.147321428571429,
+            "first_count": 1568,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.429189253827502
+          }
+        },
+        "deepseek": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 12.348214285714286,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 21.76267538265276
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 8.633928571428571,
+            "first_count": 1064,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.267777423470065
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 6.330357142857143,
+            "first_count": 1232,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.131935586735686
+          }
+        },
+        "glm4.5": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 10.361607142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.793347417092313
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 11.147321428571429,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 18.063117825254423
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 11.049107142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 17.368124202806353
+          }
+        },
+        "gpt5": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 3.2544642857142856,
+            "first_count": 3080,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 10.046855070152795
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 12.883928571428571,
+            "first_count": 952,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 52.56688456632627
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 17.044642857142858,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.944435586735713
+          }
+        },
+        "grok4": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 13.196428571428571,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 13.836415816326113
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.40625,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 23.1787109375
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 9.928571428571429,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.994897959183117
+          }
+        }
+      }
+    },
+    "glm4.5": {
+      "per_method": {
+        "all": {
+          "有效性": {
+            "count": 15624,
+            "avg_rank": 6.397849462365591,
+            "first_count": 2632,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 17.716267776621358
+          },
+          "无干扰性": {
+            "count": 15624,
+            "avg_rank": 8.946236559139784,
+            "first_count": 1008,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.35911666088566
+          },
+          "可部署性": {
+            "count": 15624,
+            "avg_rank": 9.817204301075268,
+            "first_count": 1400,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 36.54364666435613
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 12.267857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.260395408162047
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.503571428571428,
+            "first_count": 1176,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 34.685701530611325
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 9.5,
+            "first_count": 1400,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.40714285714286
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 8.45,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.104642857144093
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.289285714285715,
+            "first_count": 728,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.341313775510127
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 11.207142857142857,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.099948979593414
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 14.835714285714285,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.765867346938144
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 12.221428571428572,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 33.9795408163232
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 11.439285714285715,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 26.910599489795374
+          }
+        }
+      },
+      "per_profile": {
+        "ali-qwen": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 11.883928571428571,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 31.057955994898784
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 9.200892857142858,
+            "first_count": 1120,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 32.089106345663225
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 8.178571428571429,
+            "first_count": 1848,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.36096938775522
+          }
+        },
+        "deepseek": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 12.138392857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.806740274235263
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 8.924107142857142,
+            "first_count": 560,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 29.49870455994909
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 7.147321428571429,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.259546396683405
+          }
+        },
+        "glm4.5": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 11.129464285714286,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 23.532346141580824
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.901785714285714,
+            "first_count": 392,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.26713966836667
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 10.5,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.508928571428573
+          }
+        },
+        "gpt5": {
+          "有效性": {
+            "count": 12488,
+            "avg_rank": 4.2825112107623315,
+            "first_count": 3080,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.704940779021726
+          },
+          "无干扰性": {
+            "count": 12488,
+            "avg_rank": 13.080717488789238,
+            "first_count": 728,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 42.34326047175425
+          },
+          "可部署性": {
+            "count": 12488,
+            "avg_rank": 16.99103139013453,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 10.1523859317486
+          }
+        },
+        "grok4": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 12.995535714285714,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 15.129444355867047
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.361607142857142,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.855847417091702
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 9.669642857142858,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.346221301020975
+          }
+        }
+      }
+    },
+    "gpt5": {
+      "per_method": {
+        "all": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 7.3464285714285715,
+            "first_count": 2352,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.312130102040836
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.235714285714286,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.04443877550843
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 9.335714285714285,
+            "first_count": 1120,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.008724489794957
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 11.989285714285714,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.41059948979682
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.510714285714286,
+            "first_count": 1008,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 36.2784566326512
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 10.675,
+            "first_count": 952,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.397946428572496
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 9.332142857142857,
+            "first_count": 616,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.814681122447663
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.689285714285715,
+            "first_count": 728,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 32.742742346941355
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 10.310714285714285,
+            "first_count": 616,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.228456632655053
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 13.332142857142857,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 30.914681122447963
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.564285714285715,
+            "first_count": 616,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 36.82443877550933
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 11.678571428571429,
+            "first_count": 448,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 36.55382653061345
+          }
+        }
+      },
+      "per_profile": {
+        "ali-qwen": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 12.428571428571429,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 29.7091836734697
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.0,
+            "first_count": 392,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 32.714285714285715
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 11.361607142857142,
+            "first_count": 448,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 33.53441884566355
+          }
+        },
+        "deepseek": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 10.294642857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 18.895328443878512
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 7.723214285714286,
+            "first_count": 1120,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.923389668366745
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 6.633928571428571,
+            "first_count": 1792,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.63384885204128
+          }
+        },
+        "glm4.5": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 11.848214285714286,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.70017538265241
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.901785714285714,
+            "first_count": 672,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.668925382652596
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 10.758928571428571,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.611527423470292
+          }
+        },
+        "gpt5": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 3.4642857142857144,
+            "first_count": 3024,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 10.971938775510178
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 12.986607142857142,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.379284917091034
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 10.125,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.296875
+          }
+        },
+        "grok4": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 14.464285714285714,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 16.17729591836669
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.888392857142858,
+            "first_count": 448,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 34.10807955994841
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 13.620535714285714,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.539042570151647
+          }
+        }
+      }
+    },
+    "deepseek": {
+      "per_method": {
+        "all": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 6.796428571428572,
+            "first_count": 2408,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.247844387755105
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 9.285714285714286,
+            "first_count": 952,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.089795918366725
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 10.753571428571428,
+            "first_count": 616,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.35713010204072
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 12.582142857142857,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.464681122449097
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.496428571428572,
+            "first_count": 1176,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.09998724489812
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 8.696428571428571,
+            "first_count": 2184,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 37.13284438775409
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 8.710714285714285,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.812742346938226
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 10.725,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.999374999998924
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 11.882142857142858,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.075395408162635
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 15680,
+            "avg_rank": 13.896428571428572,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 26.87141581632715
+          },
+          "无干扰性": {
+            "count": 15680,
+            "avg_rank": 11.492857142857142,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 36.299948979592415
+          },
+          "可部署性": {
+            "count": 15680,
+            "avg_rank": 10.667857142857143,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 32.178966836734865
+          }
+        }
+      },
+      "per_profile": {
+        "ali-qwen": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 12.897321428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 28.047492825255233
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 9.651785714285714,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 29.66446109693829
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 7.955357142857143,
+            "first_count": 1624,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.15872130102116
+          }
+        },
+        "deepseek": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 11.973214285714286,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 26.37428252550972
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 8.200892857142858,
+            "first_count": 1176,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.74089205994913
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 6.415178571428571,
+            "first_count": 1288,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.653519610968296
+          }
+        },
+        "glm4.5": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 10.5625,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.755022321428573
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.495535714285714,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.035694355866823
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 10.517857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.347895408163833
+          }
+        },
+        "gpt5": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 3.90625,
+            "first_count": 2912,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 14.843889508928571
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 13.232142857142858,
+            "first_count": 616,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 44.91932397959066
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 17.589285714285715,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 6.152742346938969
+          }
+        },
+        "grok4": {
+          "有效性": {
+            "count": 12544,
+            "avg_rank": 13.142857142857142,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 14.077806122449205
+          },
+          "无干扰性": {
+            "count": 12544,
+            "avg_rank": 10.919642857142858,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.243542729592246
+          },
+          "可部署性": {
+            "count": 12544,
+            "avg_rank": 10.022321428571429,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.289680325254874
+          }
+        }
+      }
+    }
+  },
+  "judge_counts": {
+    "ali-qwen": 56,
+    "grok4": 56,
+    "glm4.5": 56,
+    "gpt5": 56,
+    "deepseek": 56
+  },
+  "per_judge_by_generator_by_method": {
+    "ali-qwen": {
+      "ali-qwen": {
+        "all": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 12.836363636363636,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 17.84595041322361
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 6.327272727272727,
+            "first_count": 1120,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.23834710743721
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 4.5636363636363635,
+            "first_count": 1400,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.62776859504159
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 15.10909090909091,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 19,
+            "var_rank": 8.133553719008171
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 9.963636363636363,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 39.38049586776948
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 8.072727272727272,
+            "first_count": 560,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.376528925620185
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 10.818181818181818,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 11.457851239669562
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 7.072727272727272,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 20.358347107438632
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 7.0181818181818185,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 18.99966942148795
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 15.927272727272728,
+            "first_count": 0,
+            "min_rank": 9,
+            "max_rank": 20,
+            "var_rank": 6.067438016528758
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 12.2,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 25.2872727272723
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 11.181818181818182,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 23.166942148760466
+          }
+        }
+      },
+      "deepseek": {
+        "all": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 6.745454545454545,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 19,
+            "var_rank": 12.807933884297581
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 7.345454545454546,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.117024793388456
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 5.509090909090909,
+            "first_count": 392,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.995371900826544
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 13.982142857142858,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 11.303252551020378
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 8.690909090909091,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 29.559008264462484
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 7.2,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 26.15999999999993
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 8.218181818181819,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 17,
+            "var_rank": 5.8433057851240395
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 6.872727272727273,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 14.838347107437965
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 6.545454545454546,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 15,
+            "var_rank": 13.702479338843094
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 14.163636363636364,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 12.28231404958679
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 10.781818181818181,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.352396694214807
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 10.672727272727272,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 24.074710743801525
+          }
+        }
+      },
+      "glm4.5": {
+        "all": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 6.9818181818181815,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 19,
+            "var_rank": 13.945123966942433
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 8.163636363636364,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 16.8277685950413
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 7.6909090909090905,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 16.57719008264498
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 12.818181818181818,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 24.548760330578464
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 13.2,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 19.323636363636123
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 12.218181818181819,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 21.152396694215145
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 7.4363636363636365,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 13.264132231405322
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 9.163636363636364,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.15504132231402
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 10.145454545454545,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 14.233388429751832
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 14.581818181818182,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 19,
+            "var_rank": 11.152396694214843
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 14.090909090909092,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 20.446280991735563
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 13.636363636363637,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 18.52231404958667
+          }
+        }
+      },
+      "gpt5": {
+        "all": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 1.8,
+            "first_count": 2688,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 12.632727272726957
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 13.581818181818182,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 44.825123966941604
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 16.89090909090909,
+            "first_count": 0,
+            "min_rank": 9,
+            "max_rank": 20,
+            "var_rank": 7.44264462809919
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 3.981818181818182,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 11.363305785124263
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 12.981818181818182,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 32.99966942148779
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 15.927272727272728,
+            "first_count": 0,
+            "min_rank": 8,
+            "max_rank": 20,
+            "var_rank": 7.958347107437815
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 3.090909090909091,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 11.60991735537218
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 13.236363636363636,
+            "first_count": 392,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 44.87140495867758
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 17.145454545454545,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 10.124297520660875
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 6.218181818181818,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 17.334214876033077
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 13.50909090909091,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 32.06809917355357
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 16.618181818181817,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 8.417851239669524
+          }
+        }
+      },
+      "grok4": {
+        "all": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 11.781818181818181,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 16.206942148760582
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 7.290909090909091,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 19.07900826446294
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 5.490909090909091,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 16,
+            "var_rank": 11.777190082644932
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 13.8,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 15.978181818181678
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 11.163636363636364,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 19,
+            "var_rank": 18.864132231405154
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 9.981818181818182,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 19,
+            "var_rank": 14.599669421487873
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3024,
+            "avg_rank": 11.88888888888889,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 16.358024691357993
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 10.272727272727273,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 18.052892561983263
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 10.181818181818182,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 16.65785123966965
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 17.78181818181818,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 10.97057851239676
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 14.090909090909092,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 23.246280991735667
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 13.309090909090909,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 19.19537190082667
+          }
+        }
+      }
+    },
+    "grok4": {
+      "ali-qwen": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 8.178571428571429,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 19,
+            "var_rank": 13.610969387755077
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.803571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 20.943558673469443
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.482142857142858,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 19.963966836734784
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 17.303571428571427,
+            "first_count": 0,
+            "min_rank": 13,
+            "max_rank": 20,
+            "var_rank": 5.139987244897817
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.035714285714286,
+            "first_count": 448,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 46.748724489795684
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 6.285714285714286,
+            "first_count": 952,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 37.20408163265358
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 9.946428571428571,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 13.657844387755153
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.178571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 23.360969387755226
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.517857142857142,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.92825255102037
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 17.928571428571427,
+            "first_count": 0,
+            "min_rank": 13,
+            "max_rank": 20,
+            "var_rank": 2.852040816326537
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.696428571428571,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 37.997130102041034
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.303571428571429,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.139987244897743
+          }
+        }
+      },
+      "deepseek": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 8.017857142857142,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 12.017538265306221
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.964285714285714,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.248724489795876
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 7.5,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.5
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.803571428571429,
+            "first_count": 0,
+            "min_rank": 8,
+            "max_rank": 20,
+            "var_rank": 6.372130102040793
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 8.589285714285714,
+            "first_count": 392,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.99202806122471
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 4.428571428571429,
+            "first_count": 672,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 15.780612244898004
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 9.5,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 19,
+            "var_rank": 7.285714285714286
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.714285714285714,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 22.20408163265307
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 6.428571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 14.459183673469278
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 16.071428571428573,
+            "first_count": 0,
+            "min_rank": 8,
+            "max_rank": 20,
+            "var_rank": 8.709183673469319
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.267857142857142,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 29.660395408163065
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 6.964285714285714,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 20.391581632652876
+          }
+        }
+      },
+      "glm4.5": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 6.660714285714286,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 10.331313775510234
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.839285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 16.456313775509983
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.767857142857142,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 16.999681122448855
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 11.375,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 19,
+            "var_rank": 17.698660714285715
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.642857142857142,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 19,
+            "var_rank": 17.551020408163005
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.035714285714286,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 17,
+            "var_rank": 16.998724489795883
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 9.089285714285714,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 9.759885204081595
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.214285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 18.096938775510118
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 12.125,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 17.216517857142858
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 14.321428571428571,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 17.360969387755205
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.892857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 19.23852040816329
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.267857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 16,
+            "var_rank": 14.946109693877617
+          }
+        }
+      },
+      "gpt5": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 1.9821428571428572,
+            "first_count": 2408,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 12.481823979591885
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.821428571428571,
+            "first_count": 840,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 63.360969387756086
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 18.267857142857142,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 13.338966836734677
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 3.232142857142857,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 9,
+            "var_rank": 1.9996811224489541
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.767857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 45.64253826530455
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 15.964285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 12.998724489796036
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 2.767857142857143,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 11.356823979592258
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.5,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 59.75
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 18.178571428571427,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 10.075255102040751
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 5.035714285714286,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 14,
+            "var_rank": 9.320153061224275
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.446428571428571,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 38.8185586734702
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 15.767857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.785395408163192
+          }
+        }
+      },
+      "grok4": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 11.035714285714286,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 6.927295918367376
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 8.107142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 18.274234693877382
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.017857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 15.803252551020249
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 14.392857142857142,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 14.595663265306065
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.410714285714286,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 17.7777423469388
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.464285714285714,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 19,
+            "var_rank": 16.60586734693869
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 12.142857142857142,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 10.443877551020579
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.160714285714286,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.313456632653025
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.589285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.70631377551007
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.214285714285714,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 12.096938775510187
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.946428571428571,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.122130102041012
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.642857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 19.22959183673468
+          }
+        }
+      }
+    },
+    "glm4.5": {
+      "ali-qwen": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 6.071428571428571,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 19,
+            "var_rank": 11.78061224489789
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.053571428571429,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 13.65784438775523
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 7.142857142857143,
+            "first_count": 672,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 25.729591836734336
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.625,
+            "first_count": 0,
+            "min_rank": 8,
+            "max_rank": 20,
+            "var_rank": 6.698660714285714
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.410714285714286,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 45.27774234693932
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 6.321428571428571,
+            "first_count": 1120,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.11096938775459
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 8.446428571428571,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 12.247130102040984
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 8.464285714285714,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 15.391581632652933
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.232142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 18.39253826530619
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 17.392857142857142,
+            "first_count": 0,
+            "min_rank": 12,
+            "max_rank": 20,
+            "var_rank": 3.5599489795918253
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.875,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 41.68080357142857
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.017857142857142,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 33.19610969387717
+          }
+        }
+      },
+      "deepseek": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 7.392857142857143,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 12.952806122449077
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.589285714285714,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 16.420599489795997
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 7.214285714285714,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.061224489795734
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.375,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 11.055803571428571
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.357142857142858,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 39.372448979591816
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 5.660714285714286,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.54559948979616
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 9.410714285714286,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 17,
+            "var_rank": 7.313456632653082
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 8.0,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 20.714285714285715
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 7.571428571428571,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 19.852040816326646
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 16.375,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.520089285714286
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.75,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.330357142857146
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.142857142857142,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 20.19387755102058
+          }
+        }
+      },
+      "glm4.5": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 6.625,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 9.520089285714286
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.196428571428571,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 15.336415816326605
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.964285714285714,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 21.034438775509955
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 12.5,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 19,
+            "var_rank": 12.75
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.5,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 24.142857142857142
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.535714285714286,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 17,
+            "var_rank": 19.891581632653008
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 9.357142857142858,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 13.086734693877467
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.767857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 15.78539540816351
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.071428571428571,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 14.530612244897977
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 16.035714285714285,
+            "first_count": 0,
+            "min_rank": 7,
+            "max_rank": 20,
+            "var_rank": 9.391581632653033
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.142857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.693877551020286
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.428571428571429,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 20.173469387755308
+          }
+        }
+      },
+      "gpt5": {
+        "all": {
+          "有效性": {
+            "count": 3080,
+            "avg_rank": 1.690909090909091,
+            "first_count": 2632,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 8.21355371900859
+          },
+          "无干扰性": {
+            "count": 3080,
+            "avg_rank": 13.345454545454546,
+            "first_count": 392,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 50.00793388429828
+          },
+          "可部署性": {
+            "count": 3080,
+            "avg_rank": 18.0,
+            "first_count": 0,
+            "min_rank": 8,
+            "max_rank": 20,
+            "var_rank": 5.418181818181818
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 4.446428571428571,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 12.068558673469646
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.017857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 35.73182397959156
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 15.714285714285714,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 13.48979591836722
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 3.0357142857142856,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 14.391581632653166
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 14.660714285714286,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 46.90274234693864
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 18.553571428571427,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 5.74713010204082
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 7.910714285714286,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 26.581313775510576
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.303571428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 32.568558673469674
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 15.714285714285714,
+            "first_count": 0,
+            "min_rank": 7,
+            "max_rank": 20,
+            "var_rank": 9.168367346938833
+          }
+        }
+      },
+      "grok4": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 10.125,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 9.145089285714286
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.625,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.520089285714285
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 6.910714285714286,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 17.759885204081407
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 13.392857142857142,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 18,
+            "var_rank": 10.309948979591969
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.232142857142858,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 18,
+            "var_rank": 23.571109693877478
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.267857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 22.946109693877304
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 12.0,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 9.821428571428571
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.553571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.461415816326838
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.607142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 23.309948979591958
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 16.464285714285715,
+            "first_count": 0,
+            "min_rank": 8,
+            "max_rank": 20,
+            "var_rank": 9.820153061224378
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.035714285714286,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 30.82015306122518
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.892857142857142,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 20.45280612244903
+          }
+        }
+      }
+    },
+    "gpt5": {
+      "ali-qwen": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 6.232142857142857,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 19,
+            "var_rank": 10.106823979591617
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.125,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 18.252232142857142
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 7.5,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 16.571428571428573
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.946428571428571,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 7.300701530612149
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.392857142857142,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 42.59566326530628
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 13.428571428571429,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.994897959183312
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 10.339285714285714,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 15.902742346938787
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 8.464285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 18.28443877551015
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.607142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.595663265306268
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 17.196428571428573,
+            "first_count": 0,
+            "min_rank": 7,
+            "max_rank": 20,
+            "var_rank": 7.657844387755041
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.017857142857142,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 45.62468112244878
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 14.910714285714286,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 28.11702806122439
+          }
+        }
+      },
+      "deepseek": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 7.642857142857143,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.479591836734697
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.714285714285714,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 22.596938775509972
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 5.910714285714286,
+            "first_count": 728,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 26.902742346938897
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 12.089285714285714,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 14.795599489795904
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.803571428571429,
+            "first_count": 392,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.872130102040913
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 6.714285714285714,
+            "first_count": 560,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.811224489796437
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 8.392857142857142,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 16,
+            "var_rank": 9.202806122448877
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.571428571428571,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.85204081632681
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 5.75,
+            "first_count": 448,
+            "min_rank": 1,
+            "max_rank": 15,
+            "var_rank": 17.616071428571427
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 13.053571428571429,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 16.62213010204095
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.803571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 28.336415816326618
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.160714285714286,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.56345663265305
+          }
+        }
+      },
+      "glm4.5": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 8.25,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 10.544642857142858
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.5,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 20.107142857142858
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.642857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 16.26530612244889
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 12.821428571428571,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 16.646683673469592
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.392857142857142,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 39.38137755102046
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.357142857142858,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 28.65816326530583
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 11.714285714285714,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 17.132653061224513
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.214285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.4897959183673
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.892857142857142,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 25.024234693877254
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 14.607142857142858,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 12.9528061224491
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.5,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.392857142857142
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.142857142857142,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 29.65816326530589
+          }
+        }
+      },
+      "gpt5": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 2.2857142857142856,
+            "first_count": 2240,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 15.311224489795972
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.232142857142858,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 36.07110969387753
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.053571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.300701530611963
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 3.5357142857142856,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 13,
+            "var_rank": 4.570153061224518
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.803571428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 23.12213010204097
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.553571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 21.10427295918403
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 3.107142857142857,
+            "first_count": 616,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.167091836735047
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.714285714285714,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.98979591836766
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.767857142857142,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 22.392538265305777
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 4.928571428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 17,
+            "var_rank": 7.173469387755048
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.196428571428571,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.086415816326337
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.125,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 23.359375
+          }
+        }
+      },
+      "grok4": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 12.321428571428571,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 9.610969387755109
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.607142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.417091836734578
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 12.571428571428571,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 19.387755102040934
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.553571428571429,
+            "first_count": 0,
+            "min_rank": 7,
+            "max_rank": 20,
+            "var_rank": 8.211415816326436
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.160714285714286,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 31.920599489796068
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 14.321428571428571,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 22.253826530612407
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 13.107142857142858,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 23.095663265306104
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.482142857142858,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 39.32110969387743
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 12.535714285714286,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 37.641581632653555
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 16.875,
+            "first_count": 0,
+            "min_rank": 8,
+            "max_rank": 20,
+            "var_rank": 10.359375
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.303571428571429,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 42.63998724489772
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 15.053571428571429,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 30.050701530612002
+          }
+        }
+      }
+    },
+    "deepseek": {
+      "ali-qwen": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 7.178571428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 19,
+            "var_rank": 9.57525510204071
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 8.232142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 14.821109693877514
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.410714285714286,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 16.884885204081513
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 17.160714285714285,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 7.206313775510191
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.107142857142858,
+            "first_count": 560,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 43.48852040816365
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 5.196428571428571,
+            "first_count": 1288,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 25.907844387755585
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 10.196428571428571,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 15.15784438775548
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.964285714285714,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 18.9630102040817
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.696428571428571,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 16.068558673469514
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 17.053571428571427,
+            "first_count": 0,
+            "min_rank": 10,
+            "max_rank": 20,
+            "var_rank": 4.8007015306122245
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.303571428571429,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 38.639987244897895
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 7.517857142857143,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 22.24968112244872
+          }
+        }
+      },
+      "deepseek": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 7.160714285714286,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.849170918367381
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.571428571428571,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 21.280612244898002
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.035714285714286,
+            "first_count": 280,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 24.24872448979613
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.535714285714286,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 10.57015306122427
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.857142857142857,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 42.336734693878064
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 3.767857142857143,
+            "first_count": 784,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 14.071109693877537
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 9.625,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 19,
+            "var_rank": 12.591517857142858
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 7.982142857142857,
+            "first_count": 336,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 23.338966836734407
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 7.517857142857143,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 20.106823979591564
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 15.571428571428571,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 14.17346938775506
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.392857142857142,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 38.02423469387727
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 6.339285714285714,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 16,
+            "var_rank": 17.331313775510303
+          }
+        }
+      },
+      "glm4.5": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 6.392857142857143,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 9.559948979591777
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 9.553571428571429,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 14.9614158163266
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.839285714285714,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 14.813456632653097
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 12.160714285714286,
+            "first_count": 0,
+            "min_rank": 4,
+            "max_rank": 20,
+            "var_rank": 19.95631377551047
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.5,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 19,
+            "var_rank": 23.642857142857142
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.071428571428571,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 23.209183673469347
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 8.839285714285714,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 14.742028061224408
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.803571428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 18.62213010204099
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.25,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 17.973214285714285
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 14.857142857142858,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 13.408163265306218
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.125,
+            "first_count": 224,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 29.537946428571427
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.910714285714286,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 22.509885204081634
+          }
+        }
+      },
+      "gpt5": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 2.25,
+            "first_count": 2240,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.866071428571429
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.535714285714286,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 54.89158163265273
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 18.017857142857142,
+            "first_count": 0,
+            "min_rank": 10,
+            "max_rank": 20,
+            "var_rank": 3.6246811224490028
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 4.267857142857143,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 14,
+            "var_rank": 9.48182397959157
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 12.589285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 35.42059948979571
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 16.214285714285715,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 19,
+            "var_rank": 7.918367346938734
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 3.107142857142857,
+            "first_count": 504,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 13.631377551020794
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 14.482142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 49.71396683673492
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 19.107142857142858,
+            "first_count": 0,
+            "min_rank": 11,
+            "max_rank": 20,
+            "var_rank": 1.8456632653060883
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 6.0,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 17,
+            "var_rank": 14.5
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.321428571428571,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 37.18239795918423
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 17.017857142857142,
+            "first_count": 0,
+            "min_rank": 7,
+            "max_rank": 20,
+            "var_rank": 6.517538265306257
+          }
+        }
+      },
+      "grok4": {
+        "all": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 11.0,
+            "first_count": 0,
+            "min_rank": 6,
+            "max_rank": 20,
+            "var_rank": 10.607142857142858
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 8.535714285714286,
+            "first_count": 168,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 14.248724489795826
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 8.464285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 11.320153061224485
+          }
+        },
+        "no_cot": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 13.785714285714286,
+            "first_count": 0,
+            "min_rank": 5,
+            "max_rank": 20,
+            "var_rank": 9.668367346938812
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 11.428571428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 19,
+            "var_rank": 18.24489795918372
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 9.232142857142858,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 18,
+            "var_rank": 21.071109693877517
+          }
+        },
+        "no_rag": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 11.785714285714286,
+            "first_count": 0,
+            "min_rank": 3,
+            "max_rank": 20,
+            "var_rank": 14.025510204081614
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 10.392857142857142,
+            "first_count": 112,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 27.024234693877432
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 10.839285714285714,
+            "first_count": 56,
+            "min_rank": 1,
+            "max_rank": 20,
+            "var_rank": 20.242028061224328
+          }
+        },
+        "no_feedback": {
+          "有效性": {
+            "count": 3136,
+            "avg_rank": 16.0,
+            "first_count": 0,
+            "min_rank": 9,
+            "max_rank": 20,
+            "var_rank": 7.0
+          },
+          "无干扰性": {
+            "count": 3136,
+            "avg_rank": 13.321428571428571,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 25.468112244898023
+          },
+          "可部署性": {
+            "count": 3136,
+            "avg_rank": 11.553571428571429,
+            "first_count": 0,
+            "min_rank": 2,
+            "max_rank": 20,
+            "var_rank": 22.46141581632678
+          }
+        }
+      }
+    }
+  }
+}

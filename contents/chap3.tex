@@ -6,69 +6,67 @@
 
 \subsection{基本对象}
 
-本节给出框架的形式化定义，用于精确刻画漏洞输入、策略生成与质量评价之间的关系。
+本节给出框架的形式化定义，刻画漏洞输入、策略生成与质量评价之间的关系。
 
-	\textbf{定义 1（漏洞实例）}：令 $\mathcal{V}$ 表示漏洞实例集合，每个漏洞 $v \in \mathcal{V}$ 由三元组表示：
+\textbf{定义 1（漏洞实例）}：漏洞实例 $v \in \mathcal{V}$ 表示为三元组：
 \[
 v = \langle \text{id},\; d,\; m \rangle
 \]
-其中 $\text{id}$ 为 CVE 标识符，$d$ 为 CVE 公告或其他文本描述，$m$ 为元数据（如严重性、受影响组件等）。
+其中 $\text{id}$ 为 CVE 编号，$d$ 为漏洞描述文本，$m$ 为元数据（严重性、受影响组件等）。
 
-	\textbf{定义 2（安全上下文）}：令 $\mathcal{C}$ 表示上下文集合，上下文 $c \in \mathcal{C}$ 是与漏洞 $v$ 相关的证据性文本或结构化信息的集合。
-
-在本框架中，上下文构建强调“证据来源可标注”，可将上下文表达为：
+\textbf{定义 2（安全上下文）}：上下文 $c \in \mathcal{C}$ 是与漏洞相关的证据集合，每条证据附带来源标识：
 \[
 c = \{(t_i,\; \text{src}_i)\}_{i=1}^{n}
 \]
-其中 $t_i$ 为片段内容，$\text{src}_i$ 为来源标识（例如文档路径、公告链接等）。
+其中 $t_i$ 为文本内容，$\text{src}_i$ 为来源（文档路径、链接等）。
 
-	\textbf{定义 3（安全策略）}：令 $\Pi$ 表示安全策略空间，每个策略 $\pi \in \Pi$ 是一个结构化对象。从防控机制的作用时机与机理考量，安全策略可划分为\textbf{监控策略} $\pi_{\mathrm{mon}}$ 与\textbf{防护策略} $\pi_{\mathrm{prot}}$ 两类，即：
+\textbf{定义 3（安全策略）}：策略空间 $\Pi$ 由监控策略 $\Pi_{\mathrm{mon}}$ 与防护策略 $\Pi_{\mathrm{prot}}$ 组成：
 \[
-\Pi = \Pi_{\mathrm{mon}} \cup \Pi_{\mathrm{prot}}
+\Pi = \Pi_{\mathrm{mon}} \cup \Pi_{\mathrm{prot}}, \quad \Pi_{\mathrm{mon}} \cap \Pi_{\mathrm{prot}} = \emptyset
 \]
-其中 $\Pi_{\mathrm{mon}}$ 为监控策略集合，$\Pi_{\mathrm{prot}}$ 为防护策略集合，且 $\Pi_{\mathrm{mon}} \cap \Pi_{\mathrm{prot}} = \emptyset$。任一策略 $\pi$ 均包含四个核心字段：
+策略 $\pi \in \Pi$ 由三部分组成：
 \[
-\pi = \langle \text{type},\; \text{layer},\; \text{method},\; \text{actions} \rangle
+\pi = \langle \text{layer},\; \text{method},\; \text{action} \rangle
 \]
 其中：
 \begin{itemize}
-    \item $\text{type} \in \{\text{monitoring}, \text{protection}\}$ 指明策略类型：\textit{monitoring} 表示监控策略，侧重运行时异常行为的感知与取证；\textit{protection} 表示防护策略，侧重事前阻断与攻击面收敛。
-    \item $\text{layer}$ 描述防控所在的技术层面（例如身份与权限、网络隔离、运行时检测、审计与日志等）。
-    \item $\text{method}$ 是防控方法的分类或摘要说明，用于快速理解防控策略的整体思路。
-    \item $\text{actions}$ 是具体可执行的防控操作序列，详见定义 3.1。
+    \item $\text{layer}$：防控层级（身份与权限、网络隔离、运行时检测、审计日志、策略执行）
+    \item $\text{method} = [m_1, \ldots, m_n]$：防控方法序列，$m_i$ 包含类型标识（监控/防护）及机理说明
+    \item $\text{action} = [a_1, \ldots, a_n]$：可执行操作序列，与 $\text{method}$ 一一对应（定义 3.1）
 \end{itemize}
 
-	\textbf{定义 3.1（防控操作序列）\label{def:action_sequence}}：定义 $\text{actions}$ 为一个有序的防控操作集合：
+\textbf{定义 3.1（防控措施单元）\label{def:action_sequence}}：策略 $\pi$ 中的 $\text{method}$ 与 $\text{action}$ 按下标一一对应：
 \[
-    \mathrm{actions} = [a_1, a_2, \ldots, a_n]
+\text{method} = [m_1, \ldots, m_n], \quad \text{action} = [a_1, \ldots, a_n]
 \]
-其中每个操作 $a_i$ 描述一个具体的防控步骤，可能涉及安全工具的使用或系统/集群配置的修改。为便于落地与复核，操作描述通常应包含：(1) 可执行的步骤或命令；(2) 作用对象或组件（例如 NetworkPolicy、RBAC 配置等）；(3) 预期效果与验证方式；(4) 可能的副作用与回滚方案。
+每对 $(m_i, a_i)$ 构成一个防控措施单元，$m_i$ 标识类型（监控/防护）并说明机理，$a_i$ 给出可执行配置或命令：
+\begin{itemize}
+    \item \textbf{监控措施}：$m_i$ 描述检测方法（如"进程行为监控"、"异常访问检测"），$a_i$ 包含监控规则（Falco、Tetragon）、告警配置、日志关联规则等
+    \item \textbf{防护措施}：$m_i$ 描述阻断方法（如"准入约束"、"权限收敛"、"网络隔离"），$a_i$ 包含准入策略（Kyverno、OPA）、RBAC 配置、NetworkPolicy、运行时策略（Seccomp、AppArmor）、回滚方案等
+\end{itemize}
+该设计支持在同一策略中组合监控与防护措施，形成检测-响应闭环。
 
 \subsection{评价与选择}
 
-本节给出候选策略质量的形式化表达，采用基于排名的评价机制。排名以相对次序刻画候选优劣，并显式结合候选集合规模，避免了绝对评分在跨样本或跨评价主体对比时的尺度不一致问题，从而更适合在不同漏洞样本之间进行可比性分析。
+本节采用基于排名的评价机制。相比绝对评分，排名以相对次序刻画优劣，避免跨样本的尺度不一致问题。
 
-\textbf{定义 4（三维质量向量）}：令 $\pi\in\Pi$ 为任一候选安全策略，定义其质量向量为
+\textbf{定义 4（三维质量向量）}：策略 $\pi\in\Pi$ 的质量由三维向量表示：
 \[
 q(\pi) = (E(\pi),\; I(\pi),\; D(\pi))\in[0,1]^3
 \]
-其中 $E$ 为有效性（Effectiveness），度量策略 $\pi$ 覆盖攻击面、阻断关键路径的程度；$I$ 为无干扰性（Interference），衡量对业务的副作用与误报风险的反向指标（值越高表示干扰越低）；$D$ 为可部署性（Deployability），评估策略 $\pi$ 中的执行步骤是否清晰、可操作且可验证。
+其中 $E$ 为有效性（覆盖攻击面与关键路径），$I$ 为无干扰性（低误报、低业务影响），$D$ 为可部署性（步骤清晰、可操作）。
 
-\textbf{定义 5（维度排名尺度）}：对给定漏洞实例 $v$ 的候选集合 $\Pi_v\subseteq\Pi$，记候选总数 $n=|\Pi_v|$。对任一维度 $\delta\in\{E,I,D\}$，定义维度排名算子输出该维度上的相对次序：
+\textbf{定义 5（维度排名）}：对候选集合 $\Pi_v$（$n=|\Pi_v|$），在维度 $\delta\in\{E,I,D\}$ 上定义排名算子：
 \[
 R_{\delta}(\Pi_v) \rightarrow (\pi_{(1)},\pi_{(2)},\ldots,\pi_{(n)})
 \]
-其中 $\pi_{(1)}$ 表示维度 $\delta$ 上最优候选。本文要求对每一维度给出\textbf{严格排序}，不允许出现名次相同的情况；当难以区分时，仍需依据预先约定的确定性次级准则打破平分，以保证名次唯一。
+其中 $\pi_{(1)}$ 为该维度最优候选。要求严格排序（无并列）。引入秩函数 $r_{\delta}:\Pi_v\to\{1,\ldots,n\}$ 表示排名位置。
 
-等价地，可定义秩函数 $r_{\delta}:\Pi_v\to\{1,\ldots,n\}$ 表示候选在该维度下的名次，即排名位置。引入秩函数的目的在于将相对次序转化为\textbf{可计算的数值对象}，便于后续进行多评审结果聚合、分歧度量与统计分析。在严格排序约束下，$r_{\delta}$ 在 $\Pi_v$ 上给出一一对应的名次编码。
-
-\textbf{定义 6（基于排名的维度得分）}：为便于后续聚合计算，定义基于排名的维度得分函数 $s_{\delta}:\Pi_v\to[0,1]$，将秩函数映射为归一化分数：
+\textbf{定义 6（维度得分）}：将排名映射为归一化得分：
 \[
 s_{\delta}(\pi) = \frac{n - r_{\delta}(\pi)}{n - 1}
 \]
-其中 $n=|\Pi_v|$ 为候选总数。该定义确保：排名第一的候选（$r_{\delta}(\pi)=1$）获得最高分 $s_{\delta}(\pi)=1$；排名最后的候选（$r_{\delta}(\pi)=n$）获得最低分 $s_{\delta}(\pi)=0$；中间排名的候选获得线性插值分数。该得分函数保持了排名的序关系，即 $r_{\delta}(\pi_1) < r_{\delta}(\pi_2) \Leftrightarrow s_{\delta}(\pi_1) > s_{\delta}(\pi_2)$，从而使得分数越高表示质量越优。
-
-排名机制作为一种\textbf{相对刻度}，不依赖单一主观数值的绝对大小，而强调在同一候选集合内的对比结果；同时，$n$ 的显式引入使不同漏洞样本的可达质量上限差异得以保留。对于某些 $\mathrm{CVE}$，受制于现有安全工具能力与部署约束，其候选策略整体质量可能偏低，但排名与归一化得分仍可在该样本内部给出稳健的选择依据。
+满足 $r_{\delta}(\pi)=1$ 时 $s_{\delta}(\pi)=1$（最优），$r_{\delta}(\pi)=n$ 时 $s_{\delta}(\pi)=0$（最差）。
 
 \section{开源应用漏洞安全知识库构建}
 
@@ -104,15 +102,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
     \item \textbf{一级分类}刻画成因大类（如安全逻辑缺陷、配置错误、代码注入、敏感信息泄露等），用于提供高层风险语义与控制域提示；
     \item \textbf{二级分类}进一步细化为更贴近防控动作选择的类型（例如授权验证不完善、默认不安全配置等），用于将漏洞分析结果对齐到可操作的控制点（RBAC 最小权限、准入控制、网络隔离、运行时策略与审计等）。
 \end{itemize}
-在策略生成阶段，分类结果作为提示词中的结构化约束，有助于模型将“漏洞语义$\rightarrow$控制域$\rightarrow$可执行动作序列”对齐，减少泛化建议与无关信息，提高策略的可部署性与针对性。
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1\textwidth]{images/vulnerability_taxonomy.png}
-    \caption{Kubernetes 容器化应用权限提升攻击方式分类}
-    \label{fig:vulnerability-taxonomy-ch3}
-\end{figure}
-
-\noindent 完整的一级/二级分类与 CWE 对应关系见附录表~\ref{tab:vuln-cwe-mapping}。
+在策略生成阶段，分类结果作为提示词中的结构化约束，有助于模型将“漏洞语义$\rightarrow$控制域$\rightarrow$可执行动作序列”对齐，减少泛化建议与无关信息，提高策略的可部署性与针对性。完整的一级/二级分类与 CWE 对应关系见附录表~\ref{tab:vuln-cwe-mapping}。
 
 \begin{table}[htbp]
     \centering
@@ -333,11 +323,10 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
         \item \textit{防护策略}：网络隔离与认证强化、权限最小化与配置加固、准入约束与阻断等。
     \end{itemize}
     % 在“定义 3.1（防控操作序列）”处添加 \label{def:action_sequence} 以便下方引用
-    \item \textbf{action 字段}：与 \texttt{method} 一一对应的可执行片段序列，遵循定义 3.1（见定义~\ref{def:action_sequence}），包含：
+    \item \textbf{action 字段}：与 \texttt{method} 一一对应的可执行片段序列，遵循定义 3.1（见定义~\ref{def:action_sequence}）。根据策略类型的不同，包含内容有所差异：
     \begin{itemize}
-        \item 对应的安全工具或修改对象（如 Falco规则、Tetragon Tracing Policy、Kyverno准入策略、NetworkPolicy、Kubernetes RBAC配置）；
-        \item 具体的执行步骤，包括命令、参数、验证方式；
-        \item 副作用评估与回滚方案。
+        \item \textbf{监控策略 action}：包含监控规则配置（如 Falco 规则、Tetragon Tracing Policy）、检测策略部署命令、告警配置、日志采集与关联规则、异常行为验证与溯源步骤等；
+        \item \textbf{防护策略 action}：包含准入策略配置（如 Kyverno、OPA Gatekeeper 规则）、权限收敛配置（如 RBAC、ServiceAccount 修订）、网络隔离策略（如 NetworkPolicy）、运行时安全策略（如 Seccomp、AppArmor）、副作用评估与回滚方案等。
     \end{itemize}
 \end{itemize}
 
