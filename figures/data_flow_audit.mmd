@@ -1,0 +1,20 @@
+flowchart LR
+    subgraph Input ["输入"]
+        CVE[("CVE库")] --> Load["载入漏洞"]
+    end
+
+    subgraph Process ["生成与评估"]
+        Load --> CoT["推理"]
+        CoT --> Gen["生成策略"]
+        Gen --> Human["人工反馈"]
+        Human --> Rank["策略排序"]
+    end
+
+    subgraph Output ["产物与审计"]
+        Artifacts[("JSON产物")]
+        Logs[("排序记录")]
+    end
+
+    Gen --> Artifacts
+    Human --> Artifacts
+    Rank --> Logs

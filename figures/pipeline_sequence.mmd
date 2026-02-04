@@ -1,0 +1,33 @@
+sequenceDiagram
+    autonumber
+    actor User as 用户
+    participant UI as 前端界面
+    participant API as 后端 API
+    participant Agent as 智能体
+    participant DB as 文件存储
+
+    Note over User, UI: 会话创建阶段
+    User->>UI: 选择 CVE 创建会话
+    UI->>API: 请求初始化
+    API->>DB: 创建目录结构
+    API-->>UI: 返回 Session ID
+
+    Note over User, UI: 生成与执行阶段
+    User->>UI: 点击"生成策略"
+    UI->>API: 调用管线步骤
+    API->>Agent: 执行生成任务
+    Agent-->>API: 返回策略 JSON
+    API->>DB: 保存 Artifact
+    API-->>UI: 展示策略内容
+
+    Note over User, UI: 反馈与保存阶段
+    User->>UI: 编辑内容并保存
+    UI->>API: 提交更新
+    API->>DB: 覆写文件记录
+    API-->>UI: 保存成功
+
+    Note over User, UI: 排序提交阶段
+    User->>UI: 提交策略排序
+    UI->>API: POST /api/ranking/submit
+    API->>DB: 写入排序记录
+    API-->>UI: 确认成功

@@ -1,0 +1,26 @@
+flowchart LR
+    %% 使用 flowchart 模拟 use case 以获得更好的兼容性
+    User((("安全工程师")))
+    Reviewer((("专家评审员")))
+
+    subgraph System ["KPEAgent 系统"]
+        direction TB
+        UC1("浏览 CVE 证据")
+        UC2("创建生成会话")
+        UC3("策略生成 (RAG/CoT)")
+        UC4("人工修订与优化")
+        UC5("候选策略排序")
+        UC6("发布最终决策")
+        UC7("查看仪表盘")
+    end
+
+    User --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC6
+    
+    Reviewer --> UC1
+    Reviewer --> UC5
+    Reviewer --> UC7
+    Reviewer --> UC6

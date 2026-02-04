@@ -1,0 +1,21 @@
+erDiagram
+    CVE ||--o{ STRATEGY : "has"
+    STRATEGY ||--o{ RANKING : "ranked_in"
+
+    CVE {
+        string cve_id PK
+        string summary
+    }
+
+    STRATEGY {
+        string session_id PK
+        string content
+        string profile
+    }
+
+    RANKING {
+        string cve_id FK
+        string user_id
+        list ranked_strategy_ids
+        timestamp created_at
+    }
