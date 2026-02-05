@@ -1,0 +1,20 @@
+classDiagram
+    direction LR
+    class CVE {
+        +string cve_id
+        +string summary
+        +float cvss_score
+    }
+    class Strategy {
+        +string session_id
+        +string content
+        +string reasoning_chain
+    }
+    class Ranking {
+        +string user_id
+        +timestamp created_at
+        +list order
+    }
+
+    CVE "1" --> "*" Strategy : 生成 (Generates)
+    Strategy "1" --> "*" Ranking : 被评价 (Has Rankings)

@@ -1,0 +1,36 @@
+flowchart LR
+    %% Styles for DFD
+    classDef process fill:#f9f,stroke:#333,stroke-width:2px,rx:10,ry:10;
+    classDef store fill:#eee,stroke:#333,stroke-width:2px,shape:cylinder;
+    classDef entity fill:#bbf,stroke:#333,stroke-width:2px,shape:rect;
+
+    %% Entities
+    User[安全工程师]:::entity
+    Expert[专家评审]:::entity
+    
+    %% Processes
+    P1(1. 漏洞载入):::process
+    P2(2. 策略生成):::process
+    P3(3. 人工评审):::process
+    P4(4. 策略排序):::process
+    P5(5. 审计归档):::process
+
+    %% Data Stores
+    D1[(CVE 知识库)]:::store
+    D2[(策略库)]:::store
+    D3[(排序记录)]:::store
+
+    %% Flows
+    User -->|导入 CVE| P1
+    P1 -->|提取特征| P2
+    D1 -.->|检索语料| P2
+    P2 -->|候选策略| D2
+    
+    D2 -.->|读取生成结果| P3
+    Expert -->|提交评语| P3
+    P3 -->|反馈优化| P2
+    
+    P3 -->|评审通过| P4
+    Expert -->|排序指令| P4
+    P4 -->|最终排名| P5
+    P5 -->|持久化| D3
