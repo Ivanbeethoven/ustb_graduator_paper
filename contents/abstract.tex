@@ -1,26 +1,24 @@
 %% 中文摘要页
 \begin{ChineseAbstract}
-论文中文摘要字数约为300\textasciitilde 600字，如遇特殊需要字数可以略多，限一页。
+云原生应用广泛依赖 Kubernetes 生态第三方组件，过度授权、访问控制缺陷、敏感信息泄露与网络隔离缺失等多维因素叠加，使权限提升漏洞在披露到修复之间形成"补丁窗口期"，给生产环境带来持续暴露风险。统计表明，30.4\% 的云原生权限提升漏洞在披露后存在较长的攻击窗口。现有方法多侧重通用静态核查或单项检测，难以针对特定 CVE 的利用前置条件与攻击链路给出可快速落地且对业务影响可控的临时防控方案；同时，策略从分析到组装高度依赖专家经验，难以规模化复用。
 
-论文摘要是论文内容不加注释和评论的简短陈述，一般以第三人称语气写成。摘要的编写应遵循下列原则：
-\begin{enumerate}[label={\arabic*)},itemindent=3.5em,leftmargin=0em] 
-\item 摘要应具有独立性和自含性，即不阅读论文的全文，就能获得必要的信息。摘要是学位论文的缩影，是学位论文的主要内容、见解、结论简短明了的缩写。
-\item 摘要应是一篇完整的短文，可以独立使用，可以引用。
-\item 摘要的内容应包含与论文等同量的主要信息，供读者确定有无必要阅读全文，也可供文摘汇编等二次文献采用。
-\item 摘要一般应说明研究工作的目的意义、研究方法、研究结果、主要结论及意义、创造性成果和新见解，而重点是结论和创新点。
-\item 要用文字表达，不要附图和照片，除了实在无变通办法可用以外，摘要中不用图、表、化学结构式、非公知公用的符号和术语，不要使用表格、公式、上下标以及其他特殊符号，要突出重点，阐述清楚，少用数据表。论文摘要用语力求简洁、准确。原则上300\textasciitilde 600字。
-\end{enumerate}
+针对上述问题，本文提出面向云原生权限提升漏洞的动态防控技术框架。首先，构建融合上下文的安全知识库，从开源代码仓库、CVE 公告、Issue 与 Pull Request 等多源渠道汇聚证据，经向量化索引形成可检索的结构化知识底座。其次，设计"检索增强—思维链推导—评审反馈"的多智能体协同生成流程，由安全知识智能体整理上下文、漏洞分析智能体输出结构化威胁分析、策略生成智能体分别产出监控策略与防护策略草案，并由评审优化智能体进行多轮迭代修订。最后，以有效性、无干扰性、可部署性三维质量向量对候选策略进行排名式评估与多评审聚合，形成"证据支撑—智能推理—验证交付"的闭环。为支撑工程化落地，本文实现原型系统 KPEAgent，覆盖知识库管理、策略生成与反馈优化、专家评审排序以及策略部署管理等能力。
 
-\ChineseKeywords{摘要；论文；要求；字数；格式（关键词个数为3\textasciitilde 5个，正式写作请删除此括号）}
+在 2020—2025 年收集的 55 个云原生权限提升漏洞样本上开展实验评估。消融实验表明，反馈迭代机制对策略质量贡献最为显著，移除后有效性下降 79.2\%；检索增强与思维链推导亦具有正向贡献，三模块协同使完整工作流在各维度均取得最优表现。与基线方法相比，本框架生成的策略在有效性维度提升 32.5\%，可部署性维度提升 41.2\%；多评审聚合的共识排序稳定性较单一评审提升 23.7\%，且与人工评审趋势一致。典型 CVE 案例分析进一步验证了生成策略可在准入控制、RBAC 收敛、网络隔离与运行时监测等控制点快速落地，从而在补丁窗口期有效压制攻击路径并降低风险暴露面。
+
+\ChineseKeywords{云原生安全；权限提升漏洞；补丁窗口期防控；多智能体协同；策略生成与评估}
 \end{ChineseAbstract}
 
 %% 英文摘要页
 \begin{EnglishAbstract}
 
-   In environmental economics, environmental resources including environmental quality are categorized as amenity resources. Due to its importance to human welfare, the amenity resources theoretical study and valuation is an ongoing issue at the academic frontier in the environmental economics area.  
-  
-\EnglishKeywords{Key word 1; Key word 2; Key word 3; $\cdots$}
-注：论文的英文摘要应有英文题目和关键词，内容与中文摘要相同，用另页置于中文摘要之后；外文摘要实词在300个左右。
+Cloud-native applications extensively rely on third-party components within the Kubernetes ecosystem. The interplay of excessive permissions, access-control flaws, sensitive information exposure, and insufficient network isolation often leaves privilege escalation vulnerabilities exploitable during a patch-gap between disclosure and production-ready remediation. Statistics show that 30.4\% of such vulnerabilities exhibit a prolonged attack window after disclosure. Existing approaches focus primarily on generic static checks or single-direction detection, failing to deliver CVE-specific, deployable, and low-disruption temporary mitigations; meanwhile, assembling actionable defenses still depends heavily on expert knowledge, hindering scalability.
+
+To address these challenges, this thesis proposes a dynamic prevention-and-control framework for privilege escalation vulnerabilities in cloud-native environments. First, an evidence-grounded security knowledge base is constructed by collecting multi-source context---including open-source repositories, CVE advisories, issues, and pull requests---and organizing it via vector indexing into a retrievable structured foundation. Second, a multi-agent collaborative workflow combining retrieval-augmented generation, chain-of-thought reasoning, and iterative review feedback is designed: a security-knowledge agent consolidates context, a vulnerability-analysis agent produces structured threat reports, a policy-generation agent drafts both monitoring and protection policies, and a review-optimization agent refines candidates through multiple iterations. Third, candidate policies are evaluated using a ranking-based scheme with a three-dimensional quality vector---Effectiveness, Interference, and Deployability---followed by multi-judge aggregation to form a closed loop of ``evidence support $\rightarrow$ intelligent reasoning $\rightarrow$ verified delivery.'' A prototype system, KPEAgent, is implemented to operationalize the end-to-end workflow, covering knowledge base management, policy generation with feedback-driven refinement, expert review and ranking, and deployment management.
+
+Experiments are conducted on 55 privilege escalation CVEs collected from 2020 to 2025. Ablation studies reveal that the feedback-iteration mechanism contributes most significantly: removing it causes effectiveness to drop by 79.2\%; retrieval augmentation and chain-of-thought reasoning also yield positive gains, and the synergy of all three modules leads to optimal performance across all dimensions. Compared with baseline methods, the proposed framework improves effectiveness by 32.5\% and deployability by 41.2\%; the consensus ranking from multi-judge aggregation is 23.7\% more stable than single-judge results and aligns well with human expert assessments. Case studies on representative CVEs further confirm that the generated policies can be rapidly deployed with common cloud-native controls---including admission control, RBAC hardening, network micro-segmentation, and runtime monitoring---to suppress attack paths and reduce exposure during the patch-gap.
+
+\EnglishKeywords{Cloud-native security; Privilege escalation; Patch-gap defense; Multi-agent collaboration; Policy generation and evaluation}
 
 
 \end{EnglishAbstract}
