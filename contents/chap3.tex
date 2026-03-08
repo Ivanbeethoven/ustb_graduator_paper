@@ -1,3 +1,4 @@
+% !TeX root = ../main.tex
 \chapter{面向云原生权限提升漏洞的智能防控技术}\label{chap:method}
 
 本章给出本文方法体系和技术细节，包括形式化定义、总体流程和三个主要技术点。
@@ -75,9 +76,9 @@ s_{\delta}(\pi) = \frac{n - r_{\delta}(\pi)}{n - 1}
 
 本节阐述漏洞样本的收集流程与两级成因分类框架的构建方法。该分类框架面向策略生成场景：在输入侧提供相对稳定且可解释的风险语义线索，用以约束模型的推理路径，并辅助其对控制域与关键控制点进行选择，从而提升输出策略的可部署性、可验证性与副作用可控性。
 
-\csname textbf\endcsname{（1）云原生应用清单与仓库映射}。以 Kubernetes 及其生态开源应用为研究对象，首先从 CNCF Landscape 获取云原生应用清单，并对清单进行快照固化以保证可复现性。随后将条目名称映射到其官方代码仓库，形成后续漏洞关联与证据收集的目标集合。
+\noindent\hangindent=2em\hangafter=1 \textbf{云原生应用清单与仓库映射}。以 Kubernetes 及其生态开源应用为研究对象，首先从 CNCF Landscape 获取云原生应用清单，并对清单进行快照固化以保证可复现性。随后将条目名称映射到其官方代码仓库，形成后续漏洞关联与证据收集的目标集合。
 
-\csname textbf\endcsname{（2）漏洞收集与筛选}。在数据源选择上，综合使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}，检索 Kubernetes 及其生态应用中与权限提升相关的高风险漏洞。具体收集策略包括：
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞收集与筛选}。在数据源选择上，综合使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}，检索 Kubernetes 及其生态应用中与权限提升相关的高风险漏洞。具体收集策略包括：
 \begin{itemize}
     \item \textbf{关键词约束}：在 CVE 描述与参考链接中匹配 Privilege Escalation、Authorization Bypass、Improper Access Control、RBAC、ServiceAccount、ClusterRole、Container Escape/Sandbox Escape/Breakout 等关键词；
     \item \textbf{严重性阈值}：采用 CVSS v3.x 评分，并以 $\geq 5.0$ 的高危与严重漏洞为主要对象；
@@ -85,32 +86,30 @@ s_{\delta}(\pi) = \frac{n - r_{\delta}(\pi)}{n - 1}
 \end{itemize}
 最终保留的结构化字段包括 CVE 编号、漏洞摘要、披露时间、受影响组件与版本范围、修复版本、CVSS 评分、参考链接，以及与修复相关的补丁提交记录等。
 
-\csname textbf\endcsname{（3）CWE 标注与分布统计}。为刻画漏洞成因层面的共性，本文对样本进行 CWE（Common Weakness Enumeration）标注。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。本文依据公开映射与公告信息提取每个 CVE 的 CWE 标签，并统计不同 CWE 的出现频次。
+\noindent\hangindent=2em\hangafter=1 \textbf{CWE 标注与分布统计}。为刻画漏洞成因层面的共性，本文对样本进行 CWE（Common Weakness Enumeration）标注。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。本文依据公开映射与公告信息提取每个 CVE 的 CWE 标签，并统计不同 CWE 的出现频次。
 
-\begin{figure}[h]
+\begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/cwe_distribution_pie.png}
-    \caption{Kubernetes 权限提升 CVE 对应的 CWE 类型占比}
+    \bicaption{Kubernetes 权限提升 CVE 对应的 CWE 类型占比}{Distribution of CWE categories corresponding to Kubernetes privilege escalation CVEs}
     \label{fig:cwe-distribution-ch3}
 \end{figure}
 
 CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可能对应多个弱点条目，且不同条目在抽象层次上跨越具体机制与高层概念，使得类别之间存在交叉与重叠。在本文收集的 55 个权限提升漏洞中，36\% 的 CVE（20 个样本）同时关联两个及以上 CWE 标签。为客观反映 CWE 分布，统计时对每个 CVE 赋予单位权重 1.0，多标签情况下各 CWE 均分该权重。统计结果显示，访问控制类弱点（如 CWE-863 授权不当、CWE-269 权限管理不当）与输入处理类弱点（如 CWE-20 输入验证不当）在多个样本中共现，反映出漏洞成因的复合特征。上述非正交特性导致单一 CWE 标签难以为防控策略选择提供唯一且稳定的语义约束，因此需构建面向防控动作的成因分类框架。
 
 
-\csname textbf\endcsname{（4）面向防控的成因分类框架}。为解决“根因标签不稳定/不互斥”对策略生成的影响，本文提出面向云原生权限提升漏洞的两级成因分类框架，并将每个漏洞映射为（一级类，二级类）标签：
+\noindent\hangindent=2em\hangafter=1 \textbf{面向防控的成因分类框架}。为解决“根因标签不稳定/不互斥”对策略生成的影响，本文提出面向云原生权限提升漏洞的两级成因分类框架，并将每个漏洞映射为（一级类，二级类）标签：
 \begin{itemize}
     \item \textbf{一级分类}刻画成因大类（如安全逻辑缺陷、配置错误、代码注入、敏感信息泄露等），用于提供高层风险语义与控制域提示；
     \item \textbf{二级分类}进一步细化为更贴近防控动作选择的类型（例如授权验证不完善、默认不安全配置等），用于将漏洞分析结果对齐到可操作的控制点（RBAC 最小权限、准入控制、网络隔离、运行时策略与审计等）。
 \end{itemize}
 在策略生成阶段，分类结果作为提示词中的结构化约束，有助于模型将“漏洞语义$\rightarrow$控制域$\rightarrow$可执行动作序列”对齐，减少泛化建议与无关信息，提高策略的可部署性与针对性。完整的一级/二级分类与 CWE 对应关系见附录表~\ref{tab:vuln-cwe-mapping}。
 
-\begin{table}[htbp]
-    \centering
+\begin{table}[htb]
+    \centering\bicaption{云原生权限提升漏洞分类框架（CWE 对应详见附录表~\ref{tab:vuln-cwe-mapping}）}{Classification framework for cloud-native privilege escalation vulnerabilities (see Appendix Table~\ref{tab:vuln-cwe-mapping} for the CWE mapping)}\label{tab:cloud-native-vuln}
     \small
     \setlength{\tabcolsep}{3pt}
-    \renewcommand{\arraystretch}{0.9} % 稍微增加行高更美观
-    \caption{云原生权限提升漏洞分类框架（CWE 对应详见附录表~\ref{tab:vuln-cwe-mapping}）}
-    \label{tab:cloud-native-vuln}
+    \noindent\renewcommand{\arraystretch}{0.9}
 
     \begin{tabular}{ >{\centering\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}p{3cm} }
         \toprule
@@ -166,11 +165,11 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 
 知识库构建阶段的目标是将与漏洞 $v$ 相关的多源材料组织为带来源标注的证据集合 $c=\{(t_i,\text{src}_i)\}_{i=1}^{n}$，并以嵌入式模型构建一个可检索的向量索引，以支持后续“按需取证”的上下文供给。
 
-\csname textbf\endcsname{（1）材料收集与最小化预处理}。对每个漏洞关联的开源应用仓库，收集代码、配置与文档等可读文本；同时纳入与漏洞相关的安全公告、Issue/PR 讨论与修复提交信息。对文本进行最小化规范化（统一换行与空白），并过滤超长或二进制内容，以降低噪声与资源开销。
+\noindent\hangindent=2em\hangafter=1 \textbf{材料收集与最小化预处理}。对每个漏洞关联的开源应用仓库，收集代码、配置与文档等可读文本；同时纳入与漏洞相关的安全公告、Issue/PR 讨论与修复提交信息。对文本进行最小化规范化（统一换行与空白），并过滤超长或二进制内容，以降低噪声与资源开销。
 
-\csname textbf\endcsname{（2）结构化分块}。为兼顾证据粒度与可复核性，本文对不同材料采用差异化分块：对代码/配置按行切分并尽量对齐函数或语义边界；对文档按段落与窗口切分并保留适当重叠，以减少跨块语义断裂。
+\noindent\hangindent=2em\hangafter=1 \textbf{结构化分块}。为兼顾证据粒度与可复核性，本文对不同材料采用差异化分块：对代码/配置按行切分并尽量对齐函数或语义边界；对文档按段落与窗口切分并保留适当重叠，以减少跨块语义断裂。
 
-\csname textbf\endcsname{（3）向量化与索引}。对每个文本块使用嵌入式模型生成向量表示。本文选用 \texttt{sentence-transformers/all-mpnet-base-v2} 作为编码器，将文本块映射到统一的向量空间。基于向量表示，采用 FAISS 构建近邻索引以支持相似度检索，从而为后续按需检索证据提供高效的底层能力。为保证可追溯与可复现，索引与元数据进行同步持久化，内容包括向量索引文件、块级元数据、以及构建配置。块级元数据记录来源路径或链接、块 ID、块类型与范围等信息；构建配置记录分块参数与检索阈值等关键设置。
+\noindent\hangindent=2em\hangafter=1 \textbf{向量化与索引}。对每个文本块使用嵌入式模型生成向量表示。本文选用 \texttt{sentence-transformers/all-mpnet-base-v2} 作为编码器，将文本块映射到统一的向量空间。基于向量表示，采用 FAISS 构建近邻索引以支持相似度检索，从而为后续按需检索证据提供高效的底层能力。为保证可追溯与可复现，索引与元数据进行同步持久化，内容包括向量索引文件、块级元数据、以及构建配置。块级元数据记录来源路径或链接、块 ID、块类型与范围等信息；构建配置记录分块参数与检索阈值等关键设置。
 
 上述流程得到的向量知识库为后续策略生成提供了“可追溯证据”的供给能力：模型在推导控制措施时可以检索到与漏洞相关的关键事实与上下文片段，并通过来源标识完成快速定位与复核。
 
@@ -179,10 +178,10 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 
 策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，生成候选策略集合 $\Pi_v=\Pi_{\mathrm{mon}}\cup\Pi_{\mathrm{prot}}$（图\ref{fig:method}），其中 $\Pi_{\mathrm{mon}}$ 为监控策略子集，$\Pi_{\mathrm{prot}}$ 为防护策略子集。流程由四类智能体分工完成：安全知识智能体整理证据；漏洞分析智能体给出结构化分析；策略生成智能体产出候选（包括监控策略与防护策略）；策略评审与优化智能体基于评审反馈修订，以降低误报与运维噪声并提升可部署性。
 
-\begin{figure}[h]
+\begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/method.png}
-    \caption{多智能体协同的安全策略生成框架}
+    \bicaption{多智能体协同的安全策略生成框架}{Multi-agent collaborative framework for security strategy generation}
     \label{fig:method}
 \end{figure}
 
@@ -449,14 +448,14 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 
 为保证评价结果的可复核性与可比性，本文将评价算子划分为两类：\textbf{LLM 支持的评价算子}与\textbf{专家人工评价算子}。两类算子在评价维度与输出形式上保持一致，均以三维质量向量 $q(\pi)=(E(\pi),I(\pi),D(\pi))$ 为依据，输出按维度的排名结果；差异在于评价主体与证据使用方式：前者由评价智能体在提示词约束与证据上下文支持下给出结构化结论，后者由安全专家结合现场约束与经验进行复核与调整。
 
-\textbf{（1）LLM 支持的评价算子}。该算子以候选策略集合 $\Pi_v$ 为输入，在固定的评价准则与输出结构规范约束下，对候选策略在有效性 $E$、无干扰性 $I$、可部署性 $D$ 三个维度进行比较并给出排序。为降低模型的提示偏置与先验印象影响，评价前对候选策略进行\textbf{随机化与匿名化}处理：
+\noindent\hangindent=2em\hangafter=1 \textbf{LLM 支持的评价算子}。该算子以候选策略集合 $\Pi_v$ 为输入，在固定的评价准则与输出结构规范约束下，对候选策略在有效性 $E$、无干扰性 $I$、可部署性 $D$ 三个维度进行比较并给出排序。为降低模型的提示偏置与先验印象影响，评价前对候选策略进行\textbf{随机化与匿名化}处理：
 \begin{itemize}
         \item \textbf{随机化}：对候选策略列表进行随机打乱，避免顺序效应；
         \item \textbf{匿名化}：移除或遮蔽与生成来源相关的元信息（如模型名称、profile 标签、生成时间等），仅保留内容本身，并为每条候选分配不可语义化的匿名编号（如 \texttt{S1,S2,\ldots}）。
 \end{itemize}
 为保持可追溯性，系统同时记录匿名编号与原始候选的映射表，供最终复核与实验统计使用。
 
-	\textbf{（2）专家人工评价算子}。该算子由安全专家基于同一评价维度与检查清单，对候选策略进行复核：重点验证关键前置条件是否成立、控制点是否覆盖主要攻击路径、策略副作用与回滚边界是否明确，以及配置片段是否符合组织内基线与现场约束。专家评价可以对 LLM 排名结果进行解释性标注与必要校正，并在存在高风险不确定性时给出需补充信息或需灰度验证的结论。
+\noindent\hangindent=2em\hangafter=1 \textbf{专家人工评价算子}。该算子由安全专家基于同一评价维度与检查清单，对候选策略进行复核：重点验证关键前置条件是否成立、控制点是否覆盖主要攻击路径、策略副作用与回滚边界是否明确，以及配置片段是否符合组织内基线与现场约束。专家评价可以对 LLM 排名结果进行解释性标注与必要校正，并在存在高风险不确定性时给出需补充信息或需灰度验证的结论。
 
 \begin{PromptBox}{评价智能体 PROMPT 模板（LLM 支持的评价算子）}
 \begin{Verbatim}[breaklines,breakanywhere]
@@ -515,13 +514,13 @@ EVALUATION_PROMPT_TEMPLATE = r"""# Kubernetes 策略三维评价与排名
 
 本节给出一个面向实验可复现的聚合模型。其核心目的不是引入新的主观打分，而是\textbf{在多评审等权的前提下形成可审计的共识排序}。具体而言，在每个维度 $\delta\in\{E,I,D\}$ 上，评价算子仅输出严格排序；系统将排序映射为秩并进行加权聚合。三维维度权重 $\alpha_E,\alpha_I,\alpha_D$ 反映业务场景偏好，可按需求进行定制化设定；评审权重则采用等权设置 $w_h=\frac{1}{m}$（$m=|\mathcal{H}|$），以保证模型简单且易复现。
 
-\textbf{（1）输入：多评审排序结果}。令 $\Pi_v$ 表示通过规则化校验的候选集合，$|\Pi_v|=n$；令 $\mathcal{H}=\{h_1,\ldots,h_m\}$ 表示参与评审的评价算子集合（可为多个评审 LLM，必要时可包含专家复核）。每个 $h\in\mathcal{H}$ 在维度 $\delta\in\{E,I,D\}$ 上输出一个严格排序：
+\noindent\hangindent=2em\hangafter=1 \textbf{输入：多评审排序结果}。令 $\Pi_v$ 表示通过规则化校验的候选集合，$|\Pi_v|=n$；令 $\mathcal{H}=\{h_1,\ldots,h_m\}$ 表示参与评审的评价算子集合（可为多个评审 LLM，必要时可包含专家复核）。每个 $h\in\mathcal{H}$ 在维度 $\delta\in\{E,I,D\}$ 上输出一个严格排序：
 \[
 R_{\delta}^{(h)}(\Pi_v)\rightarrow\big(\pi^{\delta,h}_{(1)},\;\pi^{\delta,h}_{(2)},\;\ldots,\;\pi^{\delta,h}_{(n)}\big)
 \]
 其中 $\pi^{\delta,h}_{(1)}$ 表示在评审 $h$ 的维度 $\delta$ 上最优候选。排序在匿名编号（S1、S2、$\ldots$）上进行，最终通过映射表恢复到原策略用于审计与交付。
 
-\textbf{（2）将排序映射为秩函数}。为便于计算，定义秩函数 $r_{\delta}^{(h)}: \Pi_v\to\{1,\ldots,n\}$：
+\noindent\hangindent=2em\hangafter=1 \textbf{将排序映射为秩函数}。为便于计算，定义秩函数 $r_{\delta}^{(h)}: \Pi_v\to\{1,\ldots,n\}$：
 \[
 r_{\delta}^{(h)}(\pi)=1+\big|\{\pi'\in\Pi_v\mid \pi'\succ_{\delta}^{(h)}\pi\}\big|
 \]
@@ -529,7 +528,7 @@ r_{\delta}^{(h)}(\pi)=1+\big|\{\pi'\in\Pi_v\mid \pi'\succ_{\delta}^{(h)}\pi\}\bi
 
 上述映射不引入新的偏好假设：它仅将排序的“相对位置”编码为整数，从而使排序结果可以直接进入后续的加权 Borda 聚合与分歧度量计算。
 
-\textbf{（3）按维度聚合}。本文采用基于定义 6 的维度得分函数进行加权聚合。对 $m=|\mathcal{H}|$ 个评审主体取等权设置 $w_h=\frac{1}{m}$，并满足 $w_h\ge 0$ 且 $\sum_{h\in\mathcal{H}} w_h=1$。
+\noindent\hangindent=2em\hangafter=1 \textbf{按维度聚合}。本文采用基于定义 6 的维度得分函数进行加权聚合。对 $m=|\mathcal{H}|$ 个评审主体取等权设置 $w_h=\frac{1}{m}$，并满足 $w_h\ge 0$ 且 $\sum_{h\in\mathcal{H}} w_h=1$。
 
 对每个评审主体 $h\in\mathcal{H}$，根据定义 6 将其在维度 $\delta$ 上对候选 $\pi$ 的排名 $r_{\delta}^{(h)}(\pi)$ 转换为归一化得分：
 \[
@@ -550,7 +549,7 @@ U_{\delta}(\pi)=\sum_{h\in\mathcal{H}} w_h\cdot\big(r_{\delta}^{(h)}(\pi)-\bar r
 \]
 当 $U_{\delta}(\pi)$ 较大时，表示该策略在该维度上存在明显分歧，需在后续决策中优先人工复核。
 
-	\textbf{（4）总体质量评价：三维共识到总排名}。在获得三维共识质量后，给出总体质量函数 $Q: \Pi_v\to[0,1]$：
+\noindent\hangindent=2em\hangafter=1 \textbf{总体质量评价：三维共识到总排名}。在获得三维共识质量后，给出总体质量函数 $Q: \Pi_v\to[0,1]$：
 \[
 Q(\pi)=\alpha_E\hat S_E(\pi)+\alpha_I\hat S_I(\pi)+\alpha_D\hat S_D(\pi),\quad \alpha_E+\alpha_I+\alpha_D=1
 \]

@@ -1,8 +1,9 @@
+% !TeX root = ../../main.tex
 \section{案例一：CVE-2022-24768内部权限问题}
 
 \subsection{漏洞详解与复现}
 
-\textbf{（1）漏洞背景}
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
 Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工具。其典型部署形态为：Argo CD 控制平面以相对高权限身份（对集群资源拥有创建/更新/删除能力）持续对齐 Git 仓库中的“期望状态”。
 该架构提升交付一致性的同时，也带来显著的安全挑战：一旦普通用户能够影响 Argo CD 的控制决策，便可能借助控制平面权限实现权限边界放大。
@@ -18,7 +19,7 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
         \item \textbf{控制平面滥用阶段}：Argo CD 按 GitOps 同步逻辑将恶意资源应用到集群；
         \item \textbf{权限提升阶段}：借助被创建的高权限 RBAC 绑定（如 \texttt{ClusterRoleBinding}）获得集群级管理员能力。
 \end{enumerate}
-\textbf{（2）漏洞复现}
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
 本节给出可复现的实验流程：通过构造一个包含“正常资源 + 恶意 RBAC 绑定”的 Git 仓库，并为低权用户配置 \texttt{sync\allowbreak+\allowbreak override} 权限，使其能够触发 Argo CD 同步，从而在集群中创建管理员级绑定实现提权。
 
@@ -31,17 +32,17 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 
 
         \textbf{攻击结果}：综合上述验证可观察到权限边界放大。低权用户 bob 原本仅具备对特定项目范围内应用的 \texttt{sync/override} 能力，但通过影响 Git 期望状态或同步动作，间接诱导控制平面在集群中创建高权限 RBAC 绑定，最终表现为在 \texttt{--as bob} 条件下 \texttt{kubectl auth can-i '*' '*'} 返回 \texttt{yes}。
-\begin{figure}[htbp]
+\begin{figure}[htb]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image2.png}
-        \caption{漏洞复现实验结果示意（验证权限变化）}
+        \bicaption{漏洞复现实验结果示意（验证权限变化）}{Experimental result of vulnerability reproduction showing privilege change verification}
         \label{fig:cve-2022-24768-poc}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image1.png}
-        \caption{漏洞复现实验结果示意（验证是否有命令空间级别权限）}
+        \bicaption{漏洞复现实验结果示意（验证是否有命令空间级别权限）}{Experimental result of vulnerability reproduction showing namespace-level privilege verification}
         \label{fig:cve-2022-24768-chain}
 \end{figure}
 
@@ -56,16 +57,16 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 
 \subsection{三因素分析}
 
-\textbf{（1）有效性（Effectiveness）}
+\noindent\textbf{有效性（Effectiveness）：}
 该策略在攻击链的多个关键点形成“多点阻断”：
 Kubernetes RBAC 对 \texttt{AppProject} 写入进行限制，可降低放开 \texttt{sourceRepos}、\texttt{destinations} 与白名单导致的爆炸半径。Argo CD RBAC 默认只读并隔离高危资源写权限，使低权用户难以获得可用于放大控制面的关键操作集合。准入控制对策略表达施加硬约束，用于防止隐蔽通配符放权与权限漂移。身份治理约束授权来源，可降低组注入或错误映射造成的隐式提权。
 在复现实验中，若上述策略生效，则攻击者即使拥有 \texttt{sync} 权限，也难以通过修改 AppProject/仓库/策略来诱导 Argo CD 创建集群级高权限绑定，攻击路径被显著收敛。
 
-\textbf{（2）无干扰性（Interference）}
+\noindent\textbf{无干扰性（Interference）：}
 该策略以“最小必要变更”为原则，主要影响集中在管理面与配置流程：
 对业务同步的直接影响可控，策略保留项目内正常的 \texttt{sync} 能力，仅收紧 \texttt{override}、高危资源写权限与高风险策略表达。准入控制建议先审计后强制，以降低误拦截对业务的冲击。额外运维开销主要来自 RBAC 精细化与准入规则维护，但可通过模板化与 GitOps 基线降低长期成本。
 
-\textbf{（3）可部署性（Deployability）}
+\noindent\textbf{可部署性（Deployability）：}
 该策略依赖的能力均为云原生常用组件，具有较强可落地性：
 Kubernetes RBAC 与 Argo CD RBAC 均为原生能力，配置可版本化并可审计。Gatekeeper 或 Kyverno 属于成熟的准入控制方案，可按项目逐步推广，并与审计治理配套形成闭环。
 

@@ -1,3 +1,4 @@
+% !TeX root = ../main.tex
 \appendix
 
 \chapter{单位}
@@ -32,9 +33,8 @@
 示例
 
 
-\begin{table}
-\centering
-\caption{表 A.1 国际单位制的基本单位}
+\begin{table}[htb]
+\centering\bicaption{国际单位制的基本单位}{Basic units in the International System of Units}
 \noindent\renewcommand{\arraystretch}{0.9}
 \begin{tabular}{C{0.33\textwidth}C{0.34\textwidth}C{0.33\textwidth}}
 \toprule
@@ -50,9 +50,8 @@
 \end{tabular}
 \end{table}
 \vspace{-1em}  % 向上收紧一行
-\begin{table}
-\centering
-\caption{表 A.2 国家规定的非国际单位制单位}
+\begin{table}[htb]
+\centering\bicaption{国家规定的非国际单位制单位}{Non-SI units permitted by national regulations}
 \noindent\renewcommand{\arraystretch}{0.9}
 \begin{tabular}{C{0.14\textwidth}C{0.2\textwidth}C{0.15\textwidth}C{0.51\textwidth}}
 \toprule
@@ -78,13 +77,11 @@
 
 \chapter{云原生权限提升漏洞分类与 CWE 对应关系}\label{app:vuln-cwe-mapping}
 
-\begin{table}[htbp]
-	\centering
+\begin{table}[htb]
+	\centering\bicaption{云原生权限提升漏洞分类框架与 CWE 对应关系}{Mapping between the classification framework of cloud-native privilege escalation vulnerabilities and CWE}\label{tab:vuln-cwe-mapping}
 	\scriptsize
 	\setlength{\tabcolsep}{2pt}
-	\renewcommand{\arraystretch}{0.8}
-	\caption{云原生权限提升漏洞分类框架与 CWE 对应关系}
-	\label{tab:vuln-cwe-mapping}
+	\noindent\renewcommand{\arraystretch}{0.8}
 
 	\begin{tabular}{ >{\centering\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{3cm} >{\centering\arraybackslash}p{2cm} >{\raggedright\arraybackslash}p{5cm} }
 		\toprule
@@ -149,6 +146,44 @@
 		 & & CWE-36 & 绝对路径遍历 \\
 		 & & CWE-74 & 输出内容中特殊元素的中和处理不当 \\
 		\bottomrule
+	\end{tabular}
+\end{table}
+
+\section{KubeGuard 权限提升检测规则汇总}\label{app:pe-detection-rules}
+
+为便于正文聚焦方法主线，本节补充给出 KubeGuard 在四类权限提升场景下采用的代表性检测规则汇总。
+
+\begin{table}[htb]
+	\centering\bicaption{多种权限提升类型及其检测规则}{Types of privilege escalation and their detection rules}\label{tab:PEDetectionRules}
+	\noindent\renewcommand{\arraystretch}{1.5}
+	\setlength{\tabcolsep}{2mm}
+	\begin{tabular}{>{\centering\arraybackslash}m{2.5cm}m{4cm}>{\raggedright\arraybackslash}m{7.5cm}}
+	\toprule
+	\textbf{类型} & \textbf{机制} & \textbf{检测规则}\\
+	\midrule
+	\multirow{3}{2.5cm}{\centering 凭证窃取}
+	& 密钥访问
+	& \multirow{3}{7.5cm}{检测请求的源 IP 地址或服务账户与资源所属 Pod 不一致的 API 请求} \\
+	& Pod 执行 & \\
+	& 容器逃逸 & \\
+	\midrule
+
+	账户冒用
+	& 服务账户模拟
+	& 检测服务账户、操作和资源的组合是否属于该账户的正常使用行为集合 \\
+	\midrule
+
+	\multirow{2}{2.5cm}{\centering RBAC 操纵}
+	& 角色修改
+	& \multirow{2}{7.5cm}{检测对角色或角色绑定资源的创建、修补或更新操作} \\
+	& 角色绑定修改 & \\
+	\midrule
+
+	\multirow{2}{2.5cm}{\centering 间接执行}
+	& 工作负载修改
+	& \multirow{2}{7.5cm}{检测对工作负载资源的创建、修补或更新操作，以及对 Pod 的 exec 操作} \\
+	& Pod 执行 & \\
+	\bottomrule
 	\end{tabular}
 \end{table}
 

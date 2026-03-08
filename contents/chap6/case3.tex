@@ -1,8 +1,9 @@
+% !TeX root = ../../main.tex
 \section{案例三：CVE-2023-30512（CubeFS CSI 过度权限配置）}
 
 \subsection{漏洞详解与复现}
 
-\textbf{（1）漏洞背景}
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
 CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Container Storage Interface）插件与 Kubernetes 集成。
 在 Kubernetes 中，CSI 节点插件通常以 DaemonSet 形式在每个节点上运行（例如 \texttt{cfs-csi-node}），控制器组件以 Deployment 形式运行（例如 \texttt{cfs-csi-controller}）。
@@ -21,14 +22,14 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 	\item \textbf{数据获取阶段}：攻击者以该 ServiceAccount 身份读取集群 Secret，从而获取高价值凭据（管理员 Token、云凭据等），实现从“节点/Pod 控制”向“集群控制”的升级。
 \end{enumerate}
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image.png}
-	\caption{CVE-2023-30512：攻击成功证据（基于 CSI ServiceAccount 的越权访问结果）}
+	\bicaption{CVE-2023-30512：攻击成功证据（基于 CSI ServiceAccount 的越权访问结果）}{CVE-2023-30512: evidence of successful attack based on unauthorized access through a CSI ServiceAccount}
 	\label{fig:cve-2023-30512-overview}
 \end{figure}
 
-\textbf{（2）漏洞复现（验证性复现）}
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现（验证性复现）}
 
 考虑到本文面向论文复现实验，且该漏洞的攻击细节容易被滥用，本文采用\textbf{验证性复现}思路：
 以“RBAC 权限证据 + 受控权限验证”为主，证明 \texttt{cfs-csi-service-account} 具备不应存在的 \texttt{secrets} 读取能力；
@@ -44,10 +45,10 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 	\item 按“最小权限 + 准入防回归 + 审计检测”部署策略后，重复第 2 步验证权限应为 \texttt{no}。
 \end{enumerate}
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image2.png}
-	\caption{CVE-2023-30512：攻击成功证据（Secrets 读取能力验证/提权结果截图）}
+	\bicaption{CVE-2023-30512：攻击成功证据（Secrets 读取能力验证/提权结果截图）}{CVE-2023-30512: evidence of successful attack showing secret-reading capability and privilege escalation results}
 	\label{fig:cve-2023-30512-verify}
 \end{figure}
 
@@ -69,12 +70,12 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 
 \subsection{三因素分析}
 
-\textbf{（1）有效性（Effectiveness）}
+\noindent\textbf{有效性（Effectiveness）：}
 RBAC 最小化可直接移除攻击链关键条件，即 \texttt{secrets} 读取能力，从根源降低风险。准入防回归用于阻断误配置、版本回滚或安装脚本重复执行导致的过度授权再次出现。审计检测可在异常访问出现时提供证据并触发凭据轮换等止血动作。
 
-\textbf{（2）无干扰性（Interference）}
+\noindent\textbf{无干扰性（Interference）：}
 RBAC 收敛可能影响 CSI 的部分诊断与自愈路径，应在预生产环境验证 PVC/PV 生命周期以及 attach/detach 等关键流程。准入策略若采用 \texttt{deny} 强制模式，需要避免误拦截平台必需组件的合法权限，建议先以 \texttt{dryrun/audit} 运行并结合白名单迭代。审计与检测会增加日志量与告警治理成本，但通常不影响业务链路。
 
-\textbf{（3）可部署性（Deployability）}
+\noindent\textbf{可部署性（Deployability）：}
 RBAC 与审计属于平台原生能力，适合在多集群场景中模板化推广。准入策略与网络收敛属于长期基线治理内容，可通过 GitOps 与策略即代码持续交付。工程落地时建议提供回滚与灰度路径，先在测试与预生产验证后再逐步推广至生产。
 

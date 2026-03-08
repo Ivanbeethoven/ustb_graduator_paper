@@ -1,3 +1,4 @@
+% !TeX root = ../main.tex
 \chapter{案例分析}\label{chap:case}
 为验证本文提出的多智能体协同的安全策略生成框架在真实云原生权限提升漏洞场景下的有效性，本章选取若干典型 CVE 案例进行深入分析。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{三维质量验证}三个阶段：首先在可控环境中重现漏洞攻击路径并确认风险；随后使用本文方法自动生成\textbf{监控策略}与\textbf{防护策略}候选集合；最后从有效性 $E$、无干扰性 $I$、可部署性 $D$ 三个维度对生成策略进行实证评估，以验证策略能否真实阻断攻击、是否引入业务干扰以及部署难度是否可控。
 
@@ -8,20 +9,18 @@
 
 为保证案例的代表性与可复现性，本文依据以下标准筛选案例 CVE：
 
-\textbf{（1）风险等级与影响范围}：优先选择 CVSS 评分 $\geq 5.0$ 的高危漏洞，且在 Kubernetes 生态中具有广泛影响（如 Kubernetes 核心组件漏洞或高使用率的第三方应用漏洞）。
+\noindent\hangindent=2em\hangafter=1 \textbf{风险等级与影响范围}：优先选择 CVSS 评分 $\geq 5.0$ 的高危漏洞，且在 Kubernetes 生态中具有广泛影响（如 Kubernetes 核心组件漏洞或高使用率的第三方应用漏洞）。
 
-\textbf{（2）成因类型覆盖}：确保所选案例覆盖本文提出的两级成因分类框架中的主要类别，包括配置缺陷（如过度权限配置、网络隔离不足）、安全逻辑缺陷（如访问控制缺陷、身份验证绕过）、敏感信息泄露与代码注入等，以全面检验方法的适用性。
+\noindent\hangindent=2em\hangafter=1 \textbf{成因类型覆盖}：确保所选案例覆盖本文提出的两级成因分类框架中的主要类别，包括配置缺陷（如过度权限配置、网络隔离不足）、安全逻辑缺陷（如访问控制缺陷、身份验证绕过）、敏感信息泄露与代码注入等，以全面检验方法的适用性。
 
-\textbf{（3）可复现性}：漏洞具备公开的攻击 PoC（Proof of Concept）或详尽的技术细节，可在隔离环境中安全复现；同时受影响版本与修复版本明确，便于对比验证。
+\noindent\hangindent=2em\hangafter=1 \textbf{可复现性}：漏洞具备公开的攻击 PoC（Proof of Concept）或详尽的技术细节，可在隔离环境中安全复现；同时受影响版本与修复版本明确，便于对比验证。
 
-\textbf{（4）防控价值}：漏洞场景具有典型的临时防控需求（如修复补丁尚未发布、业务无法立即升级或需要多层防御），使得智能生成策略具有实际应用价值。
+\noindent\hangindent=2em\hangafter=1 \textbf{防控价值}：漏洞场景具有典型的临时防控需求（如修复补丁尚未发布、业务无法立即升级或需要多层防御），使得智能生成策略具有实际应用价值。
 
 
-\begin{table}[htbp]
-    \centering
+\begin{table}[htb]
+    \centering\bicaption{本章所选 CVE 案例一览}{Overview of selected CVE cases in this chapter}\label{tab:cve-summary}
     \small
-    \caption{本章所选 CVE 案例一览}
-    \label{tab:cve-summary}
     \begin{tabularx}{\textwidth}{C{1.0cm} C{3.2cm} X C{2.4cm} X C{2.0cm}}
         \toprule
         序号 & CVE / 案例 & 影响组件 & 一级分类 & 二级分类 & 章节 \\
@@ -40,13 +39,11 @@
 
 \subsection{实验环境与复现流程}
 
-\textbf{（1）环境搭建}。所有漏洞复现与策略验证在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总如表~\ref{tab:chap6-env}。
+\noindent\hangindent=2em\hangafter=1 \textbf{环境搭建}。所有漏洞复现与策略验证在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总如表~\ref{tab:chap6-env}。
 
-\begin{table}[htbp]
-    \centering
+\begin{table}[htb]
+    \centering\bicaption{实验环境软硬件配置与工具版本汇总}{Summary of hardware and software environment configuration and tool versions}\label{tab:chap6-env}
     \small
-    \caption{实验环境软硬件配置与工具版本汇总}
-    \label{tab:chap6-env}
     \begin{tabularx}{\textwidth}{C{3.4cm} X}
         \toprule
         项目 & 配置 \\
@@ -62,14 +59,14 @@
     \end{tabularx}
 \end{table}
 
-\textbf{（2）漏洞复现流程}。对每个 CVE，按以下步骤进行复现：
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现流程}。对每个 CVE，按以下步骤进行复现：
 \begin{enumerate}
     \item \textbf{基线环境准备}：部署受影响版本的目标组件，并创建模拟的业务负载与用户身份（如低权限 ServiceAccount）；
     \item \textbf{攻击执行}：根据公开 PoC 或技术分析，模拟攻击者执行权限提升攻击，记录攻击步骤与观测到的异常行为；
     \item \textbf{影响确认}：验证攻击是否成功实现权限提升（如获取集群管理员权限、访问受限资源、执行特权操作等）；
 \end{enumerate}
 
-\textbf{（3）策略生成与验证}。复现成功后，使用本文方法生成安全策略并进行三维评价：
+\noindent\hangindent=2em\hangafter=1 \textbf{策略生成与验证}。复现成功后，使用本文方法生成安全策略并进行三维评价：
 \begin{enumerate}
     \item \textbf{安全上下文构建（RAG）}：将 CVE 公告、受影响组件文档、攻击日志与社区讨论输入向量知识库，检索与漏洞相关的证据；
     \item \textbf{策略生成（CoT + Feedback）}：基于 RAG 上下文与漏洞分析结果，生成候选策略并进行评审反馈优化；
