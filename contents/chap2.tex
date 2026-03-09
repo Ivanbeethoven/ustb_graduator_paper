@@ -1,4 +1,4 @@
-% !TeX root = ../main.tex
+
 \chapter{背景介绍}\label{chap:background}
 本章节主要介绍相关概念、技术，以及与Kubernetes权限提升漏洞相关的国内外研究现状。
 
@@ -79,7 +79,7 @@ Falco 的监测机制基于\textbf{eBPF}技术对Linux系统调用的动态捕�
     \bicaption{Falco 运行时监控与规则示意}{Illustration of Falco runtime monitoring and rules}\label{fig:falco}
 \end{figure}
 
-\subsection{防测一体：Cilium Tetragon}
+\subsection{防控一体：Cilium Tetragon}
 在云原生安全工具谱系中，大多数工具侧重于单一维度的防护（如准入控制）或监控（如行为检测）。\textbf{Cilium Tetragon}\cite{tetragon2025} 通过基于 eBPF 的内核层安全观测与运行时强制执行，实现了\textbf{监控策略}与\textbf{防护策略}的深度融合，构建起从感知到响应的闭环防护体系。
 
 Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化项目，其核心设计理念是将安全策略的过滤、阻断与响应直接下沉至 eBPF 内核层执行，从而实现\textbf{实时性}与\textbf{低开销}的统一。与传统用户态 Agent 需要通过上下文切换将事件传递至用户空间不同，Tetragon 在内核态完成事件捕获、策略匹配与执行决策，显著降低了高频事件（如 $\texttt{send}$、$\texttt{read}$、$\texttt{write}$ 系统调用）的观测开销。
@@ -139,7 +139,7 @@ Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化
 
 \section{国内外研究现状}
 
-随着云服务与云原生基础设施的广泛采用，围绕权限系统的安全问题逐渐受到更多关注。总体而言，相关研究可分为“系统权限安全问题”“Kubernetes 安全问题”“漏洞缓解与防控”以及“本文工作”四个层次。
+本小节将围绕系统权限安全问题与 Kubernetes 安全问题两个层面介绍相关的研究国内外现状。同时介绍本课题组已有的研究工作KubeGuard~\cite{kubeguard_icws2025}，以说明本研究在现有研究基础上的创新点与价值。
 
 \subsection{系统权限安全问题}
 围绕系统权限治理，既有研究形成了从设计原则、访问控制模型到数据驱动推断与风险后果分析的较为完整的谱系。Saltzer 与 Schroeder\cite{saltzer1975protection}归纳的信息保护原则为权限设计提供了规范性基准，其中“最小权限原则”强调主体应仅获得完成任务所需的最小权限集合，以减少可被滥用的能力边界。面向工程落地，Ferraiolo 等\cite{ferraiolo1995role}提出并系统阐释 RBAC 的基本动机与结构，将权限组织为角色并通过用户—角色映射实现规模化授权，为后续策略表达、角色工程与权限管理研究提供了通用模型。

@@ -33,7 +33,9 @@ def count_chars_in_repo(root_dir):
     print(f"\n总计: 中文字符={total_chinese}, 英文字符={total_english}")
 
 if __name__ == "__main__":
-    count_chars_in_repo(os.path.dirname(os.path.abspath(__file__)))
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    contents_dir = os.path.join(repo_root, 'contents')
+    count_chars_in_repo(contents_dir)
 
 
 
