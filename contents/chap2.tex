@@ -13,7 +13,7 @@
     \bicaption{服务部署形式演进}{Evolution of service deployment paradigms}\label{fig:container-evolution}
 \end{figure}
 
-与传统的物理机和虚拟机相比，容器通过操作系统内核级的资源隔离，实现了更高的资源利用率和更快的启动速度。容器以\textbf{镜像}为交付单元,讲部署应用及其依赖环境以镜像形式打包。从实现机制看，容器的关键能力主要来自三类内核与运行时支撑：
+与传统的物理机和虚拟机相比，容器通过操作系统内核级的资源隔离，实现了更高的资源利用率和更快的启动速度。容器以\textbf{镜像}为交付单元，将部署应用及其依赖环境以镜像形式打包。从实现机制看，容器的关键能力主要来自三类内核与运行时支撑：
 
 \noindent\hangindent=2em\hangafter=1 \textbf{命名空间（Namespace）隔离}，将进程、网络、挂载点、IPC、用户等资源视图隔离开来，使容器内进程“看见”的系统环境与宿主机相互独立；
 
@@ -29,7 +29,7 @@ Kubernetes 是面向容器工作负载的编排系统,源自于谷歌内部的�
     \includegraphics[width=0.8\textwidth]{images/k8s.png}
     \bicaption{Kubernetes 体系结构示意}{Overview of Kubernetes architecture}\label{fig:k8s-arch}
 \end{figure}
-图\ref{fig:k8s-arch}所示 Kubernetes 的体系结构示意图，一个Kubernetes集群由\textbf{控制平面}与多个\textbf{工作节点}构成。控制平面负责提供控制接口、调度与集群控制逻辑，其中：\textit{API Server}是所有资源访问与状态变更的统一入口，基于键值数据库ETCD承担认证、授权、准入与资源对象持久化等关键职责；\textit{调度器}根据资源请求、亲和/反亲和等约束为待调度Pod选择工作节点；\textit{控制器}基于不同资源对象的当前状态触发协调动作以达到期望状态。工作节点侧，\textit{kubelet}负责与API Server通信并维护调度到本节点的容器运行，\textit{容器运行时}负责拉取镜像、创建容器并管理生命周期，\textit{kube-proxy}负责服务转发与网络规则的实现。
+图\ref{fig:k8s-arch}所示为 Kubernetes 的体系结构示意图，一个 Kubernetes 集群由\textbf{控制平面}与多个\textbf{工作节点}构成。控制平面负责提供控制接口、调度与集群控制逻辑，其中：\textit{API Server}是所有资源访问与状态变更的统一入口，基于键值数据库ETCD承担认证、授权、准入与资源对象持久化等关键职责；\textit{调度器}根据资源请求、亲和/反亲和等约束为待调度Pod选择工作节点；\textit{控制器}基于不同资源对象的当前状态触发协调动作以达到期望状态。工作节点侧，\textit{kubelet}负责与API Server通信并维护调度到本节点的容器运行，\textit{容器运行时}负责拉取镜像、创建容器并管理生命周期，\textit{kube-proxy}负责服务转发与网络规则的实现。
 
 Kubernetes通过一系列持久化\textbf{资源对象}实现对集群多种资源的编排与管理。例如，\textit{Pod}是最小调度单元，包含一个或多个共享网络与存储命名空间的容器；Deployment/StatefulSet/DaemonSet分别面向无状态、有状态与节点守护型工作负载提供期望副本与更新策略；Service与Endpoint/EndpointSlice提供稳定的服务发现与负载均衡抽象；Ingress（或 Gateway API）面向南北向流量提供入口控制；ConfigMap/Secret用于配置与敏感信息的声明式注入；Volume/PV/PVC则提供存储生命周期与绑定关系的抽象。
 
@@ -46,11 +46,11 @@ Kubernetes通过一系列持久化\textbf{资源对象}实现对集群多种资�
 
 \subsection{Kubernetes 权限提升漏洞}
 
-权限提升（Privilege Escalation）指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置，将自身权限提升到更高等级的过程\cite{mead2003computer}。在 Kubernetes 场景下，权限提升既可能表现为授权范围的的扩大或横向获取，也可能表现为节点侧系统权限提升（例如获得节点上的 root 权限），从而对更大范围的资源与工作负载产生影响。
+权限提升（Privilege Escalation）指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置，将自身权限提升到更高等级的过程\cite{mead2003computer}。在 Kubernetes 场景下，权限提升既可能表现为授权范围的扩大或横向获取，也可能表现为节点侧系统权限提升（例如获得节点上的 root 权限），从而对更大范围的资源与工作负载产生影响。
 
-在云原生环境中，权限提升的危害往往具有更强的放大效应。一方面，单个节点通常承载多个 Pod，节点侧提权成功后，攻击者可能对同节点上的多个工作负载实施窃取敏感信息、篡改运行环境或注入恶意组件等行为。另一方面，Kubernetes 的资源对象与运维动作高度集中且自动化；当攻击者获得更高权限后，可能进一步读取 $\texttt{Secret}$、创建高权限工作负载、修改\textbf{网络防护策略}或部署守护进程，进而将影响从单一应用扩展到集群层面的安全与稳定。因此，权限提升漏洞不仅是单点缺陷，还可能引发平台级安全事件与隔离失效。
+在云原生环境中，权限提升的危害往往具有更强的放大效应。一方面，单个节点通常承载多个 Pod，节点侧权限提升成功后，攻击者可能对同节点上的多个工作负载实施窃取敏感信息、篡改运行环境或注入恶意组件等行为。另一方面，Kubernetes 的资源对象与运维动作高度集中且自动化；当攻击者获得更高权限后，可能进一步读取 $\texttt{Secret}$、创建高权限工作负载、修改\textbf{网络隔离策略}或部署守护进程，进而将影响从单一应用扩展到集群层面的安全与稳定。因此，权限提升漏洞不仅是单点缺陷，还可能引发平台级安全事件与隔离失效。
 
-为说明节点侧提权在云原生场景中的现实危害，图\ref{fig:cve-2024-33522}给出了\texttt{CVE-\allowbreak2024-\allowbreak33522}的示例。该漏洞影响 Calico 的 CNI 安装程序：在部分易受影响版本中，安装二进制的 SUID位配置不当，同时允许攻击者控制输入二进制。在攻击者已具备 Kubernetes 节点本地访问的前提下，攻击者可诱导安装过程以更高权限执行任意二进制，从而实现节点侧权限提升。虽然该漏洞的利用前提包含节点本地访问，但在真实环境中，这一前提可能由节点服务暴露、弱口令、供应链投毒或通过其他漏洞等其他入侵路径满足。一旦节点侧权限提升成功，攻击者可能读取或篡改节点容器运行时目录、配置与日志等关键数据，窃取工作负载凭据与令牌，干扰网络组件行为，并进一步扩大影响范围，从而显著加剧集群整体风险。
+为说明节点侧权限提升在云原生场景中的现实危害，图\ref{fig:cve-2024-33522}给出了\texttt{CVE-\allowbreak2024-\allowbreak33522}的示例。该漏洞影响 Calico 的 CNI 安装程序：在部分易受影响版本中，安装二进制的 SUID位配置不当，同时允许攻击者控制输入二进制。在攻击者已具备 Kubernetes 节点本地访问的前提下，攻击者可诱导安装过程以更高权限执行任意二进制，从而实现节点侧权限提升。虽然该漏洞的利用前提包含节点本地访问，但在真实环境中，这一前提可能由节点服务暴露、弱口令、供应链投毒或通过其他漏洞等其他入侵路径满足。一旦节点侧权限提升成功，攻击者可能读取或篡改节点容器运行时目录、配置与日志等关键数据，窃取工作负载凭据与令牌，干扰网络组件行为，并进一步扩大影响范围，从而显著加剧集群整体风险。
 
 \begin{figure}[htb]
     \centering
@@ -64,7 +64,7 @@ Kubernetes通过一系列持久化\textbf{资源对象}实现对集群多种资�
 
 \noindent\hangindent=2em\hangafter=1 (1) \textbf{监控策略}在不中断业务的前提下对异常行为进行告警与取证，主要涵盖运行时检测与审计、静态扫描与配置审计；
 
-\noindent\hangindent=2em\hangafter=1 (2) \textbf{防护策略}在风险入口处主动阻断与收敛政击面，包括准入与配置约束、网络隔离与最小连通。
+\noindent\hangindent=2em\hangafter=1 (2) \textbf{防护策略}在风险入口处主动阻断与收敛攻击面，包括准入与配置约束、网络隔离与最小连通。
 下文分别介绍监控策略中的运行时检测工具 Falco 与静态扫描类工具、防测一体工具 Cilium Tetragon，以及防护策略中的准入控制工具 OPA/Gatekeeper 与 Kyverno、网络隔离机制 NetworkPolicy。
 
 \subsection{监控策略：容器运行时安全监控工具——Falco}
@@ -106,7 +106,7 @@ Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化
 然而，Tetragon 的内核层强制执行也引入了新的工程挑战：策略配置不当可能导致误杀合法进程或影响业务可用性，因此在生产环境部署前需充分验证策略的副作用边界，并建立完善的灰度发布与回滚机制。
 
 \subsection{防护策略：准入控制与配置约束工具}
-准入控制（Admission Control）作为云原生安全的\textbf{事前\textbf{防护策略}}机制，通过在 API Server 请求链路中插入校验（Validation）或变更（Mutation）逻辑，在资源对象持久化前对其进行规则检测，从源头阻断不合规配置进入集群。在这一领域，OPA (Open Policy Agent) 及其 Kubernetes 实现 Gatekeeper 提供了通用的策略引擎支持，但其依赖 Rego 语言的特性在一定程度上提高了使用门槛。
+准入控制（Admission Control）作为云原生安全的\textbf{事前防护策略}机制，通过在 API Server 请求链路中插入校验（Validation）或变更（Mutation）逻辑，在资源对象持久化前对其进行规则检测，从源头阻断不合规配置进入集群。在这一领域，OPA (Open Policy Agent) 及其 Kubernetes 实现 Gatekeeper 提供了通用的策略引擎支持，但其依赖 Rego 语言的特性在一定程度上提高了使用门槛。
 
 相比之下，\textbf{Kyverno} 作为 Kubernetes 原生\textbf{防护策略}引擎，通过以 YAML 定义策略降低复杂度。Kyverno 不仅支持对 Pod 安全标准（PSS）、镜像签名及供应链安全的校验，还具备对资源进行自动修正（Mutate）与基于触发器生成配置（Generate）的能力，能够将安全基线与平台治理要求固化为可复用的声明式规则。如图~\ref{fig:kyverno-demo} 所示，该\textbf{防护策略}展示了一个典型的 Kyverno 应用场景：强制要求所有 Pod 必须携带 \texttt{owner} 标签。通过定义 \texttt{validationFailureAction: enforce}，任何缺失该元数据的 Pod 创建请求都将被准入控制器直接拒绝。这种声明式的策略管理方式不仅实现了明确的治理效果，更确保了集群内所有工作负载具备可追溯的权属标识。
 \begin{figure}[htb]
@@ -134,7 +134,7 @@ Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化
 
 第一类是\textbf{镜像与依赖漏洞扫描}。该类工具通常解析镜像分层文件系统与软件包清单，基于公开漏洞库对已知 CVE 进行匹配，并输出风险等级、受影响版本与修复建议。代表性工具包括 Trivy\cite{trivy2025}、Grype/Anchore\cite{grype2025} 等；其中，Syft\cite{syft2025} 等工具可生成软件物料清单（SBOM），用于提升漏洞告警的可追溯性与供应链治理能力。在工程实践中，镜像扫描往往与 CI 流水线结合，在构建阶段阻断高危漏洞或不合规组件进入制品仓库。
 
-第二类是\textbf{Kubernetes 清单与基础设施即代码（IaC）扫描}。此类工具面向 YAML/Helm/Terraform 等配置，检查特权容器、宿主机路径挂载、过宽权限、明文密钥、缺失资源限制等常见风险，并可作为代码评审与准入策略的前置门禁。例如，kubelinter\cite{kubelinter2025}、kubescape\cite{kubescape2025}、kube-score\cite{kubescore2025}、kubesec\cite{kubesec2025}、Polaris\cite{polaris2025} 等可对工作负载清单进行规则化检查；Checkov\cite{checkov2025} 等可对 Terraform 等 IaC 模板进行安全基线与合规性验证。静态扫描的优势在于易于规模化推广与持续运行，但也可能因业务差异产生误报，因此通常需要结合组织基线与例外机制、以及准入与运行时告警进行闭环。
+第二类是\textbf{Kubernetes 清单与基础设施即代码（IaC）扫描}。此类工具面向 YAML/Helm/Terraform 等配置，检查特权容器、宿主机路径挂载、过宽权限、明文密钥、缺失资源限制等常见风险，并可作为代码评审与准入策略的前置门禁。例如，kube-linter\cite{kubelinter2025}、Kubescape\cite{kubescape2025}、kube-score\cite{kubescore2025}、KubeSec\cite{kubesec2025}、Polaris\cite{polaris2025} 等可对工作负载清单进行规则化检查；Checkov\cite{checkov2025} 等可对 Terraform 等 IaC 模板进行安全基线与合规性验证。静态扫描的优势在于易于规模化推广与持续运行，但也可能因业务差异产生误报，因此通常需要结合组织基线与例外机制、以及准入与运行时告警进行闭环。
 
 
 \section{国内外研究现状}
@@ -194,7 +194,7 @@ Kubernetes 场景下的权限与安全风险往往因配置项繁多、组件生
     & 生成 SBOM（如 SPDX/CycloneDX）并对制品签名与验证；用于提升漏洞告警可追溯性与供应链完整性校验。\\
     \midrule
     清单/Helm 静态扫描
-    & \texttt{kubescape}、\texttt{kube-score}、\texttt{kube-linter}、\texttt{Polaris}、\texttt{kubesec}、\texttt{datree}
+    & \texttt{Kubescape}、\texttt{kube-score}、\texttt{kube-linter}、\texttt{Polaris}、\texttt{KubeSec}、\texttt{datree}
     & 针对 Kubernetes YAML/Helm 进行规则化检查（特权容器、hostPath、资源限制、明文密钥、PSS 违规等），适合代码评审与部署前基线核查。\\
     \midrule
     IaC 扫描（Terraform 等）
@@ -226,10 +226,10 @@ Kubernetes 场景下的权限与安全风险往往因配置项繁多、组件生
 
 进一步地,课题组实现了原型系统 KubeGuarder,并在开源 Kubernetes 应用与模拟场景上开展实验评估;结果表明,该框架在过度权限检测方面相较静态基线方法更为有效且更精确,并能够同时发现多类型的权限提升与敏感资源泄露风险\cite{kubeguard_icws2025}。
 
-然而,该研究主要基于\textbf{权限层面的规则化检测},通过审计 RBAC 权限配置与 API 访问行为来识别潜在的权限提升风险。这种方法虽然能够系统性地覆盖多种提权模式,但在真实生产环境中可能面临较高的误报率:一方面,仅依赖权限配置与 API 操作的匹配难以区分正常运维行为与恶意提权行为;另一方面,该方法未能深入到\textbf{节点侧系统层面}的权限提升漏洞,对于利用容器逃逸、SUID 配置不当、内核漏洞等底层机制实现的提权行为缺乏针对性检测能力。此外,基于规则的检测依赖于预定义的攻击模式,对于未知漏洞或新型攻击手法的泛化能力有限。
+然而,该研究主要基于\textbf{权限层面的规则化检测},通过审计 RBAC 权限配置与 API 访问行为来识别潜在的权限提升风险。这种方法虽然能够系统性地覆盖多种权限提升模式,但在真实生产环境中可能面临较高的误报率:一方面,仅依赖权限配置与 API 操作的匹配难以区分正常运维行为与恶意权限提升行为;另一方面,该方法未能深入到\textbf{节点侧系统层面}的权限提升漏洞,对于利用容器逃逸、SUID 配置不当、内核漏洞等底层机制实现的权限提升行为缺乏针对性检测能力。此外,基于规则的检测依赖于预定义的攻击模式,对于未知漏洞或新型攻击手法的泛化能力有限。
 
 相较而言,本文工作聚焦于\textbf{真实权限提升漏洞场景}的深度分析与针对性防控。具体而言,本研究不仅关注 RBAC 层面的权限配置问题,更深入到\textbf{节点侧系统权限提升漏洞}的利用特征与防控机制,通过对公开 CVE 漏洞与真实攻击案例的系统化分析,提炼出\textbf{可利用性判定准则}与\textbf{防控策略生成方法}。同时,本研究面向补丁未就绪或难以及时升级的生产环境,通过结合准入控制、运行时监控与网络隔离等多层防御手段,在漏洞利用链的关键环节实施精准阻断,从而在保障业务可用性的前提下有效降低安全风险暴露面。
 
 
-\section{小节}
+\section{小结}
 通过本章的分析，可知云原生环境中Kubernetes权限提升漏洞的成因复杂，涉及容器安全、Kubernetes权限模型及其配置等多个方面。现有的安全工具与\textbf{监控策略}、\textbf{防护策略}在一定程度上能够提供防护，但仍需面向权限提升的特性进行优化与增强。本文接下来的工作将基于上述研究现状与动机，聚焦于权限提升漏洞的检测与防控策略的设计与实现。

@@ -21,7 +21,7 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 \end{enumerate}
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
-本节给出可复现的实验流程：通过构造一个包含“正常资源 + 恶意 RBAC 绑定”的 Git 仓库，并为低权用户配置 \texttt{sync\allowbreak+\allowbreak override} 权限，使其能够触发 Argo CD 同步，从而在集群中创建管理员级绑定实现提权。
+本节给出可复现的实验流程：通过构造一个包含“正常资源 + 恶意 RBAC 绑定”的 Git 仓库，并为低权用户配置 \texttt{sync\allowbreak+\allowbreak override} 权限，使其能够触发 Argo CD 同步，从而在集群中创建管理员级绑定实现权限提升。
 
         \textbf{环境配置}：Kubernetes 测试集群可选 \texttt{kind} 或 \texttt{minikube}，版本以实验环境为准。受影响组件为 Argo CD v2.3.1，补丁版本为 2.3.2、2.2.8、2.1.14。测试负载使用仓库 \url{https://github.com/Ivanbeethoven/bad_repo}，其中包含 \texttt{app.yaml} 与 \texttt{hack-admin.yaml}，用于分别承载正常资源与恶意 RBAC 绑定。
 
@@ -59,7 +59,7 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 
 \noindent\textbf{有效性（Effectiveness）：}
 该策略在攻击链的多个关键点形成“多点阻断”：
-Kubernetes RBAC 对 \texttt{AppProject} 写入进行限制，可降低放开 \texttt{sourceRepos}、\texttt{destinations} 与白名单导致的爆炸半径。Argo CD RBAC 默认只读并隔离高危资源写权限，使低权用户难以获得可用于放大控制面的关键操作集合。准入控制对策略表达施加硬约束，用于防止隐蔽通配符放权与权限漂移。身份治理约束授权来源，可降低组注入或错误映射造成的隐式提权。
+Kubernetes RBAC 对 \texttt{AppProject} 写入进行限制，可降低放开 \texttt{sourceRepos}、\texttt{destinations} 与白名单导致的爆炸半径。Argo CD RBAC 默认只读并隔离高危资源写权限，使低权用户难以获得可用于放大控制面的关键操作集合。准入控制对策略表达施加硬约束，用于防止隐蔽通配符放权与权限漂移。身份治理约束授权来源，可降低组注入或错误映射造成的隐式权限提升。
 在复现实验中，若上述策略生效，则攻击者即使拥有 \texttt{sync} 权限，也难以通过修改 AppProject/仓库/策略来诱导 Argo CD 创建集群级高权限绑定，攻击路径被显著收敛。
 
 \noindent\textbf{无干扰性（Interference）：}

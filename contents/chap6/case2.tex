@@ -1,5 +1,5 @@
 % !TeX root = ../../main.tex
-\section{案例二：CVE-2025-2241（Hive \texttt{ClusterProvision} 敏感信息泄漏）}
+\section{案例二：CVE-2025-2241（Hive \texttt{ClusterProvision} 敏感信息泄露）}
 
 \subsection{漏洞详解与复现}
 
@@ -13,7 +13,7 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 
 \textbf{CVSS 信息}：CNA（Red Hat）给出的向量为 \texttt{CVSS:3.1/AV:N/AC:H/PR:L}，基准分 8.2（High）。其含义可理解为：攻击者需要一定前置权限（PR:L）和较高攻击复杂度（AC:H），但一旦满足条件，影响范围跨越安全边界（S:C），并造成高机密性与完整性影响（C:H/I:H）。
 
-\textbf{主要成因分类}：敏感信息泄漏 / 配置与对象生命周期缺陷（“Secret 旁路”：敏感数据出现在可读的 CR 状态字段中）。
+\textbf{主要成因分类}：敏感信息泄露 / 配置与对象生命周期缺陷（“Secret 旁路”：敏感数据出现在可读的 CR 状态字段中）。
 
 \textbf{攻击链条描述}：该漏洞可抽象为“\texttt{Secret} 隔离被 CR 可读性绕过”的链条：
 \begin{enumerate}
@@ -48,7 +48,7 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 \textbf{攻击结果}：若在 \texttt{ClusterProvision} 的可读字段中发现明文凭据，则说明“敏感信息通过 CR 状态旁路泄露”成立；该风险不依赖 \texttt{Secret} 读取权限，属于权限边界外泄。
 
 \subsection{策略部署}
-本节给出可落地的缓解策略。与仅依赖版本升级不同，本案例侧重敏感信息泄漏的多层次控制：通过\textbf{防护策略}收敛读权限面，通过\textbf{监控策略}缩短暴露窗口。
+本节给出可落地的缓解策略。与仅依赖版本升级不同，本案例侧重敏感信息泄露的多层次控制：通过\textbf{防护策略}收敛读权限面，通过\textbf{监控策略}缩短暴露窗口。
 
 \textbf{策略概述}：从\textbf{防护策略}（身份与权限、准入检测）与\textbf{监控策略}（审计与告警、资源生命周期治理）四个层面协同落地。具体方法包括：
 \begin{itemize}

@@ -1,24 +1,36 @@
 % !TeX root = ../main.tex
 %% 中文摘要页
 \begin{ChineseAbstract}
-云原生应用广泛依赖 Kubernetes 生态中的第三方组件。受过度授权、访问控制缺陷、敏感信息泄露和网络隔离不足等因素影响，权限提升漏洞在披露到补丁完成发布和部署之间往往存在较长窗口期，给生产环境带来持续风险。本文对 2020—2025 年间 55 个云原生权限提升漏洞样本进行统计分析，结果表明，30.4\% 的漏洞在披露后存在较长攻击窗口。现有方法多侧重通用静态核查、配置审计或单项检测，难以针对具体漏洞生成可快速部署、业务干扰较小的临时防控方案，且策略制定过程较为依赖专家经验，制约了方法的复用与推广。
+Kubernetes 生态中的第三方开源应用普遍存在过度授权、访问控制缺陷、敏感信息泄露和网络隔离不足等安全漏洞，易被利用实施权限提升攻击。受开源社区漏洞治理能力差异影响，生产环境在补丁窗口期内会暴露于权限提升攻击风险之下。本文统计 2020—2025 年间 55 个云原生权限提升漏洞，其中 30.4\% 在披露后存在攻击窗口。现有方法偏重通用静态核查、配置审计或单项检测，难以为具体漏洞快速生成有效、干扰小且可即时部署的临时防控方案，且策略制定依赖专家经验，复用性差。
 
-针对上述问题，本文提出一种面向云原生权限提升漏洞补丁窗口期的智能防控方法。本文构建了云原生权限提升漏洞分类框架，并从代码仓库、漏洞公告、Issue 和 Pull Request 等材料中提取相关证据，建立安全知识库。在此基础上，将防控措施划分为监控策略和防护策略两类，设计结合知识检索、分步推理和反馈优化的协同生成流程，实现从漏洞分析到策略生成的自动化。同时，围绕有效性、无干扰性和可部署性三个方面建立候选策略排序评价方法，并通过多评审聚合提高结果稳定性。为验证方法的工程可行性，本文设计并实现了原型系统 KPEAgent。
+本文围绕补丁窗口期内云原生权限提升漏洞的临时防控需求，利用大语言模型的语义分析与代码生成能力，提出一套涵盖漏洞建模、策略生成与策略评价的自动化方法。主要贡献包括以下三方面。
 
-本文在 55 个云原生权限提升漏洞样本上开展实验研究。结果表明，反馈优化机制对策略质量提升作用最为显著，移除该机制后策略有效性下降 79.2\%；知识检索和分步推理同样能够带来稳定增益，三者协同作用下完整方法在有效性、无干扰性和可部署性三个维度上均取得最优表现。与基线方法相比，本文方法生成策略的有效性提升 32.5\%，可部署性提升 41.2\%；多评审聚合得到的排序结果较单一评审稳定性提升 23.7\%，且与人工评审结果整体一致。案例分析表明，生成的策略能够在准入控制、权限收敛、网络隔离和运行时监测等环节快速落地，有效压制补丁窗口期内的攻击路径并降低风险暴露面。研究结果可为云原生环境下权限提升漏洞的临时防控提供方法依据和工程参考。
+\textbf{（1）漏洞建模与策略生成方法}：建立云原生权限提升漏洞分类框架，从代码仓库、漏洞公告、Issue 和 Pull Request 中提取证据构建安全知识库。将防控措施分为监控策略与防护策略两类，经检索增强、思维链推理与反馈优化三阶段协同，自动完成从漏洞分析到策略代码生成的全流程。按有效性、无干扰性和可部署性三个维度对候选策略排序，并经多评审聚合获得最终安全策略。
 
-\ChineseKeywords{云原生安全；权限提升漏洞；补丁窗口期防控；多智能体协同；策略生成与评估}
+\textbf{（2）原型系统实现}：基于上述方法设计并实现原型系统 KPEAgent，集成漏洞信息采集、知识库构建、策略生成与策略评价各模块。
+
+\textbf{（3）实验验证与案例分析}：在 55 个漏洞样本上开展消融实验与对比实验。反馈优化对策略质量影响最大，去掉后有效性降 79.2\%；检索增强与思维链推理各有稳定增益，三者联合达到最优。较基线方法，策略有效性提升 32.5\%，可部署性提升 41.2\%；多评审聚合排序较单一评审稳定性提升 23.7\%，与人工评审一致性良好。案例分析表明，生成的策略可在准入控制、权限收敛、网络隔离和运行时监测等环节直接落地，封堵补丁窗口期内的攻击路径。
+
+本文的研究可为云原生环境下权限提升漏洞补丁窗口期的临时防控提供方法参考与工程借鉴。
+
+\ChineseKeywords{云原生安全；权限提升漏洞；策略代码生成；补丁窗口期防控；多智能体协同}
 \end{ChineseAbstract}
 
 %% 英文摘要页
 \begin{EnglishAbstract}
-Cloud-native applications rely heavily on third-party components in the Kubernetes ecosystem. Excessive privileges, access-control flaws, sensitive information exposure, and insufficient network isolation often leave privilege escalation vulnerabilities exploitable during the interval between disclosure and patch deployment, thereby posing persistent risks to production environments. An analysis of 55 cloud-native privilege escalation vulnerabilities collected from 2020 to 2025 shows that 30.4\% of them have a prolonged attack window after disclosure. Existing approaches mainly focus on generic static inspection, configuration auditing, or isolated detection, and therefore cannot easily provide temporary mitigation strategies that are tailored to specific vulnerabilities, rapidly deployable, and minimally disruptive to business services. In addition, the formulation of such strategies still depends heavily on expert experience, which limits reuse and practical deployment.
+Third-party open-source applications in the Kubernetes ecosystem commonly suffer from excessive privileges, access-control flaws, sensitive information exposure, and inadequate network isolation, making them susceptible to privilege escalation attacks. However, variations in vulnerability governance across open-source communities leave production environments exposed to privilege escalation risks during the patch-gap window. A survey of 55 cloud-native privilege escalation vulnerabilities from 2020 to 2025 shows that 30.4\% have an exploitable attack window after disclosure. Existing methods focus on generic static checks, configuration auditing, or point-wise detection, and fall short of producing vulnerability-specific, low-disruption, readily deployable interim mitigations; the process also relies on expert knowledge, limiting reusability.
 
-To address these issues, this thesis proposes an intelligent prevention-and-control method for privilege escalation vulnerabilities during the patch-gap stage in cloud-native environments. A classification framework for cloud-native privilege escalation vulnerabilities is first constructed, and a security knowledge base is established by extracting relevant evidence from code repositories, vulnerability advisories, issues, and pull requests. On this basis, mitigation measures are divided into monitoring strategies and protection strategies, and a collaborative generation workflow integrating knowledge retrieval, step-by-step reasoning, and feedback optimization is designed to automate the process from vulnerability analysis to strategy generation. In addition, a ranking-based evaluation method is introduced from the perspectives of effectiveness, non-interference, and deployability, and multi-judge aggregation is adopted to improve the stability of the evaluation results. To further verify engineering feasibility, a prototype system named KPEAgent is designed and implemented.
+Targeting the need for interim mitigation during the patch-gap window, this thesis leverages the semantic analysis and code generation capabilities of large language models to develop an automated method spanning vulnerability modeling, strategy generation, and strategy evaluation. The contributions are threefold.
 
-Experiments are conducted on 55 cloud-native privilege escalation vulnerability samples. The results show that feedback optimization contributes most significantly to policy quality, and removing this mechanism reduces effectiveness by 79.2\%. Knowledge retrieval and step-by-step reasoning also provide stable gains, and the complete method achieves the best overall performance in effectiveness, non-interference, and deployability. Compared with baseline methods, the proposed method improves effectiveness by 32.5\% and deployability by 41.2\%. Moreover, the ranking results produced by multi-judge aggregation are 23.7\% more stable than those of a single judge and are broadly consistent with human assessment results. Case studies further show that the generated strategies can be rapidly deployed in admission control, privilege reduction, network isolation, and runtime monitoring, thereby suppressing attack paths and reducing risk exposure during the patch-gap stage.
+\textbf{(1) Vulnerability modeling and strategy generation method:} A cloud-native privilege escalation vulnerability classification framework is established, and a security knowledge base is built by extracting evidence from code repositories, advisories, issues, and pull requests. Mitigations are divided into monitoring and protection strategies and produced through a three-stage pipeline of retrieval augmentation, chain-of-thought reasoning, and feedback refinement. Candidate strategies are then ranked along effectiveness, non-interference, and deployability, with multi-judge aggregation to improve ranking stability.
 
-\EnglishKeywords{Cloud-native security; Privilege escalation; Patch-gap defense; Multi-agent collaboration; Policy generation and evaluation}
+\textbf{(2) Prototype system implementation:} A prototype system called KPEAgent is designed and implemented on the basis of the above method. The system integrates modules for vulnerability information collection, knowledge base construction, strategy generation, and strategy evaluation.
+
+\textbf{(3) Experimental validation and case studies:} Ablation and comparative experiments are conducted on the 55 vulnerability samples. Feedback refinement has the largest impact on strategy quality---removing it drops effectiveness by 79.2\%. Retrieval augmentation and chain-of-thought reasoning each provide steady gains, and the full pipeline achieves the best overall results. Over baselines, effectiveness rises by 32.5\% and deployability by 41.2\%; multi-judge ranking is 23.7\% more stable than single-judge ranking and agrees well with human assessments. Case studies confirm that the generated strategies can be directly applied to admission control, privilege reduction, network isolation, and runtime monitoring, effectively blocking attack paths during the patch-gap window.
+
+Overall, this work provides both a methodological reference and an engineering basis for interim mitigation of privilege escalation vulnerabilities in cloud-native environments during the patch-gap window.
+
+\EnglishKeywords{Cloud-native security; Privilege escalation; Patch-gap defense; Multi-agent collaboration; Policy code generation}
 
 
 \end{EnglishAbstract}

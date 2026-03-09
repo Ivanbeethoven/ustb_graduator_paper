@@ -120,7 +120,7 @@
 		 & & CWE-268 & 特权操作执行不当 \\
 		\midrule
 		\multirow{9}{*}{敏感信息泄露} 
-		 & \multirow{3}{*}{API 端口暴漏} 
+		 & \multirow{3}{*}{API 端口暴露} 
 		 & CWE-200 & 敏感信息泄露给未授权主体 \\
 		 & & CWE-358 & 动态识别资源的操作限制不当 \\
 		 & & CWE-276 & 默认权限配置错误 \\
@@ -276,7 +276,7 @@ argocd login localhost:8080 --username bob --password <token-or-password>
 argocd app sync bob-app --force
 \end{Verbatim}
 
-\textbf{步骤 7：验证是否提权成功}
+\textbf{步骤 7：验证是否权限提升成功}
 \begin{Verbatim}[breaklines,breakanywhere]
 kubectl auth can-i '*' '*' --as bob
 \end{Verbatim}
@@ -524,7 +524,7 @@ spec:
 
 \chapter{CVE-2025-2241 复现步骤与策略清单}\label{app:cve-2025-2241}
 
-本附录给出案例二（CVE-2025-2241）的\textbf{复现要点}与\textbf{缓解策略清单}，用于复核与工程落地。该漏洞属于\textbf{敏感信息泄漏}：vCenter 凭据出现在 Hive 的 \texttt{ClusterProvision} 对象可读字段中，导致“无 \texttt{Secret} 权限也可读到凭据”的旁路风险。请仅在隔离测试环境中操作。
+本附录给出案例二（CVE-2025-2241）的\textbf{复现要点}与\textbf{缓解策略清单}，用于复核与工程落地。该漏洞属于\textbf{敏感信息泄露}：vCenter 凭据出现在 Hive 的 \texttt{ClusterProvision} 对象可读字段中，导致“无 \texttt{Secret} 权限也可读到凭据”的旁路风险。请仅在隔离测试环境中操作。
 
 \section{漏洞复现详细步骤}\label{app:cve-2025-2241-repro}
 

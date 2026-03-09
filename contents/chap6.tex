@@ -26,7 +26,7 @@
         序号 & CVE / 案例 & 影响组件 & 一级分类 & 二级分类 & 章节 \\
         \midrule
         1 & CVE-2022-24768 & Argo CD & 安全逻辑缺陷 & 访问控制缺陷 & 案例一 \\
-        2 & CVE-2025-2241 & Hive (ClusterProvision) & 敏感信息泄露 & API端口暴漏 & 案例二 \\
+        2 & CVE-2025-2241 & Hive (ClusterProvision) & 敏感信息泄露 & API端口暴露 & 案例二 \\
         3 & CVE-2023-30512 & CubeFS CSI & 配置缺陷 & 冗余权限 & 案例三 \\
         4 & CVE-2020-4062 & ConjurOSS / Postgres & 配置缺陷 & 网络隔离不足 & 案例四 \\
         5 & CVE-2022-24877 & Flux (kustomize-controller) & 代码注入 & 路径遍历 & 案例五 \\
@@ -53,7 +53,7 @@
         节点规模与规格 & 1个控制节点与2个工作节点；每节点4核CPU/8GB内存 \\
         CNI/网络策略 & Calico v3.28.2\\
         准入控制 & OPA/Gatekeeper v3.14.0；Kyverno v1.11.0\\
-        运行时安全监控 & Falco v0.38.1 、Tetragen v1.6.0\\
+        运行时安全监控 & Falco v0.38.1、Tetragon v1.6.0\\
         包管理工具 & Helm v3（用于部分案例组件的 Helm Chart 部署与回滚）\\
         \bottomrule
     \end{tabularx}
@@ -93,5 +93,5 @@
 
 \input{contents/chap6/case7.tex}
 
-\section{小节}
+\section{小结}
 通过本章的分析，本文所提多智能体协同的安全策略生成框架能够有效应对多种云原生环境中的权限提升漏洞。通过对典型 CVE 案例的复现与分析，验证了自动生成的\textbf{监控策略}与\textbf{防护策略}在真实攻击场景中的有效性与适用性，为云原生应用的安全防护提供了有力支撑。
