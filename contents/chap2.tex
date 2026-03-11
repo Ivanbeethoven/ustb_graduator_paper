@@ -15,11 +15,11 @@
 
 与传统的物理机和虚拟机相比，容器通过操作系统内核级的资源隔离，实现了更高的资源利用率和更快的启动速度。容器以\textbf{镜像}为交付单元，将部署应用及其依赖环境以镜像形式打包。从实现机制看，容器的关键能力主要来自三类内核与运行时支撑：
 
-\noindent\hangindent=2em\hangafter=1 \textbf{命名空间（Namespace）隔离}，将进程、网络、挂载点、IPC、用户等资源视图隔离开来，使容器内进程“看见”的系统环境与宿主机相互独立；
-
-\noindent\hangindent=2em\hangafter=1 \textbf{控制组（cgroup）资源管控}，对 CPU、内存、I/O 等资源进行限制与统计，防止单个工作负载挤占宿主机资源；
-
-\noindent\hangindent=2em\hangafter=1 \textbf{镜像与分层文件系统}，将应用与依赖固化为可复用的只读层，基于OverlayFS技术叠加读写层形成运行时文件系统，同时基于切根（chroot）技术实现文件系统隔离，使得容器内的进程只访问其专属的文件视图。
+\begin{itemize}
+    \item \textbf{命名空间（Namespace）隔离}：通过分离进程、网络、挂载点等核心视图，使容器内运行的程序呈现独立的系统环境，在感知上与宿主机和其他集群应用相脱离；
+    \item \textbf{控制组（Cgroup）限制}：负责对容器施加 CPU、内存等硬件资源使用的强制规划，防范单一进程无节制消耗资源引发宿主机整体故障；
+    \item \textbf{只读分层与隔离挂载}：利用 OverlayFS 等联合文件系统，允许多个应用复用底部的只读镜像层，仅针对特定容器开放最上层的读写区域，并在启动时配合 chroot 将根目录“锁死”，确保读写操作互不跨界。
+\end{itemize}
 
 
 \subsection{Kubernetes架构与工作原理}

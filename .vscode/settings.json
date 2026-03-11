@@ -1,5 +1,6 @@
 {
-    "latex-workshop.latex.autoBuild.run": "never",
+    "latex-workshop.latex.autoBuild.run": "onSave",
+    "latex-workshop.latex.autoBuild.interval": 2000,
     "latex-workshop.showContextMenu": true,
     "latex-workshop.intellisense.package.enabled": true,
     "latex-workshop.message.error.show": false,
@@ -29,10 +30,10 @@
             "name": "latexmk",
             "command": "latexmk",
             "args": [
+                "-xelatex",
                 "-synctex=1",
                 "-interaction=nonstopmode",
                 "-file-line-error",
-                "-pdf",
                 "-outdir=%OUTDIR%",
                 "%DOCFILE%"
             ]
@@ -47,16 +48,15 @@
     ],
     "latex-workshop.latex.recipes": [
         {
-            "name": "XeLaTeX",
+            "name": "XeLaTeX (Fast Auto Build)",
             "tools": [
                 "xelatex"
             ]
         },
         {
-            "name": "(点击这里)XeLaTeX*2 (no BibTeX)",
+            "name": "LaTeXmk (XeLaTeX Full)",
             "tools": [
-                "xelatex",
-                "xelatex"
+                "latexmk"
             ]
         },
         {
@@ -69,15 +69,16 @@
             ]
         },
         {
-            "name": "PDFLaTeX",
+            "name": "(点击这里)XeLaTeX*2 (no BibTeX)",
             "tools": [
-                "pdflatex"
+                "xelatex",
+                "xelatex"
             ]
         },
         {
-            "name": "LaTeXmk",
+            "name": "PDFLaTeX",
             "tools": [
-                "latexmk"
+                "pdflatex"
             ]
         }
     ],
@@ -103,7 +104,7 @@
         "*.fdb_latexmk"
     ],
     "latex-workshop.latex.autoClean.run": "onFailed",
-    "latex-workshop.latex.recipe.default": "lastUsed",
+    "latex-workshop.latex.recipe.default": "first",
     "latex-workshop.view.pdf.internal.synctex.keybinding": "double-click",
     "code-runner.runInTerminal": true,
     "code-runner.executorMap": {
