@@ -42,8 +42,8 @@ Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平�
 
 \subsection{策略部署}
 
-该漏洞的\textbf{根本修复}是升级 Conjur OSS Helm Chart 至 2.0.0 或更高版本，新版本默认包含更严格的网络策略。
-在无法立即升级的场景下，可采用以 NetworkPolicy 为核心的缓解路径：以默认拒绝策略 Default Deny 收敛数据库入站访问面，仅允许 Conjur Server 访问 Postgres 5432 端口，并与命名空间隔离、RBAC 收敛及审计治理配套，以降低横向直连与配置漂移带来的风险。
+该漏洞的治理重点是\textbf{收敛数据库暴露面}并\textbf{防止隔离策略回归}。
+可采用以 NetworkPolicy 为核心的缓解路径：以默认拒绝策略 Default Deny 收敛数据库入站访问面，仅允许 Conjur Server 访问 Postgres 5432 端口，并与命名空间隔离、RBAC 收敛及审计治理配套，以降低横向直连与配置漂移带来的风险。
 
 \textbf{策略概述}：从网络隔离、身份与权限、审计与治理三个层面协同落地。网络层通过 NetworkPolicy 实现默认拒绝与精确放通，身份层通过 RBAC 限制对数据库凭据相关资源的读取面，治理层以基线检测与告警机制保证策略长期有效。
 
