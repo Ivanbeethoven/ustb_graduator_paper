@@ -19,7 +19,7 @@
 
 \section{实验设置}
 
-实验以 55 个权限提升漏洞实例为对象，在统一的提示与输出结构规范下对五个大模型生成候选策略集合 $\Pi_v$。表\ref{tab:llm-models-info} 给出本实验所采用的五个大语言模型的基本信息。为验证关键模块的贡献，设置三项消融：移除检索增强（\texttt{w/o rag}）、移除思维链推理（\texttt{w/o cot}）、移除基于评审反馈的反馈优化（\texttt{w/o feedback}），其余流程保持一致。
+实验以 55 个权限提升漏洞实例为对象，在统一的提示词与输出结构规范下对五个大语言模型（LLM）生成候选策略集合 $\Pi_v$。表\ref{tab:llm-models-info} 给出本实验所采用的五个大语言模型的基本信息。为验证关键模块的贡献，设置三项消融：移除检索增强（\texttt{w/o rag}）、移除思维链推理（\texttt{w/o cot}）、移除基于评审反馈的反馈优化（\texttt{w/o feedback}），其余流程保持一致。
 
 \begin{table}[htb]
 	\centering\bicaption{实验采用的大语言模型}{Large language models used in experiments}
@@ -38,7 +38,7 @@
     \end{tabularx}
 \end{table}
 
-评审阶段将上述五个模型作为评审模型，对 $\Pi_v$ 进行排名式评价。评价指标采用三维质量向量 $q(\pi)=(E(\pi),I(\pi),D(\pi))$，分别对应有效性、无干扰性与可部署性。为缓解大模型评分能力缺陷\cite{wu2024scoring}，降低不同评审模型评分尺度差异带来的影响，本文以相对排序作为效果评估质量。同时我们将所有评审模型的结果进行聚合，采用算术平均排名作为最终排序依据，以增强结果的稳健性与可解释性。
+评审阶段将上述五个模型作为评审模型，对 $\Pi_v$ 进行排名式评价。评价指标采用三维质量向量 $q(\pi)=\bigl(E(\pi),I(\pi),D(\pi)\bigr)$，分别对应有效性、无干扰性与可部署性。为缓解大模型评分能力缺陷\cite{wu2024scoring}，并降低不同评审模型评分尺度差异带来的影响，本文以相对排序作为基础评价信号。随后依据第三章给出的等权聚合模型，将各评审模型的维度排序映射为归一化得分并计算共识得分，再据此形成最终的共识排序，以增强结果的稳健性与可解释性。
 
 为回答有关令牌消耗与大模型调用成本的问题，本文在生成与评审阶段记录每次调用的输入与输出的令牌数，并按漏洞样本CVE聚合统计令牌消耗；对于包含反馈优化的配置，累计其多轮调用的令牌消耗。
 
@@ -63,9 +63,9 @@
 
 \section{RQ1：消融实验与工作流模块贡献}
 
-本节验证检索增强RAG、思维链推理CoT与反馈优化Feedback三个关键模块对策略生成质量的贡献。通过消融实验，对比完整工作流\texttt{all}与三种消融配置\texttt{w/o rag}、\texttt{w/o cot}、\texttt{w/o feedback}在有效性$E$、无干扰性$I$与可部署性$D$三个维度上的表现。
+本节验证检索增强（RAG）、思维链推理（CoT）与反馈优化（Feedback）三个关键模块对策略生成质量的贡献。通过消融实验，对比完整工作流 \texttt{all} 与三种消融配置 \texttt{w/o rag}、\texttt{w/o cot}、\texttt{w/o feedback} 在有效性 $E$、无干扰性 $I$ 与可部署性 $D$ 三个维度上的表现。
 
-图\ref{fig:method-ranking-overview}展示了四种方法配置在三个维度上的排名对比。55个权限提升漏洞样本分别经五个生成模型生成候选策略，由五个评审模型独立评审并给出排名，最终取算术平均作为综合排名。从图中可见，完整工作流 \texttt{all} 在三个维度上均排名第一（综合平均排名 $1.00$），显著优于任何消融配置。表\ref{tab:ablation-scores}给出了四种方法配置在三个维度上的详细得分。
+图\ref{fig:method-ranking-overview}展示了四种方法配置在三个维度上的排序对比。55 个权限提升漏洞样本分别经五个生成模型生成候选策略，由五个评审模型独立评审并给出排序结果，再经等权聚合得到各维度的共识排序。从图中可见，完整工作流 \texttt{all} 在三个维度上均位列第一，显著优于任何消融配置。表\ref{tab:ablation-scores}给出了四种方法配置在三个维度上的详细得分。
 \begin{figure}[htb]
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
@@ -93,17 +93,17 @@
 	\end{tabularx}
 \end{table}
 
-\textbf{反馈优化机制Feedback的核心作用：}移除反馈优化后，策略质量全面下降，三个维度得分分别为：$E=0.121$，下降79.2\%；$I=0.269$，下降37.6\%；$D=0.288$，下降28.5\%。这表明反馈优化是工作流的核心环节，评审模型的多轮反馈能够持续引导生成模型修正缺陷，对有效性的提升尤为显著。
+\textbf{反馈优化机制的核心作用：}移除反馈优化后，策略质量全面下降，三个维度得分分别为：$E=0.121$，下降79.2\%；$I=0.269$，下降37.6\%；$D=0.288$，下降28.5\%。这表明反馈优化是工作流的核心环节，评审模型的多轮反馈能够持续引导生成模型修正缺陷，对有效性的提升尤为显著。
 
-\textbf{检索增强RAG的知识支撑：}\texttt{w/o rag} 在有效性维度保持次优，得分$E=0.476$，显著优于 \texttt{w/o cot}得分$E=0.234$和 \texttt{w/o feedback}得分$E=0.121$。这说明检索增强模块为策略生成提供了关键的领域知识支撑，包括漏洞特征库、历史防控案例与Kubernetes安全最佳实践。在缺乏这些知识的情况下，生成模型更易产生不精确或不相关的策略。
+\textbf{检索增强的知识支撑作用：}\texttt{w/o rag} 在有效性维度保持次优，得分 $E=0.476$，显著优于 \texttt{w/o cot} 得分 $E=0.234$ 和 \texttt{w/o feedback} 得分 $E=0.121$。这说明检索增强模块为策略生成提供了关键的领域知识支撑，包括漏洞特征库、历史防控案例与 Kubernetes 安全最佳实践。在缺乏这些知识的情况下，生成模型更易产生不精确或不相关的策略。
 
-\textbf{思维链推理CoT的双刃剑效应：}\texttt{w/o cot} 在有效性维度排名最低，得分$E=0.234$，但在可部署性维度接近完整工作流，得分$D=0.398$ vs. $D=0.403$。这揭示了思维链推理的双重作用：虽能显著提升策略的漏洞覆盖率与防控逻辑严密性，但分阶段推理过程引入了更复杂的YAML配置结构与依赖关系，增加了部署门槛。在对安全性要求极高的场景下，应优先保留CoT模块；而在快速响应场景下，可适当简化推理过程以降低部署复杂度。
+\textbf{思维链推理的双刃剑效应：}\texttt{w/o cot} 在有效性维度排名最低，得分 $E=0.234$，但在可部署性维度接近完整工作流，得分 $D=0.398$，而完整工作流为 $D=0.403$。这揭示了思维链推理的双重作用：虽能显著提升策略的漏洞覆盖率与防控逻辑严密性，但分阶段推理过程引入了更复杂的 YAML 配置结构与依赖关系，增加了部署门槛。在对安全性要求极高的场景下，应优先保留 CoT 模块；而在快速响应场景下，可适当简化推理过程以降低部署复杂度。
 
-综上，三个模块的协同作用为策略生成提供了一致性增益，其重要性排序为：\textbf{Feedback > RAG > CoT}。完整工作流在三个维度上分别达到0.581、0.431与0.403的最优表现，对应有效性、无干扰性与可部署性维度。在实际部署中，若资源受限需简化工作流，建议优先保留反馈优化机制与检索增强模块。
+综上，三个模块的协同作用为策略生成提供了一致性增益，其重要性排序为：\textbf{反馈优化 $>$ 检索增强 $>$ 思维链推理}。完整工作流在三个维度上分别达到 0.581、0.431 与 0.403 的最优表现，对应有效性、无干扰性与可部署性维度。在实际部署中，若资源受限需简化工作流，建议优先保留反馈优化机制与检索增强模块。
 
 \subsection{工作流跨模型稳健性验证}
 
-为验证上述消融实验结论是否对不同生成模型稳健，本小节分析完整工作流相对消融配置的优势在不同模型条件下的一致性。图\ref{fig:effectiveness-profile-avg}给出不同生成模型在有效性维度的平均排名。从图中可见，完整工作流\texttt{all}在五个生成模型条件下均保持最优或次优排名，验证了消融实验结论的跨模型稳健性。不同生成模型对各模块的依赖程度存在差异：GPT-5 与 GLM-4.5 对反馈优化的依赖性更强，移除反馈后排名下降明显；而 DeepSeek 与 Qwen3-Max 对检索增强的响应更为敏感，说明不同模型在知识库支撑与反馈优化上的需求存在差异。
+为验证上述消融实验结论是否对不同生成模型稳健，本小节分析完整工作流相对消融配置的优势在不同模型条件下的一致性。图\ref{fig:effectiveness-profile-avg}给出不同生成模型在有效性维度的共识排序结果。从图中可见，完整工作流\texttt{all}在五个生成模型条件下均保持最优或次优位次，验证了消融实验结论的跨模型稳健性。不同生成模型对各模块的依赖程度存在差异：GPT-5 与 GLM-4.5 对反馈优化的依赖性更强，移除反馈后排序下降明显；而 DeepSeek 与 Qwen3-Max 对检索增强的响应更为敏感，说明不同模型在知识库支撑与反馈优化上的需求存在差异。
 
 \begin{figure}[htb]
 	\centering
@@ -119,7 +119,7 @@
 
 \subsection{三维质量指标的能力分化}
 
-图\ref{fig:generator-ranking-overview}展示了五个生成模型在有效性$E$、无干扰性$I$与可部署性$D$三个维度上的排名分布。
+图\ref{fig:generator-ranking-overview}展示了五个生成模型在有效性 $E$、无干扰性 $I$ 与可部署性 $D$ 三个维度上的排名分布。
 
 \begin{figure}[htb]
 	\centering
@@ -153,7 +153,7 @@
 
 \subsection{输出稳定性评估}
 
-为评估不同生成模型在策略生成过程中的输出稳定性，本文统计了各模型在生成阶段触发重试的次数。重试机制主要针对三类失败情形：结构化输出的 JSON 格式错误，通常因字段缺失、括号不匹配或编码问题导致；生成内容的语法错误，包括 YAML 语法错误、逻辑矛盾或不可解析的配置片段；以及内容违规，即触发模型供应商的安全策略或内容审核机制。为便于跨模型对比，本文将计数按固定分母 504 归一化为失误率。表\ref{tab:model-retry-stats} 给出五个生成模型的失误率统计。
+为评估不同生成模型在策略生成过程中的输出稳定性，本文统计了各模型在生成阶段触发重试的次数。重试机制主要针对三类失败情形：结构化输出中的 JSON 结构错误，通常因字段缺失、括号不匹配或编码问题导致；生成内容的语法错误，包括 YAML 语法错误、逻辑矛盾或不可解析的配置片段；以及内容违规，即触发模型供应商的安全策略或内容审核机制。为便于跨模型对比，本文将计数按固定分母 504 归一化为失误率。表\ref{tab:model-retry-stats} 给出五个生成模型的失误率统计。
 
 \begin{table}[htb]
 	\centering\bicaption{生成模型输出稳定性统计}{Output stability statistics of generation models}
@@ -206,13 +206,13 @@
 
 \section{RQ3：评审方法可信度评估}
 
-为验证大语言模型作为评审方法的可靠性，本节从两个角度评估其可信度：其一，考察不同LLM评审模型在单一维度与跨维度场景下的内部一致性，以判断聚合后排序结果的稳定性；其二，将LLM评审结果与人工专家评审进行对比，以验证自动化评审方法的有效性。若LLM评审模型之间保持较高一致性，且与人工评审结果趋势相符，则可证明该评审方法足以支撑前述跨评审聚合统计与反馈闭环（RQ1--RQ2）。
+为验证大语言模型作为评审方法的可靠性，本节从两个角度评估其可信度：其一，考察不同大语言模型评审模型在单一维度与跨维度场景下的内部一致性，以判断聚合后排序结果的稳定性；其二，将大语言模型评审结果与人工专家评审进行对比，以验证自动化评审方法的有效性。若大语言模型评审模型之间保持较高一致性，且与人工评审结果趋势相符，则可证明该评审方法足以支撑前述跨评审聚合统计与反馈闭环（RQ1--RQ2）。
 
-\subsection{不同LLM的评审一致性验证}
+\subsection{不同大语言模型的评审一致性验证}
 
-为评估LLM评审方法的内部稳定性，本小节分析不同LLM评审模型在单一维度与跨维度场景下的一致性。若不同LLM评审模型对候选策略优劣的判断高度一致，则说明评审方法本身具有较强的鲁棒性，聚合后的排序结果更稳定、更可解释；反之，若一致性较弱，则需要警惕评审方法的不确定性问题。
+为评估大语言模型评审方法的内部稳定性，本小节分析不同大语言模型评审模型在单一维度与跨维度场景下的一致性。若不同大语言模型评审模型对候选策略优劣的判断高度一致，则说明评审方法本身具有较强的鲁棒性，聚合后的排序结果更稳定、更可解释；反之，若一致性较弱，则需要警惕评审方法的不确定性问题。
 
-在固定评价维度下，设共有 $n$ 个候选项与 $m$ 个LLM评审模型，候选项索引 $i=1,\dots,n$，评审模型索引 $j=1,\dots,m$。令 $r_{ij}$ 表示评审模型 $j$ 对候选项 $i$ 给出的名次，名次越小表示越优。
+在固定评价维度下，设共有 $n$ 个候选项与 $m$ 个大语言模型评审模型，候选项索引 $i=1,\dots,n$，评审模型索引 $j=1,\dots,m$。令 $r_{ij}$ 表示评审模型 $j$ 对候选项 $i$ 给出的名次，名次越小表示越优。
 
 \textbf{Kendall's $W$协调系数}用于刻画多评审模型整体一致性，取值范围 $[0,1]$，$W=1$ 表示完全一致：
 \begin{equation}
@@ -223,16 +223,16 @@ W = \frac{12\,S}{m^2\,(n^3-n)}
 S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\frac{1}{n}\sum_{i=1}^{n}R_i.
 \end{equation}
 
-\textbf{两两 Spearman 等级相关系数}用于刻画任意两个LLM评审模型排序趋势的一致性。对评审模型 $j$ 与 $k$，其排名向量分别记为 $\mathbf{r}_j$ 与 $\mathbf{r}_k$，则
+\textbf{两两 Spearman 等级相关系数}用于刻画任意两个大语言模型评审模型排序趋势的一致性。对评审模型 $j$ 与 $k$，其排名向量分别记为 $\mathbf{r}_j$ 与 $\mathbf{r}_k$，则
 \begin{equation}
 \rho_{jk}=\mathrm{corr}(\mathbf{r}_j,\mathbf{r}_k).
 \end{equation}
 当两个评审模型排序趋势一致时 $\rho_{jk}$ 接近 $1$，当趋势相反时 $\rho_{jk}$ 接近 $-1$。
 
-本文在 $E/I/D$ 三个维度内分别计算 Kendall's $W$ 与评审模型两两 Spearman 相关系数，并汇总其分布统计。表\ref{tab:judge-consistency-stats}给出三维度下的一致性量化指标，图\ref{fig:judge-corr-3d}--\ref{fig:judge-spearman-box}展示分布细节。
+本文分别在有效性 $E$、无干扰性 $I$ 与可部署性 $D$ 三个维度内计算 Kendall's $W$ 与评审模型两两 Spearman 相关系数，并汇总其分布统计。表\ref{tab:judge-consistency-stats}给出三维度下的一致性量化指标，图\ref{fig:judge-corr-3d}--\ref{fig:judge-spearman-box}展示分布细节。
 
 \begin{table}[htb]
-	\centering\bicaption{不同维度下LLM评审模型一致性统计}{LLM judge consistency statistics across dimensions}
+	\centering\bicaption{不同维度下大语言模型评审一致性统计}{Consistency statistics of large-language-model judges across dimensions}
 	\label{tab:judge-consistency-stats}
 	\setlength{\tabcolsep}{6pt}
 	\noindent\renewcommand{\arraystretch}{1.25}
@@ -247,7 +247,7 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 	\end{tabularx}
 \end{table}
 
-结果表明，LLM评审模型的内部一致性呈现有效性优于无干扰性、无干扰性优于可部署性的稳定梯度。
+结果表明，大语言模型评审模型的内部一致性呈现有效性优于无干扰性、无干扰性优于可部署性的稳定梯度。
 
 \begin{figure}[htb]
 	\centering
@@ -256,7 +256,7 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 	 \subfloat[有效性\label{fig:judge-corr-eff}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_有效性.png}}\hfill
 	 \subfloat[无干扰性\label{fig:judge-corr-noint}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_无干扰性.png}}\hfill
 	 \subfloat[可部署性\label{fig:judge-corr-deploy}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_可部署性.png}}}
-	\bicaption{不同维度下LLM评审模型两两相关性热力图（Spearman）}{Pairwise correlation heatmaps of LLM judges across different dimensions (Spearman)}
+	\bicaption{不同维度下大语言模型评审两两相关性热力图（Spearman）}{Pairwise correlation heatmaps of large-language-model judges across different dimensions (Spearman)}
 	\label{fig:judge-corr-3d}
 \end{figure}
 
@@ -266,20 +266,20 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 	 \setlength{\belowcaptionskip}{0pt}%
 	 \subfloat[Kendall's $W$ 对比\label{fig:judge-kendalls-w}]{\includegraphics[width=0.49\textwidth]{images/plots/judge_consistency/judge_kendalls_w_by_dimension.png}}\hfill
 	 \subfloat[两两 Spearman 分布\label{fig:judge-spearman-box}]{\includegraphics[width=0.49\textwidth]{images/plots/judge_consistency/judge_spearman_box_by_dimension.png}}}
-	\bicaption{LLM评审一致性统计}{Consistency statistics of LLM judges}
+	\bicaption{大语言模型评审一致性统计}{Consistency statistics of large-language-model judges}
 	\label{fig:judge-agreement-summary}
 \end{figure}
 
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.86\linewidth]{images/plots/judge_consistency/judge_dispersion_by_dimension.png}
-	\bicaption{不同维度下LLM评审分歧程度统计}{Statistics of disagreement among LLM judges across different dimensions}
+	\bicaption{不同维度下大语言模型评审分歧程度统计}{Statistics of disagreement among large-language-model judges across different dimensions}
 	\label{fig:judge-dispersion}
 \end{figure}
 
-从一致性统计结果可以看出，不同评价维度下LLM评审模型的一致性存在明显差异。有效性维度的一致性最高，$W=0.955$，Spearman均值为$0.944$，说明LLM评审模型对漏洞路径覆盖与处置有效性的判定依据更为一致。这可能归因于有效性判定标准相对客观——漏洞是否被有效封堵、攻击路径是否被完全覆盖等技术指标具有较强的可验证性。相比之下，可部署性维度的一致性相对较弱，$W=0.687$，Spearman均值为$0.609$，这与该维度涉及的评价因素更为复杂有关：工程可行性、环境依赖、部署成本与运维复杂度等多目标权衡使得不同评审模型对权重与阈值的设定更易出现系统性差异。无干扰性维度的一致性则处于中间水平，$W=0.846$，Spearman均值为$0.808$，反映了LLM评审模型在判断策略对业务流程影响时具有一定的共识基础，但仍存在因应用场景理解差异而产生的分歧。
+从一致性统计结果可以看出，不同评价维度下大语言模型评审模型的一致性存在明显差异。有效性维度的一致性最高，$W=0.955$，Spearman 均值为 $0.944$，说明大语言模型评审模型对漏洞路径覆盖与处置有效性的判定依据更为一致。这可能归因于有效性判定标准相对客观，即漏洞是否被有效封堵、攻击路径是否被完全覆盖等技术指标具有较强的可验证性。相比之下，可部署性维度的一致性相对较弱，$W=0.687$，Spearman 均值为 $0.609$，这与该维度涉及的评价因素更为复杂有关：工程可行性、环境依赖、部署成本与运维复杂度等多目标权衡使得不同评审模型对权重与阈值的设定更易出现系统性差异。无干扰性维度的一致性则处于中间水平，$W=0.846$，Spearman 均值为 $0.808$，反映了大语言模型评审模型在判断策略对业务流程影响时具有一定的共识基础，但仍存在因应用场景理解差异而产生的分歧。
 
-尽管存在维度差异，较高的Kendall's $W$值与Spearman均值表明跨评审聚合后的排序整体稳定，LLM评审方法的内部一致性得到验证。
+尽管存在维度差异，较高的 Kendall's $W$ 值与 Spearman 均值表明跨评审聚合后的排序整体稳定，大语言模型评审方法的内部一致性得到验证。
 \subsection{跨维度评审差异分析}
 
 图\ref{fig:single-dim-by-judge-3d} 与图\ref{fig:single-dim-profile-avg} 分别从评审模型与生成模型视角展示三维度评价的差异模式。
@@ -314,11 +314,11 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 
 \subsection{与人工评审的对比验证}
 
-为进一步验证LLM评审方法的外部有效性，本小节将聚合后的LLM评审结果与人工专家评审进行对比。人工评审邀请了三位具有五年以上Kubernetes安全运维经验的专家，对随机抽取的20个CVE样本（涵盖不同漏洞类型与危害等级）进行盲评。每位专家独立评审由五个生成模型在四种方法配置下生成的策略，在有效性$E$、无干扰性$I$与可部署性$D$三个维度上给出排名。最终取三位专家排名的算术平均作为人工评审基准。
+为进一步验证大语言模型评审方法的外部有效性，本小节将聚合后的大语言模型评审结果与人工专家评审进行对比。人工评审邀请了三位具有五年以上 Kubernetes 安全运维经验的专家，对随机抽取的 20 个 CVE 样本（涵盖不同漏洞类型与危害等级）进行盲评。每位专家独立评审由五个生成模型在四种方法配置下生成的策略，在有效性 $E$、无干扰性 $I$ 与可部署性 $D$ 三个维度上给出排序。随后对三位专家的排序结果采用等权聚合，形成人工评审基准。
 
 \textbf{权重学习方法。}
 
-给定$N$个待评审样本，第$i$个样本有$K$个LLM评审者的打分$\mathbf{x}_i = (x_{i,1}, \ldots, x_{i,K})^\top$及对应的人工评审分数$y_i$。我们希望找到一组权重，使LLM评审的加权结果尽可能逼近人工评审。实验对比两种方案。
+给定 $N$ 个待评审样本，第 $i$ 个样本有 $K$ 个大语言模型评审者的打分 $\mathbf{x}_i = (x_{i,1}, \ldots, x_{i,K})^\top$ 及对应的人工评审分数 $y_i$。我们希望找到一组权重，使大语言模型评审的加权结果尽可能逼近人工评审。实验对比两种方案。
 
 方案1采用凸组合权重，直接加权平均：$\hat{y}_i = \sum_{j=1}^{K} w_j x_{i,j}$，约束$w_j \geq 0$且$\sum_j w_j = 1$。通过最小化MSE求解：
 \begin{equation}
@@ -329,7 +329,7 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 \begin{equation}
 \hat{y}_i = a \left( \sum_{j=1}^{K} w_j x_{i,j} \right) + b
 \end{equation}
-权重$\mathbf{w}$保持相同约束，$(a, b)$通过最小二乘拟合。这样可以同时校正LLM分数的尺度和偏移。在三个评审维度（有效性、无干扰性、可部署性）上分别拟合独立权重。评审者打分从排名转为分数时采用组内归一化：$\text{score} = (N_{\text{max}} - \text{avg\_rank}) / (N_{\text{max}} - 1)$，其中$N_{\text{max}}$为该组的候选数上限。用留一法（LOO）和5折交叉验证评估泛化能力。
+权重 $\mathbf{w}$ 保持相同约束，$(a, b)$ 通过最小二乘拟合。这样可以同时校正大语言模型分数的尺度和偏移。在三个评审维度（有效性、无干扰性、可部署性）上分别拟合独立权重。评审者打分从排名转为分数时采用组内归一化：$\text{score} = (N_{\text{max}} - \text{avg\_rank}) / (N_{\text{max}} - 1)$，其中 $N_{\text{max}}$ 为该组的候选数上限。用留一法（LOO）和 5 折交叉验证评估泛化能力。
 
 \textbf{拟合结果对比。}表\ref{tab:cv-results}展示了两种权重方案与人工评审的拟合结果。
 
@@ -359,12 +359,12 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 \end{tabular}
 \end{table}
 
-从表\ref{tab:cv-results}可以看出，带校准的方案在5-fold验证中整体MSE为0.0331，比凸组合权重的0.0373降低了11\%。训练误差的大幅下降（23.6\%）与验证误差的温和下降说明校准参数$(a, b)$确实有助于拟合，但也需要警惕过拟合。分维度来看差异明显：有效性维度改善最大（5-fold: 0.0458→0.0335，降低27\%），这可能是因为LLM在判断漏洞利用效果时存在系统性的尺度偏差，需要线性变换来对齐人工标准；无干扰性维度也有22\%的改善；但可部署性维度反而变差（0.0332→0.0402），检查发现该维度下各LLM评审者分数高度一致（均匀权重MSE已达0.0339），此时引入校准参数反而带来过拟合风险。
+从表\ref{tab:cv-results}可以看出，带校准的方案在 5-fold 验证中整体 MSE 为 0.0331，比凸组合权重的 0.0373 降低了 11\%。训练误差的大幅下降（23.6\%）与验证误差的温和下降说明校准参数 $(a, b)$ 确实有助于拟合，但也需要警惕过拟合。分维度来看差异明显：有效性维度改善最大（5-fold: 0.0458→0.0335，降低 27\%），这可能是因为大语言模型在判断漏洞利用效果时存在系统性的尺度偏差，需要线性变换来对齐人工标准；无干扰性维度也有 22\% 的改善；但可部署性维度反而变差（0.0332→0.0402），检查发现该维度下各大语言模型评审者分数高度一致（均匀权重 MSE 已达 0.0339），此时引入校准参数反而带来过拟合风险。
 
 \textbf{权重分布与校准参数。}表\ref{tab:weight-distribution}给出了最终学到的权重（基于全量数据）。
 
 \begin{table}[htb]
-\centering\bicaption{学习到的评审者权重分布}{Learned weight distribution of LLM judges}
+\centering\bicaption{学习到的评审者权重分布}{Learned weight distribution of large-language-model judges}
 \label{tab:weight-distribution}
 \noindent\renewcommand{\arraystretch}{1.2}
 \setlength{\tabcolsep}{12pt}
@@ -383,7 +383,7 @@ grok4     & 0.05 & 0.07 & 0.20 \\
 
 从权重分布可以看出，有效性和无干扰性两个维度上Qwen3-Max获得了最高权重（分别为0.42和0.38），这表明其评审结果与人工专家判断的一致性最高。GPT-5和DeepSeek在有效性维度上也获得了较为显著的权重（0.20和0.18），反映出这些模型在判断漏洞防控效果时具有一定的可靠性。可部署性维度呈现均匀分布，说明在这个维度上各评审者与人工判断的相关性都相对较弱，这与该维度涉及的工程实践因素更为复杂有关。
 
-图\ref{fig:human-radar-comparison}从生成模型和方法配置两个视角展示了人工评审的三维度评分分布。从图\ref{fig:human-generator-radar-overall}可见，人工专家评审下GPT-5在有效性维度获得最高评价，DeepSeek在可部署性维度表现最优，与RQ2中LLM评审的结论一致。图\ref{fig:human-method-radar-overall}显示完整工作流在三个维度上均优于消融配置，验证了RQ1的结论。对比图\ref{fig:llm-radar-comparison}所示的LLM评审结果，两者在整体趋势上高度一致，但人工评审在可部署性维度上的区分度更高，这可能是因为人工专家能够更准确地评估工程实践中的部署复杂度。
+图\ref{fig:human-radar-comparison}从生成模型和方法配置两个视角展示了人工评审的三维度评分分布。从图\ref{fig:human-generator-radar-overall}可见，人工专家评审下 GPT-5 在有效性维度获得最高评价，DeepSeek 在可部署性维度表现最优，与 RQ2 中大语言模型评审的结论一致。图\ref{fig:human-method-radar-overall}显示完整工作流在三个维度上均优于消融配置，验证了 RQ1 的结论。对比图\ref{fig:llm-radar-comparison}所示的大语言模型评审结果，两者在整体趋势上高度一致，但人工评审在可部署性维度上的区分度更高，这可能是因为人工专家能够更准确地评估工程实践中的部署复杂度。
 
 \begin{figure}[htb]
 	\centering
@@ -399,13 +399,13 @@ grok4     & 0.05 & 0.07 & 0.20 \\
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
 	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[生成模型对比（LLM评审）\label{fig:llm-generator-radar-overall}]{\includegraphics[width=0.49\textwidth]{images/analysis/plots/summary/radar_generator_overall.png}}\hfill
-	 \subfloat[方法配置对比（LLM评审）\label{fig:llm-method-radar-overall}]{\includegraphics[width=0.49\textwidth]{images/analysis/plots/summary/radar_method_overall.png}}}
-	\bicaption{LLM评审的三维度雷达图对比}{Comparison of three-dimensional radar charts based on LLM evaluation}
+	 \subfloat[生成模型对比（大语言模型评审）\label{fig:llm-generator-radar-overall}]{\includegraphics[width=0.49\textwidth]{images/analysis/plots/summary/radar_generator_overall.png}}\hfill
+	 \subfloat[方法配置对比（大语言模型评审）\label{fig:llm-method-radar-overall}]{\includegraphics[width=0.49\textwidth]{images/analysis/plots/summary/radar_method_overall.png}}}
+	\bicaption{大语言模型评审的三维度雷达图对比}{Comparison of three-dimensional radar charts based on large-language-model evaluation}
 	\label{fig:llm-radar-comparison}
 \end{figure}
 
-表\ref{tab:calibration-params}展示了校准参数。有效性和无干扰性的$a \approx 0.35\sim 0.5$，意味着LLM分数需要压缩一半左右才能对齐人工分数范围。可部署性的$a = 0.08$接近于零，说明该维度上LLM评审信号与人工判断的线性相关性较弱，模型主要依赖偏置项$b$进行预测。
+表\ref{tab:calibration-params}展示了校准参数。有效性和无干扰性的 $a \approx 0.35\sim 0.5$，意味着大语言模型分数需要压缩一半左右才能对齐人工分数范围。可部署性的 $a = 0.08$ 接近于零，说明该维度上大语言模型评审信号与人工判断的线性相关性较弱，模型主要依赖偏置项 $b$ 进行预测。
 
 \begin{table}[htb]
 \centering\bicaption{校准参数与拟合质量}{Calibration parameters and fitting quality}
@@ -423,14 +423,14 @@ grok4     & 0.05 & 0.07 & 0.20 \\
 \end{tabular}
 \end{table}
 
-\textbf{对比分析与讨论。}通过交叉验证对比发现，在凸组合权重基础上增加线性校准能将MSE从0.037降到0.033（改善11\%）。有效性和无干扰性维度显著受益，但可部署性维度因LLM评审与人工判断相关性弱而效果不佳。权重分布显示Qwen3-Max与人工专家判断的一致性最高，而其他模型也贡献了一定的权重，形成了相对均衡的聚合策略。
+\textbf{对比分析与讨论。}通过交叉验证对比发现，在凸组合权重基础上增加线性校准能将 MSE 从 0.037 降到 0.033（改善 11\%）。有效性和无干扰性维度显著受益，但可部署性维度因大语言模型评审与人工判断相关性较弱而效果不佳。权重分布显示 Qwen3-Max 与人工专家判断的一致性最高，而其他模型也贡献了一定的权重，形成了相对均衡的聚合策略。
 
-当前方法的主要限制在于样本量偏小——每个维度只有20个数据点（5个LLM $\times$ 4种消融设置）。这直接导致可部署性维度几乎无法学到有效信号。现在只用了LLM的排名分数作为特征，如果能引入更多信号（比如评审置信度、多轮反馈中的分数变化、生成文本的长度和复杂度等），可能会提高拟合质量。非线性校准（分段函数、核方法等）也值得尝试，尤其是当LLM分数与人工分数的关系并非简单线性时。此外，增加$L_2$正则化约束可以进一步平衡权重分布，在可解释性和准确性之间取得更好的折衷。
+当前方法的主要限制在于样本量偏小，即每个维度只有 20 个数据点（5 个大语言模型 $\times$ 4 种消融设置）。这直接导致可部署性维度几乎无法学到有效信号。现在只使用了大语言模型的排名分数作为特征，如果能引入更多信号（比如评审置信度、多轮反馈中的分数变化、生成文本的长度和复杂度等），可能会提高拟合质量。非线性校准（分段函数、核方法等）也值得尝试，尤其是当大语言模型分数与人工分数的关系并非简单线性时。此外，增加 $L_2$ 正则化约束可以进一步平衡权重分布，在可解释性和准确性之间取得更好的折衷。
 
 
 \subsection{小结}
 
-综合内部一致性验证与人工评审对比结果，本文所采用的LLM多评审模型聚合方法在评价维度上表现出较强的稳定性与可信度，足以支撑RQ1--RQ2的结论。对于一致性相对较弱的维度如可部署性，后续可通过细化评价准则、增加典型案例边界说明，或采用鲁棒聚合策略如中位数排名、加权投票等来降低对单一评审模型偏好的敏感性，进一步提升评价体系的稳定性与可解释性。
+综合内部一致性验证与人工评审对比结果，本文所采用的大语言模型多评审聚合方法在评价维度上表现出较强的稳定性与可信度，足以支撑 RQ1--RQ2 的结论。对于一致性相对较弱的维度如可部署性，后续可通过细化评价准则、增加典型案例边界说明，或采用鲁棒聚合策略如中位数排名、加权投票等来降低对单一评审模型偏好的敏感性，进一步提升评价体系的稳定性与可解释性。
 
 
 

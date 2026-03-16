@@ -82,7 +82,7 @@ Falco 的监测机制基于\textbf{eBPF}技术\cite{hoiland2018express}对Linux�
 \subsection{防控一体：Cilium Tetragon}
 在云原生安全工具谱系中，大多数工具侧重于单一维度的防护（如准入控制）或监控（如行为检测）。\textbf{Cilium Tetragon}\cite{tetragon2025} 通过基于 eBPF 的内核层安全观测与运行时强制执行，实现了\textbf{监控策略}与\textbf{防护策略}的深度融合，构建起从感知到响应的闭环防护体系。
 
-Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化项目，其核心设计理念是将安全策略的过滤、阻断与响应直接下沉至 eBPF 内核层执行，从而实现\textbf{实时性}与\textbf{低开销}的统一。与传统用户态 Agent 需要通过上下文切换将事件传递至用户空间不同，Tetragon 在内核态完成事件捕获、策略匹配与执行决策，显著降低了高频事件（如 $\texttt{send}$、$\texttt{read}$、$\texttt{write}$ 系统调用）的观测开销。
+Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化项目，其核心设计理念是将安全策略的过滤、阻断与响应直接下沉至 eBPF 内核层执行，从而实现\textbf{实时性}与\textbf{低开销}的统一。与传统用户态代理组件需要通过上下文切换将事件传递至用户空间不同，Tetragon 在内核态完成事件捕获、策略匹配与执行决策，显著降低了高频事件（如 $\texttt{send}$、$\texttt{read}$、$\texttt{write}$ 系统调用）的观测开销。
 
 从\textbf{监控策略}维度考量，Tetragon 能够检测并响应安全关键事件，包括：
 
