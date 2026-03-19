@@ -1,4 +1,4 @@
-
+﻿
 \chapter{背景介绍}\label{chap:background}
 本章节主要介绍相关概念、技术，以及与Kubernetes权限提升漏洞相关的国内外研究现状。
 
@@ -67,19 +67,19 @@ Kubernetes通过一系列持久化\textbf{资源对象}实现对集群多种资�
 \noindent\hangindent=2em\hangafter=1 (2) \textbf{防护策略}在风险入口处主动阻断与收敛攻击面，包括准入与配置约束、网络隔离与最小连通。
 下文分别介绍监控策略中的运行时检测工具 Falco 与静态扫描类工具、防测一体工具 Cilium Tetragon，以及防护策略中的准入控制工具 OPA/Gatekeeper 与 Kyverno、网络隔离机制 NetworkPolicy。
 
-\subsection{监控策略：容器运行时安全监控工具——Falco}
+\subsection{Falco}
 在容器技术与云原生基础设施广泛部署的背景下，传统基于主机或网络的入侵监测系统（IDS）逐渐暴露出适应性不足、粒度较粗以及缺乏云原生上下文语义等问题。为满足容器化环境对运行时安全的实时性与上下文感知需求，开源项目 Falco 应运而生。Falco 最初由 Sysdig 公司开发，并于 2018 年捐赠给云原生计算基金会（CNCF），成为较早面向容器运行时的行为监测系统之一\cite{falco2025}。其核心思想是在\textbf{系统调用}层进行透明监控，并通过规则语言定义\textbf{监控策略}，从而在不中断业务的前提下实现精细化威胁监测与审计。
 
 Falco 的监测机制基于\textbf{eBPF}技术\cite{hoiland2018express}对Linux系统调用的动态捕获与分析。eBPF（extended Berkeley Packet Filter）允许在\textbf{内核态}运行经过验证的字节码程序，并以受控方式访问内核提供的上下文与辅助函数；eBPF 程序可动态挂载到系统调用入口/退出点、内核跟踪点（tracepoint）、kprobe 以及网络相关钩子等位置，从而以较低侵入性捕获安全相关事件。相较于传统内核模块方案，eBPF 通过验证器与隔离执行机制降低了对内核稳定性的影响，并在性能与可观测性之间提供更可控的权衡，适合用于容器运行时的持续监测。
 
-基于高语义的行为数据流，Falco利用面向安全运维的领域特定语言（DSL）构建声明式规则引擎。与依赖统计特征或黑盒模型的检测方法不同，Falco允许管理员针对特定威胁场景定义确定性的逻辑约束。例如图\ref{fig:falco}展示了监测“在容器内启动交互式 shell 进程”的Falco规则，一旦检测到会产生日志/告警。这种白盒化的检测方式不仅具备极强的可解释性，便于合规审计与取证分析，还能确保告警信息直接关联至具体的云原生实体，显著降低了安全运营的定位成本。然而，该机制在工程应用中仍存在局限性：一方面，基于规则的检测高度依赖专家经验与知识库的持续更新，对未知攻击或变种攻击的泛化检测能力较弱；另一方面，Falco 的观测视野局限于系统调用层，对应用层协议滥用或纯内存型攻击的感知能力有限。
+基于高语义的行为数据流，Falco 利用面向安全运维的领域特定语言（DSL）构建声明式规则引擎。与依赖统计特征或黑盒模型的检测方法不同，Falco 允许管理员针对特定威胁场景定义确定性的逻辑约束。例如图\ref{fig:falco}展示了监测”在容器内启动交互式 shell 进程”的 Falco 规则。这种白盒化的检测方式具备极强的可解释性，便于合规审计与取证分析，能将告警信息直接关联至具体的云原生实体，降低安全运营的定位成本。然而，该机制仍存在局限性：一方面，基于规则的检测高度依赖专家经验与知识库的持续更新，对未知攻击或变种攻击的泛化检测能力较弱；另一方面，Falco 的观测视野局限于系统调用层，对应用层协议滥用或纯内存型攻击的感知能力有限。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/falco.png}
     \bicaption{Falco 运行时监控与规则示意}{Illustration of Falco runtime monitoring and rules}\label{fig:falco}
 \end{figure}
 
-\subsection{防控一体：Cilium Tetragon}
+\subsection{Tetragon}
 在云原生安全工具谱系中，大多数工具侧重于单一维度的防护（如准入控制）或监控（如行为检测）。\textbf{Cilium Tetragon}\cite{tetragon2025} 通过基于 eBPF 的内核层安全观测与运行时强制执行，实现了\textbf{监控策略}与\textbf{防护策略}的深度融合，构建起从感知到响应的闭环防护体系。
 
 Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化项目，其核心设计理念是将安全策略的过滤、阻断与响应直接下沉至 eBPF 内核层执行，从而实现\textbf{实时性}与\textbf{低开销}的统一。与传统用户态代理组件需要通过上下文切换将事件传递至用户空间不同，Tetragon 在内核态完成事件捕获、策略匹配与执行决策，显著降低了高频事件（如 $\texttt{send}$、$\texttt{read}$、$\texttt{write}$ 系统调用）的观测开销。
@@ -105,7 +105,7 @@ Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化
 
 然而，Tetragon 的内核层强制执行也引入了新的工程挑战：策略配置不当可能导致误杀合法进程或影响业务可用性，因此在生产环境部署前需充分验证策略的副作用边界，并建立完善的灰度发布与回滚机制。
 
-\subsection{防护策略：准入控制与配置约束工具}
+\subsection{准入控制与配置约束工具}
 准入控制（Admission Control）是 Kubernetes 中典型的\textbf{事前防护策略}机制。其核心思想是在 API Server 接收资源创建或更新请求后、对象真正写入存储之前，插入额外的校验（Validation）或变更（Mutation）逻辑，对配置是否符合安全要求进行检查。由此，集群可以在工作负载落地前拦截高风险配置，例如特权容器、不受控的宿主机挂载、缺失关键标签或不符合安全基线的部署清单，从源头减少攻击面。
 
 在该领域，OPA（Open Policy Agent）及其 Kubernetes 实现 Gatekeeper 提供了通用的策略引擎能力，适合表达较复杂的组织级约束规则；但其策略通常依赖 Rego 语言编写，学习与维护成本相对较高。相比之下，\textbf{Kyverno} 作为 Kubernetes 原生\textbf{防护策略}引擎，直接以 YAML 描述策略，更贴近集群运维人员的使用习惯，因此在工程实践中更易落地。Kyverno 不仅支持对 Pod 安全标准（PSS）、镜像签名及供应链安全进行校验，还支持对资源进行自动修正（Mutate）和基于触发条件生成配置（Generate），从而将安全基线与平台治理要求固化为可复用的声明式规则。
@@ -117,7 +117,7 @@ Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化
     \bicaption{Kyverno 策略示例：强制要求 Pod 包含 owner 标签}{Example of a Kyverno policy enforcing owner labels on Pods}\label{fig:kyverno-demo}
 \end{figure}
 
-\subsection{防护策略：网络隔离工具——NetworkPolicy}
+\subsection{NetworkPolicy}
 网络隔离用于降低横向移动与数据外传风险，是云原生环境中与身份权限控制互补的关键手段。Kubernetes 的 NetworkPolicy 为声明式\textbf{防护策略}，允许以 $\texttt{Pod}/\texttt{Namespace}$ 选择器与端口规则的形式，定义\textbf{入站（Ingress）/出站（Egress）}通信的允许集合，从而将网络访问从“默认全通”收敛到“默认拒绝+按需放通”。在多租户或微服务体系中，合理的 NetworkPolicy 可将控制域落到命名空间与工作负载级别，减少单点被攻破后对整个集群的扩散影响。
 
 需要注意的是，NetworkPolicy 的效果依赖底层网络插件（CNI）对策略的实现能力。常见 CNI（如 Calico、Cilium、Antrea 等）均可提供对 NetworkPolicy 的支持；其中部分实现还可在标准三/四层策略之外，扩展更细粒度能力（例如基于 eBPF 的高性能转发与可观测性、面向应用协议的七层策略等）。工程实践中通常结合业务依赖关系梳理通信图谱，先对关键命名空间与高价值服务进行最小连通收敛，再逐步扩展覆盖范围，并配合观测与告警机制验证策略变更带来的连通性影响。
@@ -130,7 +130,7 @@ Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化
 
 如图~\ref{fig:networkpolicy-demo} 所示，该策略定义了一个典型的微服务网络隔离场景：针对带有 \texttt{role: db} 标签的数据库工作负载，仅允许来自 \texttt{role: frontend} 前端服务的流量通过 TCP 5432 端口访问。这种基于标签选择器（Label Selector）的白名单机制有效地构建了\textbf{微隔离（Micro-segmentation）}边界，确保即使集群内其他容器（如被入侵的非关联服务）试图横向移动访问数据库，也会在网络层被 CNI 插件直接阻断，从而显著提升了核心数据资产的安全性。
 
-\subsection{静态扫描与配置审计工具：镜像、依赖与 IaC}
+\subsection{静态扫描与配置审计工具}
 与运行时检测相对，静态扫描更偏向\textbf{事前发现与持续治理}：在镜像构建、交付与部署前，通过自动化检查提前识别已知漏洞、弱配置与合规风险，避免高风险对象进入集群。
 
 第一类是\textbf{镜像与依赖漏洞扫描}。该类工具通常解析镜像分层文件系统与软件包清单，基于公开漏洞库对已知 CVE 进行匹配，并输出风险等级、受影响版本与修复建议。代表性工具包括 Trivy\cite{trivy2025}、Grype/Anchore\cite{grype2025} 等；其中，Syft\cite{syft2025} 等工具可生成软件物料清单（SBOM），用于提升漏洞告警的可追溯性与供应链治理能力。在工程实践中，镜像扫描往往与 CI 流水线结合，在构建阶段阻断高危漏洞或不合规组件进入制品仓库。
@@ -140,9 +140,9 @@ Tetragon 由 Cilium 项目开发，作为 CNCF 云原生计算基金会的孵化
 \begin{table}[htb!]
     \centering\bicaption{Kubernetes 常见安全扫描与审计工具整理}{Classification of common Kubernetes security scanning and auditing tools}\label{tab:k8s-security-scan-tools}
     \noindent\renewcommand{\arraystretch}{1.25}
-    \setlength{\tabcolsep}{2mm}
+    \setlength{\tabcolsep}{1.5mm}
     \small
-    \begin{tabular}{>{\centering\arraybackslash}m{2.7cm}m{4.3cm}>{\raggedright\arraybackslash}m{7.0cm}}
+    \begin{tabular}{>{\centering\arraybackslash}m{2.2cm}m{3.5cm}>{\raggedright\arraybackslash}m{6.0cm}}
     \toprule
     \textbf{类别} & \textbf{代表性工具} & \textbf{主要能力与适用场景}\\
     \midrule

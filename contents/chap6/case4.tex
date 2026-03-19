@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例四：CVE-2020-4062 Conjur OSS 缺乏网络隔离策略}
 
 \subsection{漏洞详解与复现}
@@ -19,7 +19,7 @@ Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平�
     \item \textbf{初始立足点}：攻击者控制集群内任意 Pod，例如通过业务漏洞或错误授权获得容器执行能力；
     \item \textbf{侦察发现}：在目标命名空间中发现 Postgres Service 与 5432 端口；
     \item \textbf{网络直连}：由于缺失 NetworkPolicy，攻击者可从任意 Pod 直连 Postgres；
-    \item \textbf{影响扩展}：一旦数据库凭据或数据密钥被获取，常见来源包括过宽 RBAC、配置泄露或备份泄露，风险可进一步扩展为机密窃取、权限篡改与审计删除。
+    \item \textbf{影响扩展}：若获取数据库凭据或数据密钥（来源可能包括过宽 RBAC、配置泄露或备份泄露），风险可进一步扩展为机密窃取、权限篡改与审计删除。
 \end{enumerate}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现（验证性复现）}
@@ -53,7 +53,7 @@ Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平�
 \subsection{三因素分析}
 
 \noindent\textbf{有效性（Effectiveness）：}
-NetworkPolicy 能直接收敛数据库暴露面，将任意 Pod 可达降至仅 Conjur Server 可达，从网络层阻断横向直连路径。命名空间隔离与 RBAC 收敛可进一步降低数据库凭据被读取或滥用的概率，与网络隔离形成互补。基线检测用于在 Helm 回滚或配置漂移时及时发现 NetworkPolicy 缺失、规则被弱化等回归风险。
+NetworkPolicy 能直接收敛数据库暴露面，将任意 Pod 可达降至仅 Conjur Server 可达，从网络层阻断横向直连路径。命名空间隔离与 RBAC 收敛可进一步降低数据库凭据被读取或滥用的概率，与网络隔离形成互补。基线检测用于在 Helm 回滚或配置漂移时，及时发现 NetworkPolicy 缺失、规则被弱化等回归风险。
 
 \noindent\textbf{无干扰性（Interference）：}
 NetworkPolicy 的引入可能影响 Conjur 组件间通信与运维排障，需在预生产完成连通性与回归验证，并准备回滚方案。若集群 CNI 不支持 NetworkPolicy，则相关策略无法执行，应优先通过命名空间隔离等手段降低暴露面，或在平台层面选用支持策略的 CNI。精确放通依赖正确的标签选择器，标签不一致可能造成误拦截，需要与 Chart 模板保持一致。

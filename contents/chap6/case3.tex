@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例三：CVE-2023-30512（CubeFS CSI 过度权限配置）}
 
 \subsection{漏洞详解与复现}
@@ -40,7 +40,7 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 
 \textbf{复现步骤（摘要）}：
 \begin{enumerate}
-	\item 盘点并导出 CSI 的 RBAC 绑定，确认 ClusterRole 规则中包含 \texttt{resources:\allowbreak[\allowbreak secrets\allowbreak]} 且 verbs 包含 \texttt{get/list/watch}；
+	\item 盘点并导出 CSI 的 RBAC 绑定，确认 ClusterRole 规则含 \texttt{resources:\allowbreak[\allowbreak secrets\allowbreak]} 且 verbs 包含 \texttt{get/list/watch}；
 	\item 以该 ServiceAccount 身份执行权限验证（\texttt{kubectl auth can-i}），确认其具备跨命名空间读取 \texttt{Secret} 的能力；
 	\item 按“最小权限 + 准入防回归 + 审计检测”部署策略后，重复第 2 步验证权限应为 \texttt{no}。
 \end{enumerate}

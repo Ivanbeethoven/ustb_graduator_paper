@@ -7,7 +7,7 @@
 
 \subsection{用户角色与用例分析}
 
-按照职责划分，系统面向两类协同用户：\textbf{安全工程师}与\textbf{专家评审员}（见图 \ref{fig:role_use_case}）。安全工程师是系统的主要操作者，负责漏洞生命周期的全程跟踪，利用系统的自动化能力完成特征提取、检索增强与推理链构建，从而以极低成本输出初步防御方案；专家评审员则聚焦于决策与质控环节，在人工介入点（人在回路）对多份候选策略进行多维度评分与排序，其反馈不仅决定最终部署方案，还作为高质量偏好数据回流至知识库，用于持续校准模型行为。
+按照职责划分，系统面向两类协同用户：\textbf{安全工程师}与\textbf{专家评审员}（见图~\ref{fig:role_use_case}）。安全工程师是系统的主要操作者，负责漏洞生命周期的全程跟踪，利用系统的自动化能力完成特征提取、检索增强与推理链构建，从而以极低成本输出初步防御方案；专家评审员则聚焦于决策与质控环节，在人工介入点（人在回路）对多份候选策略进行多维度评分与排序，其反馈不仅决定最终部署方案，还作为高质量偏好数据回流至知识库，用于持续校准模型行为。
 
 \begin{figure}[htb]
     \centering
@@ -78,7 +78,7 @@
 系统的数据持久化方案围绕以下三类核心实体构建（详见图 \ref{fig:storage_schema} 类图）：
 \noindent\hangindent=2em\hangafter=1 (1) \textbf{CVE 实体}：作为数据源头，包含 \texttt{cve\_id}、\texttt{summary} 及 \texttt{cvss\_score} 等描述漏洞严重程度的基础属性，与后续生成的策略呈"一对多"发散关系。
 
-\noindent\hangindent=2em\hangafter=1 (2) \textbf{策略实体}：记录单次生成会话的完整上下文，包括唯一的 \texttt{session\_id}、最终生成的策略内容 \texttt{content} 以及生成过程中的思维链快照 \texttt{reasoning\_chain}，实现了生成过程的可复现性。
+\noindent\hangindent=2em\hangafter=1 (2) \textbf{策略实体}：记录单次生成会话的完整上下文，包括唯一的 \texttt{session\_id}，以及最终策略内容与思维链快照。其中，前者记为 \texttt{content}，后者记为 \texttt{reasoning\_chain}，从而支持对生成过程的复现与追踪。
 
 \noindent\hangindent=2em\hangafter=1 (3) \textbf{排序实体}：存储专家的决策结果，包含评审人 ID \texttt{user\_id}、决策时间戳 \texttt{created\_at} 以及确认后的策略排序列表 \texttt{order}，该关联关系体现了专家对特定策略集的即时评价。
 

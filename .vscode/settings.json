@@ -1,6 +1,6 @@
 {
     "latex-workshop.latex.autoBuild.run": "onSave",
-    "latex-workshop.latex.autoBuild.interval": 2000,
+    "latex-workshop.latex.autoBuild.interval": 1000,
     "latex-workshop.showContextMenu": true,
     "latex-workshop.intellisense.package.enabled": true,
     "latex-workshop.message.error.show": false,

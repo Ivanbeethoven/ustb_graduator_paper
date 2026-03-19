@@ -82,14 +82,14 @@
 \begin{table}[htb]
 	\centering\bicaption{多种权限提升类型及其检测规则}{Types of privilege escalation and their detection rules}\label{tab:PEDetectionRules}
 	\noindent\renewcommand{\arraystretch}{1.5}
-	\setlength{\tabcolsep}{2mm}
-	\begin{tabular}{>{\centering\arraybackslash}m{2.5cm}m{4cm}>{\raggedright\arraybackslash}m{7.5cm}}
+	\setlength{\tabcolsep}{1.5mm}
+	\begin{tabular}{>{\centering\arraybackslash}m{2.0cm}m{3.2cm}>{\raggedright\arraybackslash}m{6.0cm}}
 	\toprule
 	\textbf{类型} & \textbf{机制} & \textbf{检测规则}\\
 	\midrule
-	\multirow{3}{2.5cm}{\centering 凭证窃取}
+	\multirow{3}{2.0cm}{\centering 凭证窃取}
 	& 密钥访问
-	& \multirow{3}{7.5cm}{检测请求的源 IP 地址或服务账户与资源所属 Pod 不一致的 API 请求} \\
+	& \multirow{3}{5.8cm}{检测请求的源 IP 地址或服务账户与资源所属 Pod 不一致的 API 请求} \\
 	& Pod 执行 & \\
 	& 容器逃逸 & \\
 	\midrule
@@ -99,24 +99,24 @@
 	& 检测服务账户、操作和资源的组合是否属于该账户的正常使用行为集合 \\
 	\midrule
 
-	\multirow{2}{2.5cm}{\centering RBAC 操纵}
+	\multirow{2}{2.0cm}{\centering RBAC 操纵}
 	& 角色修改
-	& \multirow{2}{7.5cm}{检测对角色或角色绑定资源的创建、修补或更新操作} \\
+	& \multirow{2}{5.8cm}{检测对角色或角色绑定资源的创建、修补或更新操作} \\
 	& 角色绑定修改 & \\
 	\midrule
 
-	\multirow{2}{2.5cm}{\centering 间接执行}
+	\multirow{2}{2.0cm}{\centering 间接执行}
 	& 工作负载修改
-	& \multirow{2}{7.5cm}{检测对工作负载资源的创建、修补或更新操作，以及对 Pod 的 exec 操作} \\
+	& \multirow{2}{5.8cm}{检测对工作负载资源的创建、修补或更新操作，以及对 Pod 的 exec 操作} \\
 	& Pod 执行 & \\
 	\bottomrule
 	\end{tabular}
 \end{table}
 
 
-\chapter{CVE-2022-24768 复现步骤与策略清单}\label{app:cve-2022-24768}
+\chapter{CVE\-2022\-24768 复现步骤与策略清单}\label{app:cve-2022-24768}
 
-本附录给出案例一（CVE-2022-24768）的\textbf{复现详细步骤}与\textbf{纵深防御策略代码清单}，用于复核与工程复现。为降低对生产环境的风险，建议仅在隔离测试集群中执行。
+本附录给出案例一的复现详细步骤与纵深防御策略代码清单，用于复核与工程复现。为降低对生产环境的风险，建议仅在隔离测试集群中执行。
 
 \section{漏洞复现详细步骤}\label{app:cve-2022-24768-repro}
 
@@ -130,7 +130,7 @@ kubectl rollout status deployment/argocd-server -n argocd
 
 \textbf{步骤 2：获取初始管理员密码并登录 UI/CLI}
 \begin{AppendixCode}
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=“{.data.password}” | base64 -d && echo
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 \end{AppendixCode}
 
@@ -154,7 +154,7 @@ spec:
 EOF
 \end{AppendixCode}
 
-\textbf{步骤 4：创建低权用户 bob，并授予其对目标 Application 的 \texttt{sync\allowbreak+\allowbreak override} 权限}
+\textbf{步骤 4：创建低权用户 bob，并授予其对目标 Application 的 \texttt{sync} 与 \texttt{override} 权限}
 在 \texttt{argocd-rbac-cm} 中添加如下策略（注意缩进）：
 \begin{AppendixCode}
 policy.default: role:readonly
@@ -211,7 +211,7 @@ kubectl auth can-i '*' '*' --as bob
 \section{策略代码清单}\label{app:cve-2022-24768-policy}
 
 \subsection{Kubernetes RBAC：收敛 AppProject 的写权限}
-将 \texttt{appprojects.argoproj.io} 的创建/更新/删除限制在平台管理员组，租户仅只读（示例中组名可按实际替换）：
+将 \texttt{appprojects.argoproj.io} 的创建/更新/删除限制在平台管理员组，租户仅可只读（示例中组名可按实际替换）：
 \begin{AppendixCode}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -1059,23 +1059,25 @@ kubectl -n conjur-vuln get networkpolicy
 \textbf{复现目标}
 验证控制器在构建过程中是否会因配置文件中的异常路径引用而产生目录边界越界读取风险。
 重点关注构建阶段的路径规范化与边界约束，并以日志行为与构建产物的异常特征作为证据判据。
-本案例涉及的控制器为 \texttt{kustomize\allowbreak-controller}，相关配置文件为 \texttt{kustomization\allowbreak.yaml}。
+本案例涉及的控制器为 \texttt{kustomize-controller}，相关配置文件为 \texttt{kustomization.yaml}。
 
-\textbf{环境与前提}
-建议在隔离测试集群中进行，并使用受影响版本的 \texttt{kustomize\allowbreak-controller}。
-在多租户集群中，该类问题可能放大隔离破坏风险，故不建议在生产环境进行实验。
-修复信息：该漏洞已在 \texttt{kustomize\allowbreak-controller v0.24.0} 修复，并随 \texttt{flux2 v0.29.0} 集成发布。
+\textbf{环境与前提}\\
+建议在隔离测试集群中进行，并使用受影响版本的 \texttt{kustomize-controller}。
+该类问题在多租户集群中可能放大隔离破坏风险，故不建议在生产环境进行实验。
+修复信息：该漏洞已在 \texttt{kustomize-controller} v0.24.0 修复。
+该版本随 \texttt{flux} v0.29.0 集成发布。
 
 \textbf{步骤要点（受控）}
 \begin{enumerate}
-	\item 在隔离仓库中准备最小化示例，包含 \texttt{kustomization\allowbreak.yaml} 及少量合法资源清单，用于建立可对比的基线构建产物。
+	\item 在隔离仓库中准备最小化示例，包含 \texttt{kustomization.yaml} 及少量合法资源清单，用于建立可对比的基线构建产物。
 	\item 在受控条件下引入异常路径引用（例如包含父目录引用或绝对路径风格的条目），触发控制器重新拉取并执行构建。
 	\item 观察控制器日志与事件输出，记录与路径解析、文件读取失败或异常引用相关的报错/告警。
 	\item 对比构建产物与基线差异，检查是否出现“非预期文件内容进入产物”的迹象。该步骤应仅使用无敏感性的测试素材进行验证。
 \end{enumerate}
 
 \textbf{证据判据与逻辑解释}
-该类漏洞的关键证据在于“路径解析是否受目录边界约束”。若控制器在构建阶段对异常路径引用给出明确的拒绝与报错，并且构建产物未出现越界读取痕迹，可视为风险被抑制。
+该类漏洞的关键证据在于“路径解析是否受目录边界约束”。
+若控制器在构建阶段对异常路径引用给出明确的拒绝与报错，并且构建产物未出现越界读取痕迹，可视为风险被抑制。
 若在严格受控的测试条件下观察到异常路径引用导致非预期内容进入构建产物，则可判定目录边界约束存在缺口，需立即升级组件并补齐流程治理措施。
 
 \section{策略代码清单（优先级方案）}
@@ -1255,7 +1257,7 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 
 \textbf{步骤要点（受控）}
 \begin{enumerate}
-	\item 固化基线配置：记录 Argo CD 版本与 OIDC 配置要点（\texttt{issuer}、\texttt{clientID}、所请求的 scope），并确认 Argo CD 能够正常使用 OIDC 完成会话建立。
+	\item 固化基线配置：记录 Argo CD 版本与 OIDC 配置要点（\texttt{issuer}、\texttt{clientID}、所请求的 scope），确认 Argo CD 能够正常使用 OIDC 完成会话建立。
 	\item 获取一枚由同一 OIDC 提供方签发、但 \texttt{aud} 指向其他受众的有效令牌。该令牌应满足验签可通过且包含可用于 RBAC 映射的 \texttt{groups} 声明。
 	\item 提取令牌声明证据：对该令牌解析其 payload，保留 \texttt{iss}、\texttt{aud}、\texttt{exp} 与 \texttt{groups} 等字段的记录，证明其受众并非 Argo CD。
 	\item 使用该令牌访问 Argo CD 的受保护接口，选择一个只读且便于判定的 API 作为验证点，记录响应结果与 Argo CD 侧日志。
@@ -1273,7 +1275,7 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 同时对该客户端签发的 \texttt{groups} 声明进行裁剪，确保仅包含与 Argo CD 授权相关的组，并建立清晰的组命名规范，避免跨系统复用带来的权限含义漂移。
 
 \textbf{Argo CD OIDC 配置示例（唯一 \texttt{clientID}）}
-说明：以下示例展示 \texttt{argocd-cm} 中的关键配置项，重点在于为 Argo CD 使用独立客户端标识，并显式声明基于 \texttt{groups} 的 RBAC 映射来源。\texttt{issuer}、\texttt{clientSecret} 与回调地址需按实际身份提供方调整。
+说明：以下示例展示 \texttt{argocd-cm} 中的关键配置项，重点在于为 Argo CD 使用独立客户端标识，并显式声明基于 \texttt{groups} 的 RBAC 映射来源。
 \begin{AppendixCode}
 apiVersion: v1
 kind: ConfigMap
@@ -1381,7 +1383,8 @@ static_resources:
 同时将关键接口的访问失败与异常登录事件纳入审计与告警，以便在令牌泄露或误用时快速发现与止血。
 
 \textbf{Argo CD RBAC 收敛示例}
-说明：以下示例将高权限组限制为 \texttt{argo:platform-admin}，普通项目用户仅保留只读与有限同步能力，从而降低跨受众令牌误用后的权限上限。
+
+说明：以下示例将高权限组限制为 \texttt{argo:platform-admin}。普通项目用户仅保留只读与有限同步能力，从而降低跨受众令牌误用后的权限上限。
 \begin{AppendixCode}
 apiVersion: v1
 kind: ConfigMap

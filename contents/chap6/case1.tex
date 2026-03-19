@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例一：CVE-2022-24768内部权限问题}
 
 \subsection{漏洞详解与复现}
@@ -17,13 +17,13 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
         \item \textbf{合法身份阶段}：攻击者以普通 Argo CD 用户身份登录；
         \item \textbf{配置影响阶段}：凭借对 Application 的 \texttt{sync\allowbreak+\allowbreak override} 或对源码仓库的 push 权限，注入恶意资源清单；
         \item \textbf{控制平面滥用阶段}：Argo CD 按 GitOps 同步逻辑将恶意资源应用到集群；
-        \item \textbf{权限提升阶段}：借助被创建的高权限 RBAC 绑定（如 \texttt{ClusterRoleBinding}）获得集群级管理员能力。
+        \item \textbf{权限提升阶段}：借助被创建的高权限 RBAC 绑定获得集群级管理员能力。
 \end{enumerate}
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
-本节给出可复现的实验流程：通过构造一个包含“正常资源 + 恶意 RBAC 绑定”的 Git 仓库，并为低权用户配置 \texttt{sync\allowbreak+\allowbreak override} 权限，使其能够触发 Argo CD 同步，从而在集群中创建管理员级绑定实现权限提升。
+本节给出可复现的实验流程：构造包含”正常资源 + 恶意 RBAC 绑定”的 Git 仓库，为低权用户配置 \texttt{sync} 与 \texttt{override} 权限，触发 Argo CD 同步，在集群中创建管理员级绑定实现权限提升。
 
-        \textbf{环境配置}：Kubernetes 测试集群可选 \texttt{kind} 或 \texttt{minikube}，版本以实验环境为准。受影响组件为 Argo CD v2.3.1，补丁版本为 2.3.2、2.2.8、2.1.14。测试负载使用仓库 \url{https://github.com/Ivanbeethoven/bad_repo}，其中包含 \texttt{app.yaml} 与 \texttt{hack-admin.yaml}，用于分别承载正常资源与恶意 RBAC 绑定。
+\textbf{环境配置}：Kubernetes 测试集群可选 \texttt{kind} 或 \texttt{minikube}。受影响组件为 Argo CD v2.3.1，补丁版本为 2.3.2、2.2.8、2.1.14。测试负载使用仓库 \url{https://github.com/Ivanbeethoven/bad_repo}，包含 \texttt{app.yaml} 与 \texttt{hack-admin.yaml}。
 
 \textbf{攻击步骤}：
 
@@ -53,13 +53,13 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 
         \textbf{策略配置}：为便于复用与自动化，可按先审计后强制的节奏分阶段落地。集群侧通过 Kubernetes RBAC 收敛 \texttt{AppProject} 的创建更新删除权限，应用侧通过 Argo CD RBAC 将默认权限设置为只读并显式隔离 \texttt{projects}、\texttt{repositories}、\texttt{clusters}、\texttt{exec} 等高风险能力。策略侧在 \texttt{AppProject} 创建更新环节校验策略表达，限制通配符放权并约束权限授予范围。治理侧将关键配置纳入 Git 基线并接入审计告警，降低权限漂移风险。
 
-为避免正文堆叠大量 YAML/Rego 清单，Kubernetes RBAC、Argo CD RBAC、Gatekeeper/Kyverno 准入策略的完整可用代码与应用命令见附录\ref{app:cve-2022-24768}。
+为避免正文堆叠大量清单，Kubernetes RBAC、Argo CD RBAC、Gatekeeper/Kyverno 准入策略的完整配置与应用命令见附录\ref{app:cve-2022-24768}。
 
 \subsection{三因素分析}
 
 \noindent\textbf{有效性（Effectiveness）：}
-该策略在攻击链的多个关键点形成“多点阻断”：
-Kubernetes RBAC 对 \texttt{AppProject} 写入进行限制，可降低放开 \texttt{sourceRepos}、\texttt{destinations} 与白名单导致的爆炸半径。Argo CD RBAC 默认只读并隔离高危资源写权限，使低权用户难以获得可用于放大控制面的关键操作集合。准入控制对策略表达施加硬约束，用于防止隐蔽通配符放权与权限漂移。身份治理约束授权来源，可降低组注入或错误映射造成的隐式权限提升。
+该策略在攻击链的多个关键点形成阻断：
+Kubernetes RBAC 对 \texttt{AppProject} 写入进行限制，可降低放开 \texttt{sourceRepos}、\texttt{destinations} 与白名单导致的爆炸半径。Argo CD RBAC 默认只读并隔离高危资源写权限，使低权用户难以获得可用于放大控制面的关键操作集合。准入控制对策略表达施加硬约束，防止隐蔽通配符放权与权限漂移。身份治理约束授权来源，可降低组注入或错误映射造成的隐式权限提升。
 在复现实验中，若上述策略生效，则攻击者即使拥有 \texttt{sync} 权限，也难以通过修改 AppProject/仓库/策略来诱导 Argo CD 创建集群级高权限绑定，攻击路径被显著收敛。
 
 \noindent\textbf{无干扰性（Interference）：}

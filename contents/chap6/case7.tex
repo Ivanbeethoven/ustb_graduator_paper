@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例七：CVE-2023-22482（Argo CD OIDC \texttt{aud} 未校验导致越权访问）}
 
 \subsection{漏洞详解与复现}
@@ -9,11 +9,11 @@ Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，�
 在企业环境中，Argo CD 常通过 OIDC 与统一身份提供方对接，由身份提供方向 Argo CD 签发包含用户身份与组信息的令牌。
 在 OIDC 令牌中，\texttt{aud}（audience）声明用于标识该令牌的预期接收方。通常情况下，服务端除验证签名与发行者外，还需要校验 \texttt{aud} 是否包含本服务的受众标识，以避免将“为其他服务签发的令牌”误用到本服务上。
 
-\textbf{CVE 描述}：CVE-2023-22482 指出 Argo CD 在部分版本中存在不恰当授权缺陷。其能够验证令牌由已配置的 OIDC 提供方签名，但未对令牌的 \texttt{aud} 声明进行校验，从而可能接受并非面向 Argo CD 的有效令牌。若同一身份提供方还为其他系统签发令牌，攻击者一旦获得其他系统的有效令牌，可能将其用于访问 Argo CD。Argo CD 将基于令牌中的 \texttt{groups} 声明授予权限，即使这些组信息并非为 Argo CD 的授权场景设计。该问题在 \texttt{2.6.0-rc3}、\texttt{2.5.6}、\texttt{2.4.19} 与 \texttt{2.3.13} 及以上版本修复；受影响范围包含 \texttt{>= 1.8.2} 且低于上述修复版本的版本分支。
+\textbf{CVE 描述}：CVE-2023-22482 指出 Argo CD 在部分版本中存在不恰当授权缺陷。其能够验证令牌由已配置的 OIDC 提供方签名，但未对令牌的 \texttt{aud} 声明进行校验，从而可能接受并非面向 Argo CD 的有效令牌。若同一身份提供方还为其他系统签发令牌，攻击者一旦获得其他系统的有效令牌，就可能将其用于访问 Argo CD。Argo CD 将基于令牌中的 \texttt{groups} 声明授予权限，即使这些组信息并非为 Argo CD 的授权场景设计。该问题在 \texttt{2.6.0-rc3}、\texttt{2.5.6}、\texttt{2.4.19} 与 \texttt{2.3.13} 及以上版本修复；受影响范围包含 \texttt{>= 1.8.2} 且低于上述修复版本的版本分支。
 
 \textbf{主要成因分类}：安全逻辑缺陷 / 身份与授权校验缺失（令牌受众 \texttt{aud} 未校验导致跨受众令牌复用）。
 
-\textbf{攻击链条描述}：该漏洞可抽象为“多受众身份提供\,$\rightarrow$\,跨受众令牌复用\,$\rightarrow$\,基于组声明的越权访问”的链条。攻击者首先获得同一 OIDC 提供方为其他受众签发的有效令牌；随后将该令牌提交给 Argo CD 的接口；若 Argo CD 未校验 \texttt{aud}，则会接受该令牌并根据 \texttt{groups} 映射授予权限，进而造成对应用资源与交付流程的非预期访问。该缺陷同时放大了令牌泄露事件的影响范围。
+\textbf{攻击链条描述}：该漏洞可抽象为”多受众身份提供\,$\rightarrow$\,跨受众令牌复用\,$\rightarrow$\,基于组声明的越权访问”的链条。攻击者获得同一 OIDC 提供方为其他受众签发的有效令牌；将其提交给 Argo CD 的接口；若 Argo CD 未校验 \texttt{aud}，则会接受该令牌并根据 \texttt{groups} 映射授予权限，进而造成对应用资源与交付流程的非预期访问。该缺陷同时放大了令牌泄露事件的影响范围。
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现（验证性复现）}
 
