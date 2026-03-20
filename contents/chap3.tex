@@ -53,7 +53,7 @@ c = \left\{\, \langle t_i,\; \text{src}_i\rangle \mid i\in[n_c] \,\right\}
 \]
 且第 $i$ 个方法与第 $i$ 个动作按下标一一对应。每对 $(m_i, a_i)$ 构成一个防控措施单元，其中 $m_i$ 给出机理描述，$a_i$ 给出对应的可执行实现：
 \begin{itemize}
-    \item 当 $\text{type}=\mathrm{mon}$ 时，$(m_i,a_i)$ 表示一条监控措施，例如进程行为监控、异常访问检测及其对应的 Falco/Tetragon 规则、告警配置与日志关联规则；
+    \item 当 $\text{type}=\mathrm{mon}$ 时，$(m_i,a_i)$ 表示一条监控措施，例如进程行为监控、异常访问检测及其对应的 Falco 规则、告警配置与日志关联规则；
     \item 当 $\text{type}=\mathrm{prot}$ 时，$(m_i,a_i)$ 表示一条防护措施，例如准入约束、权限收敛、网络隔离及其对应的 Kyverno/OPA、RBAC、NetworkPolicy 或运行时加固配置。
 \end{itemize}
 因此，单个策略在类型上保持单一，而同一漏洞的候选集合 $\Pi_v$ 可同时包含监控策略与防护策略，二者在整体交付层面形成检测与阻断互补的闭环。
@@ -215,7 +215,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 基于提供的漏洞信息和相关知识，生成一个完整的 JSON 结构化对象，严格遵循下面给出的结构规范。
 
 ## 可用技术范围
-可选用 OPA、Kyverno、Falco、Tetragon、NetworkPolicy 等工具，并在 mitigation 字段写明工具与作用。其中 Tetragon 可同时实现监控策略（进程/系统调用/I/O检测）与防护策略（内核层阻断）。
+可选用 OPA、Kyverno、Falco、NetworkPolicy 等工具，并在 mitigation 字段写明工具与作用。
 
 ## 输出约束
 1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
@@ -311,7 +311,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 }
 
 ## 可用技术范围
-你可以结合分析和选型结果，灵活选择并说明如 OPA、Kyverno、Falco、Tetragon、NetworkPolicy 等主流安全工具。建议在 mitigation 字段中明确工具名称及其作用，但不强制限定。特别注意，Tetragon 可同时实现监控与防护，适用于需要闭环响应的场景。
+你可以结合分析和选型结果，灵活选择并说明如 OPA、Kyverno、Falco、NetworkPolicy 等主流安全工具。建议在 mitigation 字段中明确工具名称及其作用，但不强制限定。
 
 ## 输出约束
 1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
@@ -340,7 +340,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
     % 在“定义 3.1（防控操作序列）”处添加 \label{def:action_sequence} 以便下方引用
     \item \textbf{action 字段}：与 \texttt{method} 一一对应的可执行片段序列，遵循定义 3.1（见定义~\ref{def:action_sequence}）。根据策略类型的不同，包含内容有所差异：
     \begin{itemize}
-        \item \textbf{监控策略 action}：包含监控规则配置（如 Falco 规则、Tetragon Tracing Policy）、检测策略部署命令、告警配置、日志采集与关联规则、异常行为验证与溯源步骤等；
+        \item \textbf{监控策略 action}：包含监控规则配置（如 Falco 规则）、检测策略部署命令、告警配置、日志采集与关联规则、异常行为验证与溯源步骤等；
         \item \textbf{防护策略 action}：包含准入策略配置（如 Kyverno、OPA Gatekeeper 规则）、权限收敛配置（如 RBAC、ServiceAccount 修订）、网络隔离策略（如 NetworkPolicy）、运行时安全策略（如 Seccomp、AppArmor）、副作用评估与回滚方案等。
     \end{itemize}
 \end{itemize}
