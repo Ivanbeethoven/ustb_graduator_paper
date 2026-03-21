@@ -1,12 +1,4 @@
 
-% chktex-file 8
-% chktex-file 11
-% chktex-file 18
-% chktex-file 26
-% chktex-file 3
-% chktex-file 1
-% chktex-file 36
-% 第三章包含多段 Verbatim 形式的提示词与 JSON 结构化示例，ChkTeX 会对其中的引号、短横线与括号产生大量假阳性告警。
 \chapter{面向云原生权限提升漏洞的智能防控技术}\label{chap:method}
 
 本章给出本文方法体系和技术细节，包括形式化定义、总体流程和三个主要技术点。
@@ -15,74 +7,52 @@
 
 \subsection{基本对象}
 
-本节给出框架的形式化定义，刻画漏洞输入、策略生成与质量评价之间的关系。
+本节对漏洞实例、安全上下文与安全策略进行形式化定义，并给出策略质量评价所需的基本记号。
 
-先约定如下记号。对任意正整数 $n$，记 $[n]=\{1,\ldots,n\}$。再记评价维度集合 $\Delta=\{E,I,D\}$，分别表示有效性、无干扰性与可部署性。
+\textbf{定义 1（漏洞实例）}。漏洞实例 $v=\langle \mathrm{id},\,d,\,m \rangle\in\mathcal{V}$，其中 $\mathrm{id}$ 为 CVE 编号，$d$ 为漏洞描述文本，$m$ 为元数据（严重性、受影响组件等）。
 
-\textbf{定义 1（漏洞实例）}：漏洞实例 $v \in \mathcal{V}$ 表示为三元组：
+\textbf{定义 2（安全上下文）}。给定漏洞实例 $v$，其安全上下文 $c\in\mathcal{C}$ 为带来源标识的证据集合：
 \[
-v = \langle \text{id},\; d,\; m \rangle
+c = \bigl\{\,\langle t_i,\,\mathrm{src}_i \rangle \mid i\in[n_c]\,\bigr\}
 \]
-其中 $\text{id}$ 为 CVE 编号，$d$ 为漏洞描述文本，$m$ 为元数据（严重性、受影响组件等）。
+其中 $t_i$ 为文本内容，$\mathrm{src}_i$ 为来源标识（文档路径、链接等），用于为策略生成提供可追溯的背景与证据。
 
-\textbf{定义 2（安全上下文）}：上下文 $c \in \mathcal{C}$ 是与漏洞相关的证据集合，每条证据附带来源标识：
+\textbf{定义 3（安全策略）}。对于给定的漏洞实例 $v$，其安全策略 $\pi$ 定义为三元组：
 \[
-c = \left\{\, \langle t_i,\; \text{src}_i\rangle \mid i\in[n_c] \,\right\}
+\pi = \langle \mathrm{type},\;\mathrm{method},\;\mathrm{action} \rangle
 \]
-其中 $t_i$ 为文本内容，$\text{src}_i$ 为来源（文档路径、链接等）。
+其中 $\mathrm{type}$ 表示策略类型（监控或防护）；$\mathrm{method}$ 与 $\mathrm{action}$ 分别表示由自然语言描述的防控机理序列和对应的可执行代码（如防御规则、配置片段或检测命令）序列。每一对方法和动作一一对应，共同构成完整的防控措施单元。
 
-\textbf{定义 3（安全策略）}：设策略类型集合 $\mathcal{T}=\{\mathrm{mon},\mathrm{prot}\}$，其中 $\mathrm{mon}$ 表示监控策略，$\mathrm{prot}$ 表示防护策略。策略空间 $\Pi$ 由两类策略组成：
-\[
-\Pi = \Pi_{\mathrm{mon}} \cup \Pi_{\mathrm{prot}}, \quad \Pi_{\mathrm{mon}} \cap \Pi_{\mathrm{prot}} = \emptyset
-\]
-记 $\mathcal{L}$ 为防控层级集合。对任一漏洞实例 $v$，其候选策略集合记为 $\Pi_v\subseteq\Pi$。任一策略 $\pi\in\Pi$ 表示为四元组：
-\[
-\pi = \langle \text{type},\; \text{layer},\; \text{method},\; \text{action} \rangle
-\]
-其中：
-\begin{itemize}
-    \item $\text{type}\in\mathcal{T}$：策略类型，用于区分监控策略与防护策略；
-    \item $\text{layer}\in\mathcal{L}$：策略所在的防控层级，例如身份与权限、网络隔离、运行时检测、审计日志与策略执行等；
-    \item $\text{method}=[m_1,\ldots,m_k]$：防控方法序列，$m_i$ 描述第 $i$ 条措施的控制点与作用机理；
-    \item $\text{action}=[a_1,\ldots,a_k]$：与 $\text{method}$ 一一对应的可执行操作序列，$a_i$ 为配置片段、规则或命令。
-\end{itemize}
-
-\textbf{定义 3.1（防控措施单元）\label{def:action_sequence}}：对任一策略 $\pi=\langle \text{type},\text{layer},\text{method},\text{action} \rangle$，要求
-\[
-|\text{method}|=|\text{action}|=k_\pi, \quad k_\pi\ge 1
-\]
-且第 $i$ 个方法与第 $i$ 个动作按下标一一对应。每对 $(m_i, a_i)$ 构成一个防控措施单元，其中 $m_i$ 给出机理描述，$a_i$ 给出对应的可执行实现：
-\begin{itemize}
-    \item 当 $\text{type}=\mathrm{mon}$ 时，$(m_i,a_i)$ 表示一条监控措施，例如进程行为监控、异常访问检测及其对应的 Falco 规则、告警配置与日志关联规则；
-    \item 当 $\text{type}=\mathrm{prot}$ 时，$(m_i,a_i)$ 表示一条防护措施，例如准入约束、权限收敛、网络隔离及其对应的 Kyverno/OPA、RBAC、NetworkPolicy 或运行时加固配置。
-\end{itemize}
-因此，单个策略在类型上保持单一，而同一漏洞的候选集合 $\Pi_v$ 可同时包含监控策略与防护策略，二者在整体交付层面形成检测与阻断互补的闭环。
 
 \subsection{评价与选择}
 
-本节采用基于排名的评价机制。相比绝对评分，排名以相对次序刻画优劣，避免跨样本的尺度不一致问题。
+为降低跨样本评分尺度不一致的影响，本文采用基于排名的评价机制，先在各维度上形成相对次序，再将次序映射为归一化得分。
 
-\textbf{定义 4（三维质量向量）}：策略质量由映射 $q\colon \Pi\to[0,1]^3$ 给出。对任一策略 $\pi\in\Pi$，其质量向量记为：
+\textbf{定义 4（三维质量向量）}。策略质量由映射 $q\colon\Pi\to[0,1]^3$ 给出：
 \[
-q(\pi) = \bigl(E(\pi),\; I(\pi),\; D(\pi)\bigr) \in [0,1]^3
+q(\pi) = \bigl(E(\pi),\;I(\pi),\;D(\pi)\bigr)
 \]
-其中 $E$、$I$ 与 $D$ 分别表示有效性（覆盖攻击面与关键路径）、无干扰性（低误报、低业务影响）以及可部署性（步骤清晰、可操作）。
+其中 $E$、$I$、$D$ 分别衡量有效性（攻击面与关键路径覆盖）、无干扰性（低误报、低业务影响）与可部署性（步骤清晰、可操作）。
 
-\textbf{定义 5（维度排名）}：对候选集合 $\Pi_v$，记 $n_v=|\Pi_v|$。对任一维度 $\delta\in\Delta$，定义排名算子：
+\textbf{定义 5（维度排名）}。对候选集合 $\Pi_v$（$n_v=|\Pi_v|$），维度 $\delta\in\Delta$ 上的排名算子定义为严格全序：
 \[
-R_{\delta}(\Pi_v) = \bigl(\pi_{(1)}^{\delta},\pi_{(2)}^{\delta},\ldots,\pi_{(n_v)}^{\delta}\bigr)
+R_{\delta}(\Pi_v) = \bigl(\pi_{(1)}^{\delta},\,\pi_{(2)}^{\delta},\,\ldots,\,\pi_{(n_v)}^{\delta}\bigr)
 \]
-其中 $\pi_{(1)}^{\delta}$ 为维度 $\delta$ 上的最优候选，且排序要求为严格全序（不允许并列）。相应地，引入秩函数 $r_{\delta}:\Pi_v\to\{1,\ldots,n_v\}$ 表示排名位置，满足 $r_{\delta}(\pi_{(i)}^{\delta})=i$。
+其中 $\pi_{(1)}^{\delta}$ 为最优候选。秩函数 $r_{\delta}\colon\Pi_v\to[n_v]$ 满足 $r_{\delta}(\pi_{(i)}^{\delta})=i$。
 
-\textbf{定义 6（维度得分）}：将排名映射为归一化得分：
+\textbf{定义 6（维度得分）}。将排名映射为归一化得分：
 \[
 s_{\delta}(\pi) =
 \begin{cases}
-1, & n_v = 1, \\
+1, & n_v = 1 \\[4pt]
 \dfrac{n_v - r_{\delta}(\pi)}{n_v - 1}, & n_v \ge 2
 \end{cases}
 \]
-当 $n_v\ge 2$ 时，满足 $r_{\delta}(\pi)=1$ 时 $s_{\delta}(\pi)=1$（最优），$r_{\delta}(\pi)=n_v$ 时 $s_{\delta}(\pi)=0$（最差）。
+当 $n_v\ge 2$ 时，最优候选（$r_{\delta}=1$）得分为 $1$，最差候选（$r_{\delta}=n_v$）得分为 $0$。
+
+\section{总体方法流程}
+
+
 
 \section{开源应用漏洞安全知识库构建}
 
@@ -206,24 +176,13 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 为便于复现实验中安全知识智能体的输入约束，本文将其提示词组织为角色定位、输入内容、任务说明与输出约束四个部分。一个规范化示例如下：
 
 \begin{PromptBox}{安全知识智能体提示词规范示例}
-\begin{Verbatim}[breaklines,breakanywhere]
-你是云原生安全专家，负责生成符合结构规范的安全策略 JSON 结构化数据，熟悉 Kubernetes 漏洞与缓解措施。
+\begin{Verbatim}[breaklines,breakanywhere,mathescape=true]
+你是云原生安全专家，负责生成符合结构规范的安全策略JSON结构化数据，熟悉 Kubernetes 漏洞与缓解措施。
 ## 输入
-<VULN_SUMMARY>
+漏洞实例 $v$ 与其安全上下文 $c$
 
 ## 任务说明
-基于提供的漏洞信息和相关知识，生成一个完整的 JSON 结构化对象，严格遵循下面给出的结构规范。
-
-## 可用技术范围
-可选用 OPA、Kyverno、Falco、NetworkPolicy 等工具，并在 mitigation 字段写明工具与作用。
-
-## 输出约束
-1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
-2. 严格格式：字段、层级、顺序必须与上方给出的结构规范/示例一致，所有字符串使用双引号并保持合法 JSON。
-3. 信息缺失：无法确定时写 "(info needed)"，并在字段或 assumptions 中说明假设。
-4. 配置转义：YAML/CLI 片段的换行统一写成 `\\n`。
-5. 具象缓解：禁止仅写“升级补丁”，需给出可执行的控制措施与配置步骤（如适用）。
-6. 一致性：内容必须与输入/分析/评审结论一致，禁止引入无依据内容。
+基于提供的漏洞实例和上下文推导详细的缓解措施，并整合为一个完整的 JSON 对象。可选用 OPA、Kyverno、Falco、NetworkPolicy 等机制。
 \end{Verbatim}
 \end{PromptBox}
 
@@ -234,92 +193,32 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 首先，\textbf{漏洞分析智能体}基于漏洞摘要与安全上下文 $c$ 输出结构化分析结果，覆盖漏洞类型、攻击向量、影响范围与风险等级，并给出与本文分类体系一致的风险类别。随后，\textbf{策略生成智能体}在规范化提示词与思维链推理（CoT）引导下，以分析结论为约束完成控制手段选择与动作序列生成：结合平台可用能力在身份与权限、网络隔离、运行时安全与策略执行等控制域中确定优先级与实施路径，并将其映射为最终策略 JSON 结构化对象；当信息不足以确定时，以 \texttt{(info needed)} 显式标注缺失信息并给出必要假设。为提高方法描述的可复现性，本文对关键提示词结构示例如下。
 
 \begin{PromptBox}{漏洞分析智能体提示词规范示例}
-\begin{Verbatim}[breaklines,breakanywhere]
+\begin{Verbatim}[breaklines,breakanywhere,mathescape=true]
 你是 Kubernetes 安全分析师，请对以下 CVE 进行分析并分类。
 ## 输入
-<VULN_SUMMARY>
-
-## 检索上下文
-<RAG_CONTEXT>
+漏洞实例 $v$ 以及其对应的安全上下文 $c$
 
 ## 分析任务
-请从以下维度分析CVE：
-1. 漏洞类型: 详细说明这是什么类型的漏洞
-2. 攻击向量: 漏洞如何被利用
-3. 影响范围: 漏洞可能造成的影响
-4. 风险等级: 基于CVSS评分和实际影响评估
-5. 漏洞分类: 从以下分类中选择最合适的一个：
-   - 配置缺陷
-   - 安全逻辑缺陷
-   - 敏感信息泄露
-   - 代码注入
-
-## 输出结构
-请返回 JSON 格式的分析结果：
+请从以下维度分析该漏洞，并返回如下包含漏洞类型描述、攻击路径描述、影响范围描述、分类、总结的 JSON 实体：
 {
-    "vulnerability_type": "漏洞类型描述",
-    "attack_vector": "攻击向量描述",
-    "impact_scope": "影响范围描述",
-    "risk_level": "高/中/低",
-    "category": "选择上述分类之一",
-    "key_findings": "关键发现总结"
+   ... 略省 ...
 }
-## 输出约束
-1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
-2. 严格格式：字段、层级、顺序必须与上方给出的结构规范/示例一致，所有字符串使用双引号并保持合法 JSON。
-3. 信息缺失：无法确定时写 "(info needed)"，并在字段或 assumptions 中说明假设。
-4. 配置转义：YAML/CLI 片段的换行统一写成 `\\n`。
-5. 具象缓解：禁止仅写“升级补丁”，需给出可执行的控制措施与配置步骤（如适用）。
-6. 一致性：内容必须与输入/分析/评审结论一致，禁止引入无依据内容。
 \end{Verbatim}
 \end{PromptBox}
 
 策略生成阶段需要在统一的数据结构下把分析结论映射为可执行策略对象，因此提示词除保留任务目标外，还需明确输出模式与可选控制手段。相应规范示例如下：
 
 \begin{PromptBox}{策略生成智能体提示词规范示例}
-\begin{Verbatim}[breaklines,breakanywhere]
-基于CVE分析和防控技术选型，生成完整的安全策略。
-
-## 分析输入
-<ANALYSIS_RESULT>
-
-## 技术选型输入
-<MITIGATION_ANALYSIS>
-
-## 检索上下文
-<RAG_CONTEXT>
+\begin{Verbatim}[breaklines,breakanywhere,mathescape=true]
+基于漏洞分析和防控技术选型，生成完整的安全策略。
+## 输入
+中间分析结论、缓解工具分析结果以及安全上下文 $c$
 
 ## 任务说明
-你必须返回一个有效的 JSON 结构化对象，格式如下：
-
+结合分析和选型结果，使用 OPA、Kyverno、Falco 或 NetworkPolicy 等工具，返回一个策略 $\pi =\langle \mathrm{type}, \mathrm{layer}, \mathrm{method}, \mathrm{action} \rangle$。输出为 JSON 对象：
 {
-    "cve_id": "string - CVE编号",
-    "description": "string - 中文漏洞简介，聚焦攻击面和触发条件",
-    "application": "string - 受影响的业务组件和运行环境假设",
-    "threat_analysis": {
-        "preconditions": "string - 漏洞触发的前提条件",
-        "attack_path": "string - 攻击链描述",
-        "blast_radius": "string - 潜在影响范围"
-    },
-    "risk_category": "string - 必须是以下之一: 配置缺陷|安全逻辑缺陷|敏感信息泄露|代码注入",
-    "mitigation": {
-        "type": "string - 策略类型: mon|prot",
-        "layer": "string - 安全层级: 身份与权限|网络|运行时|策略执行",
-        "method": ["string - 具体方法与机理说明（需与 action 一一对应）"],
-        "action": ["string - YAML/CLI 片段（仅代码/命令；换行用\\n；需与 method 一一对应）"]
-    }
+   ... 略省 ...
 }
-
-## 可用技术范围
-你可以结合分析和选型结果，灵活选择并说明如 OPA、Kyverno、Falco、NetworkPolicy 等主流安全工具。建议在 mitigation 字段中明确工具名称及其作用，但不强制限定。
-
-## 输出约束
-1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
-2. 严格格式：字段、层级、顺序必须与上方结构模式/示例一致，所有字符串使用双引号并保持合法 JSON。
-3. 信息缺失：无法确定时写 "(info needed)"，并在对应字段中说明必要假设。
-4. 配置转义：YAML/CLI 片段的换行统一写成 `\\n`。
-5. 具象缓解：禁止仅写“升级补丁”，需给出可执行的控制措施与配置步骤（如适用）。
-6. 一致性：内容必须与输入/分析/评审结论一致，禁止引入无依据内容。
 \end{Verbatim}
 \end{PromptBox}
 
@@ -338,7 +237,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
         \item \textit{防护策略}：网络隔离与认证强化、权限最小化与配置加固、准入约束与阻断等。
     \end{itemize}
     % 在“定义 3.1（防控操作序列）”处添加 \label{def:action_sequence} 以便下方引用
-    \item \textbf{action 字段}：与 \texttt{method} 一一对应的可执行片段序列，遵循定义 3.1（见定义~\ref{def:action_sequence}）。根据策略类型的不同，包含内容有所差异：
+    \item \textbf{action 字段}：与 \texttt{method} 一一对应的可执行片段序列，根据策略类型的不同，包含内容有所差异：
     \begin{itemize}
         \item \textbf{监控策略 action}：包含监控规则配置（如 Falco 规则）、检测策略部署命令、告警配置、日志采集与关联规则、异常行为验证与溯源步骤等；
         \item \textbf{防护策略 action}：包含准入策略配置（如 Kyverno、OPA Gatekeeper 规则）、权限收敛配置（如 RBAC、ServiceAccount 修订）、网络隔离策略（如 NetworkPolicy）、运行时安全策略（如 Seccomp、AppArmor）、副作用评估与回滚方案等。
@@ -359,101 +258,34 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 为保证评审阶段的比较口径一致，提示词需显式约束输入内容、评价任务与输出结构。其规范示例如下：
 
 \begin{PromptBox}{策略评审智能体提示词规范示例}
-\begin{Verbatim}[breaklines,breakanywhere]
+\begin{Verbatim}[breaklines,breakanywhere,mathescape=true]
 你是一名资深 Kubernetes 安全架构师，负责评审多份安全策略。目标是识别关键控制措施，定位误报与运维噪声来源，并明确上线前的验证需求。
 ## 输入
-- CVE 信息：含编号、摘要、CVSS、受影响场景等
-- 原始策略列表：包含模型配置标识、JSON 结构化策略、生成摘要
-- 补充约束：可选背景、现有控制、风险偏好
+- 漏洞实例 $v$，候选策略集合 $Pi_v$ 及补充约束
 
 ## 评审任务
-1. 有效性 (effective)：提炼每份策略最具价值、可快速落地的控制点
-2. 干扰/误报 (noise)：指出可能带来误报或运维噪声的配置，并提出缓解思路
-3. 验证 (validation)：明确上线前或运行期需要的验证步骤、前置条件或监控指标
-4. 一致性：若发现明显错误、冲突、缺失信息，必须指出
-5. 输出精炼：不要打分，避免冗长段落
-
-## 输出结构
-仅返回 JSON，结构如下：
-{
-    "overall_findings": ["整体发现1"],
-    "per_strategy": [
-        {
-            "profile": "llm_profile_name",
-            "strengths": ["有效点1"],
-            "gaps": ["缺口1"],
-            "risks": ["潜在风险1"],
-            "noise_sources": ["潜在噪声来源1"],
-            "validation_needs": ["验证要点1"],
-            "actionable_feedback": ["落地改进建议1"]
-        }
-    ],
-    "missing_information": ["待补充信息1"],
-    "assumptions": ["关键假设1"],
-    "confidence": "高/中/低"
-}
-## 输出约束
-1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
-2. 严格格式：字段、层级、顺序必须与上方给出的结构规范/示例一致，所有字符串使用双引号并保持合法 JSON。
-3. 信息缺失：无法确定时写 "(info needed)"，并在字段或 assumptions 中说明假设。
-4. 配置转义：YAML/CLI 片段的换行统一写成 `\\n`。
-5. 具象缓解：禁止仅写“升级补丁”，需给出可执行的控制措施与配置步骤（如适用）。
-6. 一致性：内容必须与输入/分析/评审结论一致，禁止引入无依据内容。
+1. 提炼有效性 (effective)：可快速落地的控制点。
+2. 识别干扰/误报 (noise)。
+3. 明确验证要点 (validation)。
+4. 结构化输出评审结果，包含 overall-findings 与 per-strategy 的具体点评，形式为 JSON。
 \end{Verbatim}
 \end{PromptBox}
 
 策略优化阶段的目标是把多份候选与评审反馈压缩为单一、可交付的最终策略，因此提示词除描述优化任务外，还需约束对前序评审结论的吸收方式。其规范示例如下：
 
 \begin{PromptBox}{策略优化智能体提示词规范示例}
-\begin{Verbatim}[breaklines,breakanywhere]
+\begin{Verbatim}[breaklines,breakanywhere,mathescape=true]
 你是一名 Kubernetes 安全架构师，负责在评审结果的基础上生成最终的优化策略。
 ## 输入
-- CVE 信息：含编号、受影响系统、漏洞摘要
-- 原始策略列表：来自不同大语言模型的安全策略
-- 评审结论：上一阶段输出的评审 JSON 结构化结果
-- 补充约束：可选背景、现有控制、风险偏好
+- 漏洞实例 $v$、候选策略集合 $\Pi_v$ 及上一阶段的评审结论。
 
 ## 优化任务
-1. 汇总评审中确认的有效控制，剔除不可行或噪声过高的措施
-2. 生成符合既定结构规范的最终策略，mitigation.action 作为字符串数组给出，且每个 action 元素内部可使用 1. ...\n2. ... 结构，并尽量包含可直接落地的策略代码片段。
-3. 若信息缺失，写入 assumptions 或在相关字段标注 (info needed)
-
-## 输出结构
-仅返回 JSON，结构如下：
+1. 汇总确认的有效控制，剔除不可行或噪声过高的措施。
+2. 返回如下格式的涵盖优化后策略 details(optimized-strategy) 和改进说明(improvements) 的 JSON 对象：
 {
-    "optimized_strategy": {
-        "cve_id": "CVE编号",
-        "description": "中文描述（无换行）",
-        "application": "受影响环境或(信息缺失)",
-        "threat_analysis": {
-            "preconditions": "...",
-            "attack_path": "...",
-            "blast_radius": "..."
-        },
-        "risk_category": "风险分类",
-        "mitigation": {
-            "type": "mon 或 prot",
-            "layer": "身份与权限 / 策略执行",
-            "method": ["与示例保持一致的组合描述"],
-            "action": ["1. ...\n2. ...\n3. ..."]
-        }
-    },
-    "improvements": [
-        {
-            "topic": "改进主题",
-            "details": "简述优化内容及预期效果",
-            "derived_from": ["profile_a"]
-        }
-    ]
+   ... 略省 ...
 }
-
-## 输出约束
-1. 仅返回 JSON：只输出单个 JSON 对象，不要附加说明、Markdown、表格或其它文本。
-2. 严格格式：字段、层级、顺序必须与上方给出的结构规范/示例一致，所有字符串使用双引号并保持合法 JSON。
-3. 信息缺失：无法确定时写 "(info needed)"，并在字段或 assumptions 中说明假设。
-4. 配置转义：YAML/CLI 片段的换行统一写成 `\\n`。
-5. 具象缓解：禁止仅写“升级补丁”，需给出可执行的控制措施与配置步骤（如适用）。
-6. 一致性：内容必须与输入/分析/评审结论一致，禁止引入无依据内容。
+3. 缺失信息在 assumptions 标注。
 \end{Verbatim}
 \end{PromptBox}
 
@@ -481,39 +313,20 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 为使评价算子在不同实验批次中保持一致的判断口径，本文将大语言模型评审提示词也规范为角色、输入、评价任务与输出约束四个部分。其示例如下：
 
 \begin{PromptBox}{评价智能体提示词规范示例（大语言模型支持的评价算子）}
-\begin{Verbatim}[breaklines,breakanywhere]
-EVALUATION_PROMPT_TEMPLATE = r"""# Kubernetes 策略三维评价与排名
-
+\begin{Verbatim}[breaklines,breakanywhere,mathescape=true]
+# Kubernetes 策略三维评价与排名
 你是一名资深云原生安全评审专家，负责对候选安全策略进行三维评价与排名。
 
 ## 输入
-- 候选策略列表（已匿名化、已随机化）：每项包含 id 与 strategy_json
-- 评价维度：有效性 E / 无干扰性 I / 可部署性 D
+- 候选策略列表 $\Pi_v$（已匿名化、已随机化）
 
 ## 评价任务
-1. 仅比较内容本身：不得根据任何生成来源、模型、提示词、作者等信息推断质量（输入中已匿名化）。
-2. 三维分别排序：分别给出 E/I/D 三个维度的从优到劣的排名列表。
-3. 维度解释口径：
-     - E（有效性）：是否覆盖关键攻击路径/控制点，是否具备明确的风险降低机制；
-     - I（无干扰性）：对业务影响、误报/运维噪声、过度限制风险越低越好；
-    - D（可部署性）：步骤清晰、可操作，且配置片段语法/结构合理。
-4. 排序约束：不允许出现名次相同的情况；当难以区分时，仍需依据明确的次级准则给出严格排序，并在 notes 中简要说明判别依据。
-
-## 输出结构
-仅返回 JSON，结构如下：
+1. 仅比较内容本身。
+2. 三维分别排序：分别给出 E(有效性)/I(无干扰性)/D(可部署性) 三个维度 $\delta\in\Delta$ 的从优到劣排名 $R_{\delta}(\Pi_v)$。
+3. 严格排序，返回 JSON 包含 rankings 与 notes：
 {
-    "rankings": {
-        "E": ["S3", "S1", "S2"],
-        "I": ["S2", "S1", "S3"],
-        "D": ["S1", "S3", "S2"]
-    },
-    "notes": ["如发现明显语法/结构问题，或在必须打破接近同分的情况下使用了次级判别准则，可在此简要说明。"]
+   ... 略省 ...
 }
-
-## 输出约束
-1. 仅返回 JSON：不要附加说明、Markdown、表格或其它文本。
-2. 不得泄露匿名映射：不得尝试恢复或猜测候选来源。
-"""
 \end{Verbatim}
 \end{PromptBox}
 
