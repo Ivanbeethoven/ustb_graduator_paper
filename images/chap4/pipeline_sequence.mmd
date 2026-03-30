@@ -1,33 +1,62 @@
 sequenceDiagram
     autonumber
-    actor User as 用户
-    participant UI as 前端界面
-    participant API as 后端 API
-    participant Agent as 智能体
-    participant DB as 文件存储
+    actor User as 安全工程师
+    participant UI as 前端界面<br/>(Vue3 SPA)
+    participant API as 后端 API<br/>(Flask)
+    participant Agent as 智能体引擎<br/>(KPEAgent)
+    participant RAG as RAG 检索器
+    participant CoT as CoT 推理机
+    participant DB as 数据持久层
 
-    Note over User, UI: 会话创建阶段
-    User->>UI: 选择 CVE 创建会话
-    UI->>API: 请求初始化
-    API->>DB: 创建目录结构
-    API-->>UI: 返回 Session ID
+    rect rgb(255, 249, 230)
+        Note over User, DB: 阶段一：会话创建
+        User ->>+ UI: 选择 CVE，创建分析会话
+        UI ->>+ API: POST /api/session/create
+        API ->> DB: 初始化会话目录结构
+        DB -->> API: 目录就绪
+        API -->>- UI: 返回 session_id
+        UI -->>- User: 显示会话工作区
+    end
 
-    Note over User, UI: 生成与执行阶段
-    User->>UI: 点击"生成策略"
-    UI->>API: 调用管线步骤
-    API->>Agent: 执行生成任务
-    Agent-->>API: 返回策略 JSON
-    API->>DB: 保存 Artifact
-    API-->>UI: 展示策略内容
+    rect rgb(230, 245, 255)
+        Note over User, DB: 阶段二：策略生成（RAG + CoT）
+        User ->>+ UI: 点击"生成策略"
+        UI ->>+ API: POST /api/pipeline/run
+        API ->>+ Agent: 启动生成管线
 
-    Note over User, UI: 反馈与保存阶段
-    User->>UI: 编辑内容并保存
-    UI->>API: 提交更新
-    API->>DB: 覆写文件记录
-    API-->>UI: 保存成功
+        Agent ->>+ RAG: 语义检索相关文档
+        RAG ->> DB: 查询向量索引
+        DB -->> RAG: 返回 Top-K 片段
+        RAG -->>- Agent: 召回结果
 
-    Note over User, UI: 排序提交阶段
-    User->>UI: 提交策略排序
-    UI->>API: POST /api/ranking/submit
-    API->>DB: 写入排序记录
-    API-->>UI: 确认成功
+        Agent ->>+ CoT: 执行思维链推理
+        CoT -->>- Agent: 推理链 + 候选策略
+
+        Agent -->>- API: 返回策略 JSON
+        API ->> DB: 持久化策略产物
+        API -->>- UI: 返回策略内容
+        UI -->>- User: 渲染策略与推理链
+    end
+
+    rect rgb(255, 240, 240)
+        Note over User, DB: 阶段三：反馈优化（可选迭代）
+        opt 用户提出修改意见
+            User ->>+ UI: 输入修改建议
+            UI ->>+ API: POST /api/pipeline/refine
+            API ->>+ Agent: 携带反馈重新生成
+            Agent -->>- API: 返回优化后策略
+            API ->> DB: 覆写策略记录
+            API -->>- UI: 更新展示内容
+            UI -->>- User: 显示优化结果
+        end
+    end
+
+    rect rgb(235, 255, 235)
+        Note over User, DB: 阶段四：评审与排序提交
+        User ->>+ UI: 拖拽排序并评分
+        UI ->>+ API: POST /api/ranking/submit
+        API ->> API: 一致性校验（全序检查）
+        API ->> DB: 写入排序与评审记录
+        API -->>- UI: 提交确认
+        UI -->>- User: 显示保存成功
+    end

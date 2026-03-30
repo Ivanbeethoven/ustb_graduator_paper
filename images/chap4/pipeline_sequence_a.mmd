@@ -1,0 +1,39 @@
+sequenceDiagram
+    autonumber
+    actor User as 安全工程师
+    participant UI as 前端界面<br/>(Vue3 SPA)
+    participant API as 后端 API<br/>(Flask)
+    participant Agent as 智能体引擎<br/>(KPEAgent)
+    participant RAG as RAG 检索器
+    participant CoT as CoT 推理机
+    participant DB as 数据持久层
+
+    rect rgb(255, 249, 230)
+        Note over User, DB: 阶段一：会话创建
+        User ->>+ UI: 选择 CVE，创建分析会话
+        UI ->>+ API: POST /api/session/create
+        API ->> DB: 初始化会话目录结构
+        DB -->> API: 目录就绪
+        API -->>- UI: 返回 session_id
+        UI -->>- User: 显示会话工作区
+    end
+
+    rect rgb(230, 245, 255)
+        Note over User, DB: 阶段二：策略生成（RAG + CoT）
+        User ->>+ UI: 点击"生成策略"
+        UI ->>+ API: POST /api/pipeline/run
+        API ->>+ Agent: 启动生成管线
+
+        Agent ->>+ RAG: 语义检索相关文档
+        RAG ->> DB: 查询向量索引
+        DB -->> RAG: 返回 Top-K 片段
+        RAG -->>- Agent: 召回结果
+
+        Agent ->>+ CoT: 执行思维链推理
+        CoT -->>- Agent: 推理链 + 候选策略
+
+        Agent -->>- API: 返回策略 JSON
+        API ->> DB: 持久化策略产物
+        API -->>- UI: 返回策略内容
+        UI -->>- User: 渲染策略与推理链
+    end

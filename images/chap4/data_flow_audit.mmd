@@ -1,36 +1,37 @@
 flowchart LR
-    %% Styles for DFD
-    classDef process fill:#f9f,stroke:#333,stroke-width:2px,rx:10,ry:10;
-    classDef store fill:#eee,stroke:#333,stroke-width:2px,shape:cylinder;
-    classDef entity fill:#bbf,stroke:#333,stroke-width:2px,shape:rect;
+    %% 数据流图 (DFD Level-1) — KPEAgent 防控闭环（横向）
+    classDef process fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px,color:#000
+    classDef store fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#000
+    classDef entity fill:#bbdefb,stroke:#1565c0,stroke-width:2px,color:#000
 
-    %% Entities
-    User[安全工程师]:::entity
-    Expert[专家评审]:::entity
-    
-    %% Processes
-    P1(1. 漏洞载入):::process
-    P2(2. 策略生成):::process
-    P3(3. 人工评审):::process
-    P4(4. 策略排序):::process
-    P5(5. 审计归档):::process
+    %% 外部实体
+    User["安全工程师"]:::entity
+    Expert["专家评审员"]:::entity
 
-    %% Data Stores
-    D1[(CVE 知识库)]:::store
-    D2[(策略库)]:::store
-    D3[(排序记录)]:::store
+    %% 数据存储
+    D1[("D1 · CVE 知识库")]:::store
+    D2[("D2 · 策略库")]:::store
+    D3[("D3 · 审计日志")]:::store
 
-    %% Flows
-    User -->|导入 CVE| P1
-    P1 -->|提取特征| P2
-    D1 -.->|检索语料| P2
-    P2 -->|候选策略| D2
-    
-    D2 -.->|读取生成结果| P3
-    Expert -->|提交评语| P3
-    P3 -->|反馈优化| P2
-    
-    P3 -->|评审通过| P4
-    Expert -->|排序指令| P4
-    P4 -->|最终排名| P5
-    P5 -->|持久化| D3
+    %% 处理过程
+    P1("P1 漏洞载入\n与特征提取"):::process
+    P2("P2 策略生成\n(RAG + CoT)"):::process
+    P3("P3 人工评审\n与反馈"):::process
+    P4("P4 策略排序\n与选型"):::process
+    P5("P5 审计归档"):::process
+
+    %% 数据流
+    User -->|"CVE 原始数据"| P1
+    P1 -->|"结构化特征"| D1
+    D1 -.->|"检索语料"| P2
+    P1 -->|"分析请求"| P2
+    P2 -->|"候选策略集"| D2
+
+    D2 -.->|"待审策略"| P3
+    Expert -->|"评审意见"| P3
+    P3 -->|"修订反馈"| P2
+
+    P3 -->|"通过策略"| P4
+    Expert -->|"排序偏好"| P4
+    P4 -->|"最终排名"| P5
+    P5 -->|"决策记录"| D3

@@ -7,12 +7,12 @@
 
 \subsection{用户角色与用例分析}
 
-按照职责划分，系统面向两类协同用户：\textbf{安全工程师}与\textbf{专家评审员}（见图~\ref{fig:role_use_case}）。安全工程师是系统的主要操作者，负责漏洞生命周期的全程跟踪，利用系统的自动化能力完成特征提取、检索增强与推理链构建，从而以极低成本输出初步防御方案；专家评审员则聚焦于决策与质控环节，在人工介入点（人在回路）对多份候选策略进行多维度评分与排序，其反馈不仅决定最终部署方案，还作为高质量偏好数据回流至知识库，用于持续校准模型行为。
+按照职责划分，系统面向两类协同用户：\textbf{安全工程师}与\textbf{专家评审员}（见图~\ref{fig:role_use_case}）。安全工程师是系统的主要操作者，负责漏洞生命周期的全程跟踪，利用系统的自动化能力完成特征提取、检索增强与推理链构建，从而以极低成本输出初步防御方案；专家评审员则聚焦于决策与质控环节，在人工介入点（人在回路）对多份候选策略进行多维度评分与排序，其反馈不仅决定最终部署方案，还作为高质量偏好数据回流至知识库，用于持续校准模型行为。图中采用 UML 用例图的标准表示法：椭圆表示用例，参与者以 \guillemotleft Actor\guillemotright{} 构造型标注，\guillemotleft include\guillemotright{} 关系表示"策略生成"必然包含检索增强（RAG）与思维链推理（CoT）两个子用例，\guillemotleft extend\guillemotright{} 关系则表示"人工修订与优化"和"策略部署"分别是对"策略生成"和"发布最终决策"的可选扩展。
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.42\textwidth]{images/chap4/role_use_case}
-    \bicaption{系统用户角色与核心用例}{System user roles and core use cases}
+    \includegraphics[width=0.65\textwidth]{images/chap4/role_use_case}
+    \bicaption{系统用户角色与核心用例（UML 用例图）}{System user roles and core use cases (UML use case diagram)}
     \label{fig:role_use_case}
 \end{figure}
 
@@ -34,20 +34,20 @@
 
 \subsection{系统架构设计}
 
-系统采用现代分层软件架构设计，自顶向下解耦为四个逻辑层级（图 \ref{fig:system_architecture}），确保各层关注点分离：
+系统采用现代分层软件架构设计，自顶向下解耦为四个逻辑层级（图 \ref{fig:system_architecture}），各组件以 UML \guillemotleft component\guillemotright{} 构造型标注，确保各层关注点分离：
 
 \noindent\hangindent=2em\hangafter=1 (1) \textbf{展现层 (Presentation Layer)}：基于 Vue3 框架构建单页应用 (SPA)，集成 ECharts 可视化组件，为用户提供流畅的交互体验，负责 CVE 详情展示、策略对话交互以及评审数据的图形化呈现。
 
 \noindent\hangindent=2em\hangafter=1 (2) \textbf{服务层 (Service Layer)}：采用 Flask 框架实现 REST API 网关，负责请求路由与鉴权；内置任务调度器 (Scheduler) 管理长耗时推理任务，协调 CVE 管理、策略生成与评审控制等核心业务逻辑模块。
 
-\noindent\hangindent=2em\hangafter=1 (3) \textbf{智能引擎层 (Intelligence Layer)}：封装系统的核心 AI 能力，独立的智能体引擎统筹调用检索增强模块与思维链推理模块，实现从非结构化漏洞描述到结构化防御策略的转化。
+\noindent\hangindent=2em\hangafter=1 (3) \textbf{智能引擎层 (Intelligence Layer)}：封装系统的核心 AI 能力，独立的智能体引擎统筹调用检索增强模块、思维链推理模块与反馈优化器，实现从非结构化漏洞描述到结构化防御策略的转化。
 
 \noindent\hangindent=2em\hangafter=1 (4) \textbf{数据层 (Data Layer)}：负责持久化存储，包括用于存放 CVE 元数据与 JSON 结构化策略产物的文件数据库，以及支撑语义检索的向量索引库。
 
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth,height=0.45\textheight,keepaspectratio]{images/chap4/system_architecture}
-    \bicaption{系统总体架构与分层设计}{Overall system architecture and layered design}
+    \bicaption{系统总体架构与分层设计（UML 组件图）}{Overall system architecture and layered design (UML component diagram)}
     \label{fig:system_architecture}
 \end{figure}
 
@@ -64,29 +64,50 @@
 
 \subsection{交互时序设计}
 
-策略生成通常涉及多次耗时的大模型推理与检索操作。为避免前端长时间等待导致的"假死"现象，系统设计了异步交互时序（见图 \ref{fig:pipeline_sequence}）。用户发起生成请求后，后端立即返回任务 ID，并在后台依次触发检索、推理与生成流程；前端通过轮询或 WebSocket 实时获取各阶段状态更新。这种设计通过将复杂流程拆解为用户可见的细粒度步骤，实现了分步可视化，使用户能够实时检视图 \ref{fig:ui_rag} 中的检索结果片段或图 \ref{fig:ui_cot} 中的推理链条，并在必要时及时终止或干预异常任务。
+策略生成通常涉及多次耗时的大模型推理与检索操作。为避免前端长时间等待导致的"假死"现象，系统设计了异步交互时序（见图 \ref{fig:pipeline_sequence_a} 和图 \ref{fig:pipeline_sequence_b}）。用户发起生成请求后，后端立即返回任务 ID，并在后台依次触发检索、推理与生成流程；前端通过轮询或 WebSocket 实时获取各阶段状态更新。UML 时序图将完整流程划分为四个交互片段（rect 区域）：图 \ref{fig:pipeline_sequence_a} 涵盖会话创建与策略生成（RAG + CoT）两个阶段，其中策略生成阶段细化展示了 RAG 检索器查询向量索引、CoT 推理机执行推理链的具体消息交互；图 \ref{fig:pipeline_sequence_b} 涵盖反馈优化（以 opt 可选片段标注）与评审排序提交两个阶段。这种交互模式使用户能够实时检视图 \ref{fig:ui_rag} 中的检索结果片段或图 \ref{fig:ui_cot} 中的推理链条，并在必要时及时终止或干预异常任务。
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.8\textwidth,height=0.48\textheight,keepaspectratio]{images/chap4/pipeline_sequence}
-    \bicaption{会话化策略生成与优化的交互时序}{Interaction sequence of session-based strategy generation and optimization}
-    \label{fig:pipeline_sequence}
+    \includegraphics[width=0.8\textwidth,height=0.48\textheight,keepaspectratio]{images/chap4/pipeline_sequence_a}
+    \bicaption{会话创建与策略生成的交互时序（UML 时序图）}{Interaction sequence of session creation and strategy generation (UML sequence diagram)}
+    \label{fig:pipeline_sequence_a}
+\end{figure}
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.8\textwidth,height=0.42\textheight,keepaspectratio]{images/chap4/pipeline_sequence_b}
+    \bicaption{反馈优化与评审排序的交互时序（UML 时序图）}{Interaction sequence of feedback optimization and review ranking (UML sequence diagram)}
+    \label{fig:pipeline_sequence_b}
 \end{figure}
 
 \subsection{数据模型设计}
 
-系统的数据持久化方案围绕以下三类核心实体构建（详见图 \ref{fig:storage_schema} 类图）：
-\noindent\hangindent=2em\hangafter=1 (1) \textbf{CVE 实体}：作为数据源头，包含 \texttt{cve\_id}、\texttt{summary} 及 \texttt{cvss\_score} 等描述漏洞严重程度的基础属性，与后续生成的策略呈"一对多"发散关系。
+系统的数据持久化方案围绕以下四类核心实体构建（详见图 \ref{fig:storage_schema} UML 类图）。图中按照 UML 标准标注了可见性修饰符（\texttt{-} 表示私有属性，\texttt{+} 表示公有操作）、多重性约束及关联方向：
 
-\noindent\hangindent=2em\hangafter=1 (2) \textbf{策略实体}：记录单次生成会话的完整上下文，包括唯一的 \texttt{session\_id}，以及最终策略内容与思维链快照。其中，前者记为 \texttt{content}，后者记为 \texttt{reasoning\_chain}，从而支持对生成过程的复现与追踪。
+\noindent\hangindent=2em\hangafter=1 (1) \textbf{CVE 实体}：作为数据源头，包含 \texttt{cve\_id}、\texttt{summary}、\texttt{cvss\_score} 及 \texttt{severity} 等描述漏洞严重程度的基础属性，并以枚举类型 \texttt{status} 标记当前处置状态（未处理 / 分析中 / 已部署）。每个 CVE 与后续生成的会话呈"一对多"发散关系。
 
-\noindent\hangindent=2em\hangafter=1 (3) \textbf{排序实体}：存储专家的决策结果，包含评审人 ID \texttt{user\_id}、决策时间戳 \texttt{created\_at} 以及确认后的策略排序列表 \texttt{order}，该关联关系体现了专家对特定策略集的即时评价。
+\noindent\hangindent=2em\hangafter=1 (2) \textbf{会话实体（Session）}：表示一次完整的分析会话，记录所选模型 \texttt{model\_name}、提示词模板 \texttt{prompt\_template} 及会话状态。会话与策略呈"一对多"关系，支持同一会话下的多版本迭代。
+
+\noindent\hangindent=2em\hangafter=1 (3) \textbf{策略实体（Strategy）}：记录单次生成的完整产物，包括策略内容 \texttt{content}、思维链快照 \texttt{reasoning\_chain}、RAG 召回片段 \texttt{rag\_snippets} 以及版本号 \texttt{version}，从而支持对生成过程的复现、版本对比与增量追踪。
+
+\noindent\hangindent=2em\hangafter=1 (4) \textbf{排序实体（Ranking）}：存储专家的决策结果，包含评审人 ID \texttt{user\_id}、决策时间戳 \texttt{created\_at}、策略排序列表 \texttt{order} 及各维度评分 \texttt{dimension\_scores}。该实体同时关联会话与策略，体现了专家对特定策略集的即时评价。
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.85\textwidth]{images/chap4/storage_schema}
-    \bicaption{评分与排序数据的存储结构与关联}{Storage structure and relationships of scoring and ranking data}
+    \includegraphics[width=0.95\textwidth]{images/chap4/storage_schema}
+    \bicaption{系统核心实体类图（UML 类图）}{Core entity class diagram (UML class diagram)}
     \label{fig:storage_schema}
+\end{figure}
+
+\subsection{CVE 处置生命周期设计}
+
+为清晰表达漏洞从导入到部署的完整状态演进，系统采用 UML 状态图（图 \ref{fig:cve_lifecycle}）对 CVE 处置流程建模。整个生命周期包含"未处理"、"分析中"、"待评审"、"已批准"、"部署中"与"已部署"六个顶层状态，其中"分析中"与"待评审"为复合状态，内含子状态机以描述检索—推理—生成的迭代流程以及多维评分与排序决策的评审流程。状态间的迁移条件（如"提交评审"、"驳回"、"部署失败重试"）直接映射至系统的业务规则，保证了流程的可追溯性与完整性。
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.45\textwidth]{images/chap4/cve_lifecycle}
+    \bicaption{CVE 漏洞处置生命周期状态图（UML 状态图）}{CVE vulnerability lifecycle state diagram (UML state diagram)}
+    \label{fig:cve_lifecycle}
 \end{figure}
 
 \section{详细设计}

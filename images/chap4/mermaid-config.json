@@ -1,0 +1,12 @@
+{
+  "theme": "default",
+  "themeVariables": {
+    "fontSize": "18px"
+  },
+  "state": {
+    "padding": 12,
+    "dividerMargin": 15,
+    "textHeight": 15,
+    "titleShift": -20
+  }
+}

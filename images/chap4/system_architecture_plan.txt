@@ -1,0 +1,137 @@
+========================================================
+KPEAgent 系统架构图绘制规划
+UML 组件图 (Component Diagram) — gen_architecture_v2.py
+========================================================
+
+一、画布参数
+  - 尺寸: 17" × 11"，DPI=200（输出 3400×2200 px）
+  - 坐标系: matplotlib 默认（左下角原点，x 右、y 上）
+  - 背景色: white
+  - set_aspect('equal') 保证比例一致
+
+二、字体
+  - 中文: ['SimHei', 'Microsoft YaHei', 'Arial']
+  - axes.unicode_minus = False
+
+三、图层色彩方案（UML 分层标注）
+  L1 展现层:   fill=#E3F2FD, border=#1565C0 (蓝)
+  L2 服务层:   fill=#FFF3E0, border=#E65100 (橙)
+  L3 智能引擎层: fill=#F3E5F5, border=#6A1B9A (紫)
+  L4 数据层:   fill=#E8F5E9, border=#2E7D32 (绿)
+  组件默认:    fill=white,   border=#546E7A (深蓝灰)
+  外部系统:    fill=#ECEFF1, border=#78909C, 线型=虚线
+
+四、层带（Layer Band）定位
+  ┌ 图例：x 范围均为 [0.3, 14.4]，层间留 0.25 间隙 ┐
+  L1 展现层:    y 范围 = [8.7,  10.6]   高 1.9
+  L2 服务层:    y 范围 = [5.2,   8.45]  高 3.25
+  L3 智能引擎层: y 范围 = [2.65,  4.95]  高 2.3
+  L4 数据层:    y 范围 = [0.4,   2.4]   高 2.0
+  层带圆角矩形: boxstyle='round,pad=0.12', lw=2.0
+  层带左上角标注: 格式 "«layer» 层名 (英文名)"，fontsize=10, bold
+
+  L2 内子框（核心业务逻辑）:
+    x=[0.55, 14.1], y=[5.42, 7.05]
+    fill=#FFF8E1, border=#F57C00, linestyle='--', lw=1.0
+    左上角标注: "核心业务逻辑", fontsize=8.5, color=#E65100
+
+五、组件（Component）绘制规范
+  每个组件 = 实线矩形框 + 内部两行文字 + 右上角 UML 组件图标
+  矩形: FancyBboxPatch, boxstyle='square,pad=0', fill=white, border=#546E7A, lw=1.2
+  第一行（构造型）: «component», fontsize=7, italic, color=#666, 居中
+  第二行（名称）:  组件名, fontsize=9, bold, 居中
+  第三行（可选）:  技术标注 (如 Flask / SDK), fontsize=7.5, color=#444, 居中
+  右上角图标: UML component icon（小矩形+两个 tab 突起），见函数 draw_comp_icon()
+    图标总宽约 0.20，高约 0.22，位于组件右上角内侧
+
+  默认尺寸: w=3.0, h=0.88（各层适当缩放）
+
+六、各层组件定位（cx=中心x, cy=中心y）
+  ─── L1 展现层 (cy=9.65) ───
+  A: Vue3 视图组件        cx=2.5,  w=3.0, h=0.88
+  B: Pinia 状态管理       cx=7.2,  w=3.0, h=0.88
+  C: ECharts 可视化图表   cx=11.9, w=3.0, h=0.88
+
+  ─── L2 服务层 ───
+  D: REST API 网关 (Flask)  cx=3.6,  cy=7.75, w=3.5,  h=0.88
+  E: 任务调度器              cx=9.8,  cy=7.75, w=3.0,  h=0.88
+  F: CVE 管理               cx=2.0,  cy=6.2,  w=2.5,  h=0.85
+  G: 策略生成                cx=5.0,  cy=6.2,  w=2.5,  h=0.85
+  H: 评审控制               cx=8.0,  cy=6.2,  w=2.5,  h=0.85
+  I: 部署管理               cx=11.0, cy=6.2,  w=2.5,  h=0.85
+
+  ─── L3 智能引擎层 (cy=3.8) ───
+  J: KPEAgent 核心引擎   cx=2.8,  w=3.8, h=1.05  （较大）
+  K: RAG 检索器           cx=7.2,  w=2.5, h=0.85
+  L: CoT 推理机           cx=10.2, w=2.5, h=0.85
+  M: 反馈优化器           cx=13.0, w=2.5, h=0.85
+
+  ─── L4 数据层（圆柱体）(cy=1.35) ───
+  N: 文件存储 (JSON/CSV)   cx=4.0,  w=3.2, h=1.05  cylinder
+  O: 向量索引 (Embedding)  cx=10.5, w=3.2, h=1.05  cylinder
+  圆柱体绘制: 矩形body + 顶部椭圆(closed) + 底部椭圆弧，«datastore» 标注
+
+  ─── 外部系统（虚线框）───
+  P: 目标集群 / 主机   cx=15.65, cy=6.2, w=2.4, h=1.1, 虚线框
+     构造型: «external system»
+
+七、接口箭头（Interface Arrows）
+  颜色: #37474F，lw=1.5，arrowstyle='->'
+  虚线箭头: ls='--'（表示 use/依赖关系）
+  标签: fontsize=8, 白底小框 bbox(fc=white, ec=#ccc, pad=0.2)
+
+  ┌─── 箭头路由表（点列 = 折线途经点）───────────────────────────┐
+  A1: Vue3(底) → REST API(顶)          [L1→L2 主接口]
+      路由: (2.5,9.21) → (2.5,8.58) → (3.6,8.58) → (3.6,8.19)
+      标签: "HTTP / JSON"  位于 (3.0, 8.58)
+
+  A2: REST API(右) → 调度器(左)       [内部 dispatch]
+      路由: (5.35,7.75) → (8.3,7.75)
+      标签: 无（内部实线）
+
+  A3: 调度器(底左) → 策略生成(顶)     [任务分发]
+      路由: (9.8,7.31) → (9.8,7.1) → (5.0,7.1) → (5.0,6.625)
+      标签: "任务分发"  位于水平段中点 (7.4, 7.1)
+
+  A4: 策略生成(底) → KPEAgent(顶)     [L2→L3 生成调用]
+      路由: (5.0,5.775) → (5.0,5.08) → (2.8,5.08) → (2.8,4.325)
+      标签: "生成调用"  位于 (3.9, 5.08)
+
+  A5: KPEAgent(右) → RAG(左)          [引擎→检索]
+      路由: (4.7,3.88) → (5.95,3.88) 直线
+      标签: 无
+
+  A6: KPEAgent(右) → CoT(左)          [引擎→推理]
+      路由: (4.7,3.8) → (8.95,3.8) 直线
+      标签: 无
+
+  A7: KPEAgent(右) → 反馈优化器(左)  [引擎→反馈]
+      路由: (4.7,3.72) → (11.75,3.72) 直线
+      标签: 无
+
+  A8: 反馈优化器(底) → 文件存储(顶)  [L3→L4 持久化]
+      使用曲线箭头 connectionstyle='arc3,rad=-0.35'
+      start=(13.0,3.325), end=(4.0,1.9)
+      标签: "持久化"  midpoint 附近
+
+  A9: RAG(底) → 向量索引(顶)          [L3→L4 语义检索] 虚线
+      路由: (7.2,3.325) → (7.2,2.52) → (10.5,2.52) → (10.5,1.88)
+      标签: "语义检索"  位于 (8.85, 2.52)
+
+  A10: 部署管理(右) → 目标集群(左)   [L2→外部 K8s/SSH]
+       路由: (12.25,6.2) → (14.45,6.2) 直线
+       标签: "K8s API / SSH"
+  └────────────────────────────────────────────────────────────┘
+
+八、辅助函数清单
+  draw_layer_band(ax, x0, y0, w, h, label_cn, label_en, lcolor, fcolor)
+  draw_comp_icon(ax, x_right, y_top, color)   — UML 组件图标（右上角小符号）
+  draw_component(ax, cx, cy, w, h, name, sub='', border=..., fill=...)
+  draw_datastore(ax, cx, cy, w, h, name, sub='', fcolor=..., bcolor=...)
+  draw_external(ax, cx, cy, w, h, name, sub='')
+  draw_line_arrow(ax, pts, label='', ls='-', color='#37474F', lx=None, ly=None)
+  draw_curve_arrow(ax, x1,y1,x2,y2, label='', rad=-0.3, lx=None, ly=None)
+
+九、输出
+  plt.savefig('system_architecture.png', dpi=200, bbox_inches='tight',
+              facecolor='white', edgecolor='none')

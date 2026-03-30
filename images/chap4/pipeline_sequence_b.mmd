@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    actor User as 安全工程师
+    participant UI as 前端界面<br/>(Vue3 SPA)
+    participant API as 后端 API<br/>(Flask)
+    participant Agent as 智能体引擎<br/>(KPEAgent)
+    participant DB as 数据持久层
+
+    rect rgb(255, 240, 240)
+        Note over User, DB: 阶段三：反馈优化（可选迭代）
+        opt 用户提出修改意见
+            User ->>+ UI: 输入修改建议
+            UI ->>+ API: POST /api/pipeline/refine
+            API ->>+ Agent: 携带反馈重新生成
+            Agent -->>- API: 返回优化后策略
+            API ->> DB: 覆写策略记录
+            API -->>- UI: 更新展示内容
+            UI -->>- User: 显示优化结果
+        end
+    end
+
+    rect rgb(235, 255, 235)
+        Note over User, DB: 阶段四：评审与排序提交
+        User ->>+ UI: 拖拽排序并评分
+        UI ->>+ API: POST /api/ranking/submit
+        API ->> API: 一致性校验（全序检查）
+        API ->> DB: 写入排序与评审记录
+        API -->>- UI: 提交确认
+        UI -->>- User: 显示保存成功
+    end

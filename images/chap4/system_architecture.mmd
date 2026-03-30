@@ -1,48 +1,28 @@
-graph TB
-    %% Nodes
-    subgraph ClientLayer ["展现层 (Presentation Layer)"]
-        direction TB
-        Browser["Web 浏览器"]
-        subgraph SPA ["单页应用 (Vue3)"]
-            Views["视图组件"]
-            Store["状态管理 (Pinia)"]
-            Charts["可视化图表 (ECharts)"]
-        end
+graph TD
+    %% UML 组件图 — KPEAgent 系统分层架构
+    %% 每层仅用 ~~~ 横向排列组件，层间用有向边表示接口
+
+    subgraph L1 ["«layer» 展现层 Presentation Layer"]
+        A1["«component»<br/>Vue3 视图组件"] ~~~ A2["«component»<br/>Pinia 状态管理"] ~~~ A3["«component»<br/>ECharts 可视化图表"] ~~~ A4["Web 浏览器"]
     end
 
-    subgraph ServiceLayer ["服务层 (Service Layer)"]
-        direction TB
-        API["REST API 网关 (Flask)"]
-        Scheduler["任务调度器"]
-        
-        subgraph Logic ["核心业务逻辑"]
-            cve_mgr["CVE 管理"]
-            strategy_mgr["策略生成"]
-            review_mgr["评审控制"]
-        end
+    subgraph L2 ["«layer» 服务层 Service Layer"]
+        B0["«component»<br/>REST API 网关<br/>(Flask)"] ~~~ B1["«component»<br/>任务调度器"] ~~~ B2["«component»<br/>CVE 管理"] ~~~ B3["«component»<br/>策略生成"] ~~~ B4["«component»<br/>评审控制"] ~~~ B5["«component»<br/>部署管理"]
     end
 
-    subgraph EngineLayer ["智能引擎层 (Intelligence Layer)"]
-        direction TB
-        Agent["KPEAgent 核心"]
-        RAG["RAG 检索器"]
-        CoT["CoT 推理机"]
+    subgraph L3 ["«layer» 智能引擎层 Intelligence Layer"]
+        C0["«component»<br/>KPEAgent 核心引擎"] ~~~ C1["«component»<br/>RAG 检索器"] ~~~ C2["«component»<br/>CoT 推理机"] ~~~ C3["«component»<br/>反馈优化器"]
     end
 
-    subgraph DataLayer ["数据层 (Data Layer)"]
-        direction TB
-        FileDB[("文件存储\n(JSON/CSV)")]
-        VectorDB[("向量索引")]
+    subgraph L4 ["«layer» 数据层 Data Layer"]
+        D1[("«datastore»<br/>文件存储<br/>(JSON / CSV)")] ~~~ D2[("«datastore»<br/>向量索引<br/>(Embedding)")]
     end
 
-    %% Relationships
-    Browser <-->|HTTP/JSON| API
-    Views -.-> Store
-    API --> Scheduler
-    Scheduler --> Logic
-    strategy_mgr <--> Agent
-    Agent --> RAG
-    Agent --> CoT
-    
-    Logic --> FileDB
-    RAG -.-> VectorDB
+    E1(["外部目标<br/>集群 / 主机"])
+
+    %% 层间接口
+    A4 -->|"HTTP / JSON"| B0
+    B3 -->|"生成调用"| C0
+    B5 -->|"K8s API / SSH"| E1
+    C3 -->|"持久化"| D1
+    C1 -.->|"语义检索"| D2

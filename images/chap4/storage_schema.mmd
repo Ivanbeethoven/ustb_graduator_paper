@@ -1,20 +1,51 @@
 classDiagram
     direction LR
+
     class CVE {
-        +string cve_id
-        +string summary
-        +float cvss_score
-    }
-    class Strategy {
-        +string session_id
-        +string content
-        +string reasoning_chain
-    }
-    class Ranking {
-        +string user_id
-        +timestamp created_at
-        +list order
+        -String cve_id
+        -String summary
+        -String description
+        -Float cvss_score
+        -String severity
+        -Date published_date
+        -Enum~未处理,分析中,已部署~ status
+        +getSeverityLevel() String
+        +toFeatureVector() List
     }
 
-    CVE "1" --> "*" Strategy : 生成 (Generates)
-    Strategy "1" --> "*" Ranking : 被评价 (Has Rankings)
+    class Session {
+        -String session_id
+        -String model_name
+        -String prompt_template
+        -DateTime created_at
+        -Enum~pending,completed,failed~ status
+        +initWorkspace() void
+        +getLatestStrategy() Strategy
+    }
+
+    class Strategy {
+        -String strategy_id
+        -String content
+        -String reasoning_chain
+        -List~String~ rag_snippets
+        -Int version
+        -DateTime generated_at
+        +render() String
+        +diff(other: Strategy) String
+    }
+
+    class Ranking {
+        -String ranking_id
+        -String user_id
+        -DateTime created_at
+        -List~String~ order
+        -Map~String,Float~ dimension_scores
+        -String comment
+        +validate() Boolean
+        +toPreferencePair() Pair
+    }
+
+    CVE "1" --> "0..*" Session : 发起分析
+    Session "1" --> "1..*" Strategy : 生成
+    Session "1" --> "0..*" Ranking : 收集评价
+    Strategy "1..*" <-- "0..*" Ranking : 排序对象
