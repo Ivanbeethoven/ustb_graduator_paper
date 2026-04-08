@@ -12,7 +12,7 @@ matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu S
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 # -- 画布 --
-FIG_W, FIG_H = 18, 11
+FIG_W, FIG_H = 16.8, 11
 fig, ax = plt.subplots(figsize=(FIG_W, FIG_H), dpi=200)
 ax.set_xlim(0, FIG_W)
 ax.set_ylim(0, FIG_H)
@@ -33,6 +33,14 @@ EXT_BORDER  = '#78909C'
 ARROW_CLR   = '#263238'
 LBL_CLR     = '#37474F'
 
+FONT = {
+    'layer': 12.2,
+    'stereo': 8.8,
+    'name': 12.6,
+    'sub': 9.8,
+    'label': 9.4,
+}
+
 
 # ─────────────────────────────────────────────
 # 辅助函数
@@ -45,8 +53,8 @@ def draw_layer_band(x0, y0, w, h, label_cn, label_en, fcolor, bcolor):
                           linewidth=2.0, zorder=1)
     ax.add_patch(rect)
     ax.text(x0 + 0.25, y0 + h - 0.18,
-            f'<<layer>>  {label_cn}  ({label_en})',
-            fontsize=9.5, fontweight='bold', color=bcolor,
+            f'<<layer>>  {label_cn}',
+            fontsize=FONT['layer'], fontweight='bold', color=bcolor,
             va='top', ha='left', zorder=5)
 
 
@@ -73,15 +81,15 @@ def draw_component(cx, cy, w, h, name, sub='',
     draw_comp_icon(x0 + w, y0 + h, color=border)
     ax.text(cx, y0 + h - 0.04, '<<component>>',
             ha='center', va='top',
-            fontsize=7, style='italic', color='#555', zorder=6)
+            fontsize=FONT['stereo'], style='italic', color='#555', zorder=6)
     name_y = cy + (0.1 if sub else 0.0)
     ax.text(cx, name_y, name,
             ha='center', va='center',
-            fontsize=9, fontweight='bold', color='#1A1A2E', zorder=6)
+            fontsize=FONT['name'], fontweight='bold', color='#1A1A2E', zorder=6)
     if sub:
         ax.text(cx, cy - 0.18, sub,
                 ha='center', va='center',
-                fontsize=7.5, color='#555', zorder=6)
+                fontsize=FONT['sub'], color='#555', zorder=6)
 
 
 def draw_datastore(cx, cy, w, h, name, sub='',
@@ -100,14 +108,14 @@ def draw_datastore(cx, cy, w, h, name, sub='',
                          linewidth=1.2, zorder=6))
     ax.text(cx, cy + 0.15, '<<datastore>>',
             ha='center', va='center',
-            fontsize=7, style='italic', color=bcolor, zorder=7)
+            fontsize=FONT['stereo'], style='italic', color=bcolor, zorder=7)
     ax.text(cx, cy - 0.1, name,
             ha='center', va='center',
-            fontsize=9, fontweight='bold', color='#1A1A2E', zorder=7)
+            fontsize=FONT['name'], fontweight='bold', color='#1A1A2E', zorder=7)
     if sub:
         ax.text(cx, cy - 0.3, sub,
                 ha='center', va='center',
-                fontsize=7.5, color='#555', zorder=7)
+                fontsize=FONT['sub'], color='#555', zorder=7)
 
 
 def draw_external(cx, cy, w, h, name, sub=''):
@@ -117,14 +125,14 @@ def draw_external(cx, cy, w, h, name, sub=''):
                                 linewidth=1.3, linestyle='--', zorder=5))
     ax.text(cx, cy + h / 2 - 0.04, '<<external system>>',
             ha='center', va='top',
-            fontsize=7, style='italic', color=EXT_BORDER, zorder=6)
+            fontsize=FONT['stereo'], style='italic', color=EXT_BORDER, zorder=6)
     ax.text(cx, cy + 0.06, name,
             ha='center', va='center',
-            fontsize=9, fontweight='bold', color='#1A1A2E', zorder=6)
+            fontsize=FONT['name'], fontweight='bold', color='#1A1A2E', zorder=6)
     if sub:
         ax.text(cx, cy - 0.18, sub,
                 ha='center', va='center',
-                fontsize=7.5, color='#555', zorder=6)
+                fontsize=FONT['sub'], color='#555', zorder=6)
 
 
 def _lbl_box(x, y, text, fontsize=8):
@@ -147,11 +155,11 @@ def draw_line_arrow(pts, label='', ls='-', color=ARROW_CLR, lw=1.5,
                 zorder=4)
     if label:
         if lx is not None and ly is not None:
-            _lbl_box(lx, ly, label)
+            _lbl_box(lx, ly, label, fontsize=FONT['label'])
         else:
             mid = len(pts) // 2
             _lbl_box((xs[mid - 1] + xs[mid]) / 2,
-                     (ys[mid - 1] + ys[mid]) / 2, label)
+                     (ys[mid - 1] + ys[mid]) / 2, label, fontsize=FONT['label'])
 
 
 def draw_curve_arrow(x1, y1, x2, y2, label='', rad=-0.35,
@@ -163,7 +171,7 @@ def draw_curve_arrow(x1, y1, x2, y2, label='', rad=-0.35,
     if label:
         _lx = lx if lx is not None else (x1 + x2) / 2
         _ly = ly if ly is not None else (y1 + y2) / 2
-        _lbl_box(_lx, _ly, label)
+        _lbl_box(_lx, _ly, label, fontsize=FONT['label'])
 
 
 # ─────────────────────────────────────────────
@@ -182,45 +190,45 @@ ax.add_patch(FancyBboxPatch((0.55, 5.42), 13.55, 1.63,
                             facecolor='#FFF8E1', edgecolor='#F57C00',
                             linewidth=1.0, linestyle='--', zorder=2))
 ax.text(0.85, 6.85, '核心业务逻辑',
-        fontsize=8.5, color='#E65100', va='top', ha='left', zorder=5)
+        fontsize=10.0, color='#E65100', va='top', ha='left', zorder=5)
 
 # ─────────────────────────────────────────────
 # 2. 展现层组件 (cy=9.65)
 # ─────────────────────────────────────────────
-draw_component(2.5,  9.65, 3.0, 0.88, 'Vue3 视图组件')
-draw_component(7.2,  9.65, 3.0, 0.88, 'Pinia 状态管理')
-draw_component(11.9, 9.65, 3.0, 0.88, 'ECharts 可视化图表')
+draw_component(2.5,  9.65, 3.1, 0.92, 'Vue3 视图组件')
+draw_component(7.2,  9.65, 3.1, 0.92, 'Pinia 状态管理')
+draw_component(11.9, 9.65, 3.1, 0.92, 'ECharts 可视化图表')
 
 # ─────────────────────────────────────────────
 # 3. 服务层组件
 # ─────────────────────────────────────────────
-draw_component(3.6,  7.75, 3.5, 0.88, 'REST API 网关', '(Flask)')
-draw_component(9.8,  7.75, 3.0, 0.88, '任务调度器')
+draw_component(3.6,  7.75, 3.6, 0.94, 'REST API 网关', '(Flask)')
+draw_component(9.8,  7.75, 3.1, 0.94, '任务调度器')
 
-draw_component(2.0,  6.20, 2.5, 0.85, 'CVE 管理')
-draw_component(5.0,  6.20, 2.5, 0.85, '策略生成')
-draw_component(8.0,  6.20, 2.5, 0.85, '评审控制')
-draw_component(11.0, 6.20, 2.5, 0.85, '部署管理')
+draw_component(2.0,  6.20, 2.7, 0.90, 'CVE 管理')
+draw_component(5.0,  6.20, 2.7, 0.90, '策略生成')
+draw_component(8.0,  6.20, 2.7, 0.90, '评审控制')
+draw_component(11.0, 6.20, 2.7, 0.90, '部署管理')
 
 # ─────────────────────────────────────────────
 # 4. 智能引擎层组件 (cy=3.8)
 # ─────────────────────────────────────────────
-draw_component(2.8,  3.8, 3.8, 1.05, 'KPEAgent 核心引擎',
+draw_component(2.8,  3.8, 4.0, 1.08, 'KPEAgent 核心引擎',
                border='#6A1B9A', fill='#F9F0FF')
-draw_component(7.2,  3.8, 2.5, 0.85, 'RAG 检索器')
-draw_component(10.2, 3.8, 2.5, 0.85, 'CoT 推理机')
-draw_component(13.0, 3.8, 2.5, 0.85, '反馈优化器')
+draw_component(7.2,  3.8, 2.7, 0.90, 'RAG 检索器')
+draw_component(10.2, 3.8, 2.7, 0.90, 'CoT 推理机')
+draw_component(13.0, 3.8, 2.7, 0.90, '反馈优化器')
 
 # ─────────────────────────────────────────────
 # 5. 数据层圆柱体 (cy=1.35)
 # ─────────────────────────────────────────────
-draw_datastore(4.0,  1.35, 3.2, 1.05, '文件存储', '(JSON / CSV)')
-draw_datastore(10.5, 1.35, 3.2, 1.05, '向量索引', '(Embedding)')
+draw_datastore(4.0,  1.35, 3.4, 1.12, '文件存储', '(JSON / CSV)')
+draw_datastore(10.5, 1.35, 3.4, 1.12, '向量索引', '(Embedding)')
 
 # ─────────────────────────────────────────────
 # 6. 外部系统
 # ─────────────────────────────────────────────
-draw_external(16.0, 6.20, 2.6, 1.10, '目标集群', '/ 主机')
+draw_external(15.35, 6.20, 2.35, 1.12, '目标集群', '/ 主机')
 
 # ─────────────────────────────────────────────
 # 7. 接口箭头
@@ -247,8 +255,8 @@ BUS_Y = 3.08
 BUS_X0 = 4.70    # KPEAgent 右侧边 x
 BUS_X1 = 13.0    # 反馈优化器 中心 x
 RAG_CX, COT_CX, FBK_CX = 7.2, 10.2, 13.0
-BOX_BOT = 3.375  # RAG/CoT/反馈 底边 y (cy=3.8, h=0.85)
-KPE_BOT = 3.275  # KPEAgent 底边 y (cy=3.8, h=1.05)
+BOX_BOT = 3.35   # RAG/CoT/反馈 底边 y (cy=3.8, h=0.90)
+KPE_BOT = 3.26   # KPEAgent 底边 y (cy=3.8, h=1.08)
 
 # 竖向引出线（KPEAgent 底 -> 总线）
 ax.plot([BUS_X0, BUS_X0], [KPE_BOT, BUS_Y],
@@ -264,23 +272,23 @@ for cx_t in [RAG_CX, COT_CX, FBK_CX]:
     ax.plot(cx_t, BUS_Y, 'o', color=ARROW_CLR, ms=4, zorder=5)
 
 # A8: 反馈优化器 -> 文件存储  "持久化"  曲线（避免与 A9 交叉）
-draw_curve_arrow(13.0, 3.325, 4.0, 1.905,
+draw_curve_arrow(13.0, 3.35, 4.0, 1.91,
                  label='持久化', rad=-0.28,
                  lx=9.2, ly=2.0)
 
 # A9: RAG -> 向量索引  "语义检索"  虚线 (L3->L4)  从 RAG 右侧出发，避开总线
-draw_line_arrow([(8.45, 3.80), (8.45, 2.52), (10.5, 2.52), (10.5, 1.905)],
+draw_line_arrow([(8.50, 3.80), (8.50, 2.52), (10.5, 2.52), (10.5, 1.91)],
                 label='语义检索', ls='--', lx=9.48, ly=2.52)
 
 # A10: 部署管理 -> 目标集群  "K8s API / SSH"
-draw_line_arrow([(12.25, 6.20), (14.70, 6.20)],
-                label='K8s API / SSH', lx=13.5, ly=6.43)
+draw_line_arrow([(12.35, 6.20), (14.10, 6.20)],
+                label='K8s API / SSH', lx=13.2, ly=6.43)
 
 # ─────────────────────────────────────────────
 # 8. 输出
 # ─────────────────────────────────────────────
 plt.tight_layout(pad=0.2)
-plt.savefig('system_architecture.png', dpi=200, bbox_inches='tight',
+plt.savefig('system_architecture.png', dpi=240, bbox_inches='tight',
             facecolor='white', edgecolor='none')
 plt.close()
 print('system_architecture.png generated successfully.')

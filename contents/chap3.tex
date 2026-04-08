@@ -57,15 +57,25 @@ q(\pi) = \bigl(E(\pi),\;I(\pi),\;D(\pi)\bigr)
 
 \section{开源应用漏洞安全知识库构建}
 
-本节对应总体流程中的知识组织过程 $\mathcal{K}$，即从漏洞实例 $v$ 出发，经材料收集、分块与向量化构建可追溯知识库 $\mathcal{K}_v$，并通过检索形成安全上下文 $c$，从而为后续策略生成提供带来源标识的证据支撑。
+本节对应总体流程中的知识组织阶段，围绕漏洞实例 $v$ 经四个依次递进的步骤构建可追溯知识库 $\mathcal{K}_v$，并通过检索形成安全上下文 $c$，为后续策略生成提供带来源标识的证据支撑。整体上，该过程包括四个阶段：第一阶段从 CNCF Landscape 出发，经目标应用仓库映射与多源漏洞检索汇聚形成 CVE 候选池；第二阶段通过关键词、严重度与人工复核三重过滤，得到筛选后漏洞样本集；第三阶段完成 CWE 标注与两级成因分类，输出带标签漏洞样本集；第四阶段对多源材料进行规范化、差异化分块与向量化，形成可检索的向量化知识库。
 
-\subsection{漏洞收集与分类框架}
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.92\textwidth]{images/chap3_cve_database.png}
+    \bicaption{云原生权限提升漏洞样本数据集概览}{Overview of the cloud-native privilege escalation vulnerability sample dataset}\label{fig:cve-database}
+\end{figure}
 
-漏洞样本的收集流程与分类方式直接影响后续策略生成的针对性。为此，本文构建了面向策略生成场景的两级成因分类框架，旨在为模型提供相对稳定且可解释的风险语义线索，从而约束推理路径、辅助关键控制点与实施路径的选择，提升输出策略的可部署性、可验证性与副作用可控性。
+图~\ref{fig:cve-database} 展示了本文收集并整理的漏洞样本数据集，包括来源分布、时间范围、CVSS 评分区间与漏洞类型构成，为后续的漏洞筛选、成因分类与知识库构建提供样本基础。
 
-首先，以 Kubernetes 及其生态开源应用为研究对象，从 CNCF Landscape 获取云原生应用清单，并对清单进行快照固化以保证可复现性。随后将条目名称映射到其官方代码仓库，形成后续漏洞关联与证据收集的目标集合。
+\subsection{数据采集}
 
-在漏洞收集阶段，综合使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台 GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}，检索 Kubernetes 及其生态应用中与权限提升相关的代表性漏洞。具体收集策略包括：
+以 Kubernetes 及其生态开源应用为研究对象，首先从 CNCF Landscape 获取云原生应用清单，并对清单进行快照固化以保证采集过程可复现。随后将清单条目名称映射到其官方代码仓库，形成后续漏洞检索与证据收集的目标集合。
+
+在此基础上，综合使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台 GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}三个来源，围绕权限提升线索对 Kubernetes 及其生态应用进行多源漏洞检索，获得初步 CVE 候选池。
+
+\subsection{漏洞筛选}
+
+针对 CVE 候选池，通过三重过滤策略得到筛选后的高质量漏洞样本集：
 \begin{itemize}
     \item \textbf{关键词约束}：在 CVE 描述与参考链接中匹配 Privilege Escalation、Authorization Bypass、Improper Access Control、RBAC、ServiceAccount、ClusterRole、Container Escape/Sandbox Escape/Breakout 等关键词；
     \item \textbf{严重性阈值}：采用 CVSS v3.x 评分，并以 $\geq 5.0$ 的中危及以上漏洞为主要对象；
@@ -75,7 +85,11 @@ q(\pi) = \bigl(E(\pi),\;I(\pi),\;D(\pi)\bigr)
 
 为保证数据构建过程可复现，本文对同一批次样本采用统一快照方式完成采集，并在构建配置中记录应用清单快照、检索时间窗口、纳入与剔除准则以及去重规则。对于来自不同数据源但指向同一漏洞事实的记录，以 CVE 编号为主键进行合并；对于无独立编号但经公告与补丁信息确认指向同一漏洞事件的记录，视为重复项而不重复计数。
 
-为刻画漏洞成因层面的共性，本文进一步对样本进行 CWE（Common Weakness Enumeration）标注。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。本文依据公开映射与公告信息提取每个 CVE 的 CWE 标签，并统计不同 CWE 的出现频次。
+\subsection{漏洞分类}
+
+漏洞样本的分类方式直接影响后续策略生成的针对性。为此，本文构建了面向策略生成场景的两级成因分类框架，旨在为模型提供相对稳定且可解释的风险语义线索，从而约束推理路径、辅助关键控制点与实施路径的选择，提升输出策略的可部署性、可验证性与副作用可控性。
+
+首先，本文依据公开映射与公告信息提取每个 CVE 的 CWE（Common Weakness Enumeration）标签，并统计不同 CWE 的出现频次。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。
 
 \begin{figure}[htb]
     \centering
@@ -154,11 +168,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 
 \subsection{知识库构建}
 
-知识库构建阶段的目标是将与漏洞 $v$ 相关的多源材料组织为带来源标注证据集合 $c=\left\{\,\langle t_i,\text{src}_i\rangle\mid i\in[n_c] \,\right\}$，并形成支持按需取证的检索能力。若记围绕 $v$ 建立的知识库为 $\mathcal{K}_v$，则总体流程中知识组织过程 $\mathcal{K}$ 可细化为两步：先构建 $\mathcal{K}_v$，再通过检索算子
-\[
-\mathcal{R}(v,\mathcal{K}_v)\rightarrow c
-\]
-从中提取与当前决策相关的证据片段，形成安全上下文 $c$。
+知识库构建阶段的目标是将与漏洞 $v$ 相关的多源材料组织为带来源标注的证据集合，并建立支持按需取证的检索能力。围绕 $v$ 构建知识库 $\mathcal{K}_v$ 后，在策略生成阶段通过语义检索从中提取相关证据片段，按需组装为安全上下文 $c$，为后续分析提供可追溯的事实依据。
 
 具体而言，对每个漏洞关联的开源应用仓库，收集代码、配置与文档等可读文本；同时纳入与漏洞相关的安全公告、议题（Issue）/合并请求（Pull Request）讨论与修复提交信息。对文本进行最小化规范，并过滤超长或二进制内容，以降低噪声与资源开销。
 

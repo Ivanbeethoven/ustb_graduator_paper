@@ -209,7 +209,7 @@ def _apply_y_padding(ax: Axes, values, pad_ratio: float = 0.1) -> None:
             return
         span = vmax - vmin
         pad = max(span * pad_ratio, 0.05 if vmax > 0 else 0)
-        ax.set_ylim(vmin - pad if vmin > 0 else vmin, vmax + pad)
+        ax.set_ylim(0, vmax + pad)
     except Exception:
         # Best-effort; ignore if values not numeric
         return

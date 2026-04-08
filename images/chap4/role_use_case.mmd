@@ -2,8 +2,12 @@ flowchart LR
     %% UML Use Case Diagram — KPEAgent 系统
     %% 椭圆 ([...]) 表示用例；(((...))) 表示参与者
 
-    User((("安全工程师\n«Actor»")))
-    Reviewer((("专家评审员\n«Actor»")))
+    subgraph Actors[" "]
+        direction TB
+        User((("安全工程师\n«Actor»")))
+        Reviewer((("专家评审员\n«Actor»")))
+    end
+    style Actors fill:none,stroke:none
 
     subgraph System ["«System» KPEAgent"]
         direction TB
