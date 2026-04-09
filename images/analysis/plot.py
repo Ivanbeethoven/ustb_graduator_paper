@@ -138,6 +138,21 @@ def _style_axes(ax: Axes, grid_axis: Literal["x", "y", "both"] | None = "y") -> 
         ax.grid(False)
 
 
+def _style_colorbar(ax: Axes, label: str | None = None) -> None:
+    """Apply consistent styling to seaborn/matplotlib heatmap colorbars."""
+    try:
+        if not ax.collections:
+            return
+        colorbar = ax.collections[0].colorbar
+        if colorbar is None:
+            return
+        colorbar.ax.tick_params(labelsize=9, width=0.8, length=3, colors="#1F1F1F")
+        if label:
+            colorbar.set_label(label, fontsize=10, color="#1F1F1F", rotation=90, labelpad=10)
+    except Exception:
+        return
+
+
 def _ordered_dimensions(dims: list[str]) -> list[str]:
     ordered = [d for d in _DIMENSION_ORDER if d in dims]
     remaining = [d for d in dims if d not in ordered]
@@ -185,10 +200,10 @@ def _title(head: str, dimension: str | None = None, extras: list[str] | None = N
     return "｜".join(parts)
 
 
-def load_csvs(out_dir: Path):
-    overall = pd.read_csv(out_dir / "analysis_summary.csv")
-    by_judge = pd.read_csv(out_dir / "analysis_summary_by_judge.csv")
-    csv3 = pd.read_csv(out_dir / "analysis_summary_3d.csv")
+def load_csvs(in_dir: Path):
+    overall = pd.read_csv(in_dir / "analysis_summary.csv")
+    by_judge = pd.read_csv(in_dir / "analysis_summary_by_judge.csv")
+    csv3 = pd.read_csv(in_dir / "analysis_summary_3d.csv")
     overall = _transform_rank_columns(overall, ["avg_rank", "min_rank", "max_rank"])
     by_judge = _transform_rank_columns(by_judge, ["avg_rank", "min_rank", "max_rank"])
     csv3 = _transform_rank_columns(csv3, ["avg_rank", "min_rank", "max_rank"])
@@ -534,12 +549,13 @@ def plot_per_generator(csv3: pd.DataFrame, out_dir: Path, dimension: str):
             plt.close()
 
 
-def plot_single_dimension(out_dir: Path, dimension: str):
+def plot_single_dimension(out_dir: Path, dimension: str, in_dir: Optional[Path] = None):
     """Single-dimension summary plots using per-dimension CSVs."""
+    src = in_dir if in_dir is not None else out_dir
     plots_dir = out_dir / "plots" / dimension / "summary"
     plots_dir.mkdir(parents=True, exist_ok=True)
-    dim_csv = out_dir / f"analysis_summary_{dimension}.csv"
-    judge_dim_csv = out_dir / f"analysis_summary_by_judge_{dimension}.csv"
+    dim_csv = src / f"analysis_summary_{dimension}.csv"
+    judge_dim_csv = src / f"analysis_summary_by_judge_{dimension}.csv"
     if not dim_csv.exists():
         return
     df = pd.read_csv(dim_csv)
@@ -549,8 +565,9 @@ def plot_single_dimension(out_dir: Path, dimension: str):
     methods = _ensure_numeric(methods, ["avg_rank"])
     plt.figure(figsize=(5.2, 4.2))
     keys = [_display_label(k) for k in methods['key'].astype(str)]
-    bars = plt.bar(keys, methods['avg_rank'].astype(float), color=_bar_palette(len(keys), monochrome=True))
-    plt.xticks(rotation=0, ha='center', fontsize=10)
+    x = np.arange(len(keys))
+    bars = plt.bar(x, methods['avg_rank'].astype(float), width=0.60, color=_bar_palette(len(keys), monochrome=True))
+    plt.xticks(x, keys, rotation=0, ha='center', fontsize=10)
     plt.ylabel('排序得分', fontsize=12)
     plt.xlabel('方法', fontsize=12)
     plt.title(_title("方法汇总：排序得分", dimension), fontsize=14, pad=12)
@@ -569,8 +586,9 @@ def plot_single_dimension(out_dir: Path, dimension: str):
     profiles = _ensure_numeric(profiles, ["avg_rank"])
     plt.figure(figsize=(5.2, 4.2))
     pkeys = [_display_label(k) for k in profiles['key'].astype(str)]
-    bars = plt.bar(pkeys, profiles['avg_rank'].astype(float), color=_bar_palette(len(pkeys), monochrome=True))
-    plt.xticks(rotation=0, ha='center', fontsize=10)
+    x = np.arange(len(pkeys))
+    bars = plt.bar(x, profiles['avg_rank'].astype(float), width=0.60, color=_bar_palette(len(pkeys), monochrome=True))
+    plt.xticks(x, pkeys, rotation=0, ha='center', fontsize=10)
     plt.ylabel('排序得分', fontsize=12)
     plt.xlabel('生成模型', fontsize=12)
     plt.title(_title("生成模型汇总：排序得分", dimension), fontsize=14, pad=12)
@@ -605,20 +623,44 @@ def plot_single_dimension(out_dir: Path, dimension: str):
             pivot.index = display_methods
             pivot.columns = display_judges
 
-            ax = pivot.plot(kind='bar', figsize=(11.5, 5), color=_bar_palette(max(len(pivot.columns), 1)))
-            ax.set_title(_title("方法 × 评委模型：排序得分概览", dimension), fontsize=14, pad=12)
+            fig, ax = plt.subplots(figsize=(10.6, 4.85))
+            x = np.arange(len(pivot.index), dtype=float)
+            group_width = 0.72
+            bar_width = group_width / max(len(pivot.columns), 1)
+            colors = _bar_palette(max(len(pivot.columns), 1))
+            containers: list[BarContainer] = []
+            offsets = (np.arange(len(pivot.columns), dtype=float) - (len(pivot.columns) - 1) / 2.0) * bar_width
+            for idx, judge in enumerate(pivot.columns):
+                bars = ax.bar(
+                    x + offsets[idx],
+                    pivot[judge].to_numpy(dtype=float),
+                    width=bar_width * 0.92,
+                    color=colors[idx],
+                    label=judge,
+                )
+                containers.append(cast(BarContainer, bars))
+
+            fig.suptitle(_title("方法 × 评委模型：排序得分概览", dimension), fontsize=14, y=0.935)
             ax.set_ylabel('排序得分', fontsize=12)
             ax.set_xlabel('方法', fontsize=12)
-            leg = ax.get_legend()
-            if leg is not None:
-                leg.set_title("评委模型")
+            ax.set_xticks(x)
+            ax.set_xticklabels(list(pivot.index), rotation=0)
             ax.tick_params(axis='x', labelrotation=0)
-            for container in ax.containers:
-                ax.bar_label(cast(BarContainer, container), fmt="{:.2f}", padding=2, fontsize=9)
+            fig.legend(
+                handles=containers,
+                labels=list(pivot.columns),
+                loc='lower center',
+                bbox_to_anchor=(0.5, 0.815),
+                ncol=max(len(pivot.columns), 1),
+                title=None,
+                frameon=False,
+            )
+            for container in containers:
+                ax.bar_label(container, fmt="{:.2f}", padding=2, fontsize=9)
             _apply_y_padding(ax, pivot.values.flatten())
             _style_axes(ax)
             _accentuate_bars(ax)
-            plt.tight_layout()
+            plt.tight_layout(rect=(0, 0, 1, 0.80))
             plt.savefig(plots_dir / f'single_dim_by_judge_{dimension}.png', dpi=200)
             plt.close()
 
@@ -948,7 +990,7 @@ def plot_judge_consistency(csv3: pd.DataFrame, out_dir: Path) -> None:
     std_rows = []
 
     # Judge vectors over (generator, method) per dimension
-    for dim in sorted(df["dimension"].dropna().unique()):
+    for dim in _ordered_dimensions(sorted(df["dimension"].dropna().unique().tolist())):
         sub = df[df["dimension"] == dim]
         pivot = sub.pivot_table(
             index=["generator", "method"],
@@ -981,12 +1023,13 @@ def plot_judge_consistency(csv3: pd.DataFrame, out_dir: Path) -> None:
             cmap=cmap,
             vmin=0.5,
             vmax=0.9,
-            cbar_kws={"shrink": 0.8, "extend": "min"},
+            cbar_kws={"shrink": 0.82, "extend": "min", "pad": 0.02},
         )
         ax.set_title(f"评委相关性热力图｜维度：{dim}", fontsize=14, pad=12)
         ax.set_xlabel("评委模型", fontsize=12)
         ax.set_ylabel("评委模型", fontsize=12)
         _style_axes(ax, grid_axis=None)
+        _style_colorbar(ax, "Pearson\n相关系数")
         plt.tight_layout()
         plt.savefig(plots_dir / f"judge_correlation_heatmap_{dim}.png", dpi=200)
         plt.close()
@@ -997,7 +1040,9 @@ def plot_judge_consistency(csv3: pd.DataFrame, out_dir: Path) -> None:
         std_df = _ensure_numeric(std_df, ["std_rank"])
         dim_mean = std_df.groupby("dimension", as_index=False)["std_rank"].mean()
         if not dim_mean.empty:
-            dim_mean = cast(Any, dim_mean).sort_values(by=["std_rank"], ascending=True)
+            dim_order = _ordered_dimensions(dim_mean["dimension"].astype(str).tolist())
+            dim_mean["dimension"] = pd.Categorical(dim_mean["dimension"], categories=dim_order, ordered=True)
+            dim_mean = cast(Any, dim_mean).sort_values(by=["dimension"], ascending=True)
             plt.figure(figsize=(5.6, 4.0))
             bars = plt.bar(
                 dim_mean["dimension"].astype(str).tolist(),
@@ -1047,7 +1092,7 @@ def plot_judge_consistency_extended(csv3: pd.DataFrame, out_dir: Path) -> None:
     w_rows = []
     spearman_rows = []
 
-    for dim in sorted(df["dimension"].dropna().unique()):
+    for dim in _ordered_dimensions(sorted(df["dimension"].dropna().unique().tolist())):
         sub = df[df["dimension"] == dim]
         if sub.empty:
             continue
@@ -1078,7 +1123,9 @@ def plot_judge_consistency_extended(csv3: pd.DataFrame, out_dir: Path) -> None:
     # Kendall's W bar chart
     if w_rows:
         w_df = pd.DataFrame(w_rows)
-        w_df = w_df.sort_values("kendalls_w", ascending=False)
+        dim_order = _ordered_dimensions(w_df["dimension"].astype(str).tolist())
+        w_df["dimension"] = pd.Categorical(w_df["dimension"], categories=dim_order, ordered=True)
+        w_df = w_df.sort_values("dimension")
         plt.figure(figsize=(5.6, 4.0))
         bars = plt.bar(
             w_df["dimension"].astype(str).tolist(),
@@ -1099,11 +1146,13 @@ def plot_judge_consistency_extended(csv3: pd.DataFrame, out_dir: Path) -> None:
     # Pairwise Spearman distribution by dimension
     if spearman_rows:
         s_df = pd.DataFrame(spearman_rows)
+        dim_order = _ordered_dimensions(s_df["dimension"].astype(str).dropna().unique().tolist())
         plt.figure(figsize=(6.0, 4.2))
         ax = sns.boxplot(
             data=s_df,
             x="dimension",
             y="corr",
+            order=dim_order,
             color="#A5A5A5",
             linewidth=1.0,
         )
@@ -1229,31 +1278,35 @@ def write_text_report(overall: pd.DataFrame, by_judge: pd.DataFrame, csv3: pd.Da
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--out-dir", type=Path, default=Path.cwd() / "analysis" / "output")
+    p.add_argument("--in-dir", type=Path, default=Path("images") / "analysis", help="输入 CSV 文件目录")
+    p.add_argument("--out-dir", type=Path, default=Path("images"), help="图表输出根目录（图表写入 {out-dir}/plots/）")
     p.add_argument("--dimensions", nargs="*", default=None, help="维度名称列表，默认全部")
     p.add_argument("--single-dim", nargs="*", default=None, help="只生成单维度总结图 (传入维度名列表)")
     args = p.parse_args()
 
-    overall, by_judge, csv3 = load_csvs(args.out_dir)
+    in_dir: Path = args.in_dir
+    out_dir: Path = args.out_dir
+
+    overall, by_judge, csv3 = load_csvs(in_dir)
     dims = args.dimensions or sorted(csv3["dimension"].unique())
     if args.single_dim:
         for d in args.single_dim:
-            plot_single_dimension(args.out_dir, d)
-            plot_method_report(overall, csv3, args.out_dir, d)
-            plot_generator_report(overall, csv3, args.out_dir, d)
+            plot_single_dimension(out_dir, d, in_dir=in_dir)
+            plot_method_report(overall, csv3, out_dir, d)
+            plot_generator_report(overall, csv3, out_dir, d)
     else:
         for d in dims:
-            plot_grouped_bar(csv3, args.out_dir, d)
-            plot_heatmap(csv3, args.out_dir, d)
-            plot_per_method(csv3, args.out_dir, d)
-            plot_per_generator(csv3, args.out_dir, d)
-            plot_single_dimension(args.out_dir, d)
-            plot_method_report(overall, csv3, args.out_dir, d)
-            plot_generator_report(overall, csv3, args.out_dir, d)
-    plot_radar_overall(csv3, args.out_dir)
-    plot_radar_for_judge(csv3, args.out_dir, "gpt5", "GPT-5")
-    plot_judge_consistency(csv3, args.out_dir)
-    plot_judge_consistency_extended(csv3, args.out_dir)
-    report_path = write_text_report(overall, by_judge, csv3, args.out_dir)
-    print(f"Plots written to {args.out_dir / 'plots'}")
+            plot_grouped_bar(csv3, out_dir, d)
+            plot_heatmap(csv3, out_dir, d)
+            plot_per_method(csv3, out_dir, d)
+            plot_per_generator(csv3, out_dir, d)
+            plot_single_dimension(out_dir, d, in_dir=in_dir)
+            plot_method_report(overall, csv3, out_dir, d)
+            plot_generator_report(overall, csv3, out_dir, d)
+    plot_radar_overall(csv3, out_dir)
+    plot_radar_for_judge(csv3, out_dir, "gpt5", "GPT-5")
+    plot_judge_consistency(csv3, out_dir)
+    plot_judge_consistency_extended(csv3, out_dir)
+    report_path = write_text_report(overall, by_judge, csv3, out_dir)
+    print(f"Plots written to {out_dir / 'plots'}")
     print(f"Text report written to {report_path}")

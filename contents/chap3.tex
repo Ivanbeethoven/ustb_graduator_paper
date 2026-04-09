@@ -62,10 +62,9 @@ q(\pi) = \bigl(E(\pi),\;I(\pi),\;D(\pi)\bigr)
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.92\textwidth]{images/chap3_cve_database.png}
-    \bicaption{云原生权限提升漏洞样本数据集概览}{Overview of the cloud-native privilege escalation vulnerability sample dataset}\label{fig:cve-database}
+    \bicaption{云原生权限提升漏洞知识库构建}{Overview of the cloud-native privilege escalation vulnerability knowledge base construction}\label{fig:cve-database}
 \end{figure}
 
-图~\ref{fig:cve-database} 展示了本文收集并整理的漏洞样本数据集，包括来源分布、时间范围、CVSS 评分区间与漏洞类型构成，为后续的漏洞筛选、成因分类与知识库构建提供样本基础。
 
 \subsection{数据采集}
 
@@ -156,7 +155,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 \textbf{敏感信息泄露}指重要的身份、密钥或权限信息意外暴露，常见形式包括：
 \begin{itemize}
     \item API 端口暴露：管理接口、内部 API 或调试端口未受保护暴露在网络上；
-    \item 日志泄露：日志文件包含敏感信息（如token、密钥、命令历史）；
+    \item 日志泄露：错误泄露的日志文件中包含密钥、命令历史等敏感信息；
     \item 配置文件泄露：配置文件包含硬编码的凭证或密钥。
 \end{itemize}
 

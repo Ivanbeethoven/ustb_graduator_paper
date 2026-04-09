@@ -37,7 +37,7 @@
 
 评审阶段将上述五个模型作为评审模型，对 $\Pi_v$ 进行排名式评价。评价指标采用三维质量向量 $q(\pi)=\bigl(E(\pi),I(\pi),D(\pi)\bigr)$，分别对应有效性、无干扰性与可部署性。为缓解大模型评分能力缺陷\cite{wu2024scoring}，并降低不同评审模型评分尺度差异带来的影响，本文以相对排序作为基础评价信号。随后依据第三章给出的等权聚合模型，将各评审模型的维度排序映射为归一化得分并计算共识得分，再据此形成最终的共识排序，以增强结果的稳健性与可解释性。
 
-为评估令牌消耗及调用成本，本文在生成与评审阶段记录每次调用的输入与输出令牌数，并按 CVE 样本聚合统计；对于包含反馈优化的配置，则累计其多轮调用的令牌消耗。
+为评估词元消耗及调用成本，本文在生成与评审阶段记录每次调用的输入与输出词元数，并按 CVE 样本聚合统计；对于包含反馈优化的配置，则累计其多轮调用的词元消耗。
 
 为与传统静态安全工具比较，本文选取四种代表性工具或文献作为基线。在得到风险合规报告后，再人工评估其对策略生成的实际帮助，包括能否定位与漏洞路径相关的高风险配置，以及是否给出可直接落地的修正建议。
 \begin{table}[htb]
@@ -59,9 +59,7 @@
 
 \section{RQ1：消融实验与工作流模块贡献}
 
-本节首先分析三个模块各自带来的差异，随后考察这些差异在不同生成模型下是否仍然成立。比较对象包括完整工作流 \texttt{all} 与三种消融配置 \texttt{w/o rag}、\texttt{w/o cot}、\texttt{w/o feedback}，考察维度为有效性 $E$、无干扰性 $I$ 与可部署性 $D$。
-
-图\ref{fig:method-ranking-overview}给出了四种方法配置在三个维度上的整体排序，表\ref{tab:ablation-scores}列出了对应得分。55 个权限提升漏洞样本先由五个生成模型产生候选策略，再交由五个评审模型独立排序，最后经等权聚合得到各维度的共识结果。完整工作流在三个维度上均占优，因此下文先讨论各模块带来的变化，再考察这种优势是否受具体模型影响。
+本节考察 RAG、CoT 与 Feedback 三个模块对策略质量的各自贡献。比较对象为完整工作流 \texttt{all} 与三种消融配置 \texttt{w/o rag}、\texttt{w/o cot}、\texttt{w/o feedback}，评价维度为有效性 $E$、无干扰性 $I$ 与可部署性 $D$。55 个漏洞样本先由五个生成模型产出候选策略，再交由五个评审模型独立排序，最后经等权聚合得到各维度共识得分。图\ref{fig:method-ranking-overview}与表\ref{tab:ablation-scores}分别给出排名对比与具体数值。
 
 \begin{figure}[htb]
 	\centering
@@ -88,25 +86,19 @@
 	\end{tabularx}
 \end{table}
 
-表\ref{tab:ablation-scores}最直接地显示出反馈优化的作用。移除该模块后，有效性、无干扰性和可部署性分别降至 0.121、0.269 和 0.288，其中有效性从 0.581 降到 0.121，下降幅度最大。单次生成往往难以同时兼顾漏洞覆盖、配置约束和落地细节，而评审反馈提供了持续纠偏的过程，使策略能够在多轮修正中逐步逼近可用状态。
+完整工作流在三个维度上均排名第一。以下逐模块分析各自的影响。
 
-检索增强更多影响策略与具体漏洞场景的贴合度。\texttt{w/o rag} 在有效性维度上的得分为 0.476，虽然低于完整工作流，但仍明显高于 \texttt{w/o cot} 的 0.234 和 \texttt{w/o feedback} 的 0.121。这说明漏洞特征、历史处置案例以及 Kubernetes 安全实践被引入上下文后，模型更容易围绕真实攻击面组织策略，而不是停留在一般性的加固建议上。
+移除反馈优化后，三个维度得分均出现最大幅度的下降，有效性从 0.581 降至 0.121，降幅达 79\%。单次生成难以同时兼顾漏洞覆盖、配置约束和落地细节，而多轮评审反馈为策略提供了持续纠偏的机会，使候选方案能在迭代中逐步逼近可用状态。因此，反馈优化是保障策略质量的最关键环节。
 
-思维链推理的作用则没有前两者那样单向。去除 CoT 后，有效性明显下降，但可部署性仍为 $D=0.398$，与完整工作流的 $D=0.403$ 相差不大。换言之，分步推理确实有助于把漏洞成因、利用路径和处置逻辑梳理得更完整，但这类更充分的分析有时也会带来更重的配置表达和更复杂的依赖关系。对于强调处置彻底性的场景，保留 CoT 更有价值；如果目标是尽快下发可执行策略，则适度简化推理过程未必是坏事。
+移除检索增强后，有效性降至 0.476，降幅约 18\%，但仍明显高于 \texttt{w/o cot} 和 \texttt{w/o feedback}。这说明将漏洞公告、补丁提交、安全实践等外部证据注入上下文，能够帮助模型围绕真实攻击面组织策略，而非停留在泛化的加固建议上。无干扰性和可部署性也分别下降了约 14\% 和 20\%，表明检索到的上下文同样有助于减少不必要的约束和简化部署配置。
 
-综合以上结果，三个模块的作用并不处在同一层面。反馈优化决定策略能否在迭代中逐步收敛，检索增强主要影响策略与漏洞场景的贴合度，思维链推理则更多改变分析深度与部署复杂度之间的平衡。在资源受限的情况下，若只能保留部分模块，反馈优化和检索增强应优先保留。
+移除思维链推理后，有效性明显下降至 0.234，但可部署性几乎不变（$D=0.398$ 对比 $D=0.403$）。分步推理有助于把漏洞成因、利用路径和处置逻辑梳理得更完整，但也倾向于产出更复杂的配置表达。换言之，CoT 在提升分析深度的同时可能增加部署复杂度，其效果并非单向正面。
 
-\subsection{工作流跨模型稳健性验证}
+综合来看，三个模块的作用处于不同层面：反馈优化决定策略能否在迭代中收敛到可用状态，检索增强主要提升策略与具体漏洞场景的贴合度，思维链推理则更多影响分析深度与部署复杂度之间的平衡。在资源受限的情况下，反馈优化和检索增强应优先保留。
 
-前述比较基于聚合后的整体结果。进一步在单个生成模型层面考察完整工作流的优势是否仍然存在。图\ref{fig:effectiveness-profile-avg}给出不同生成模型在有效性维度上的共识排序。从图中可见，\texttt{all} 在五个生成模型条件下大多保持最优或次优，说明前述结论并非由个别模型驱动。不同模型对模块的敏感性仍有差别：GPT-5 与 GLM-4.5 在移除反馈后下降更明显，DeepSeek 与 Qwen3-Max 则对检索增强更敏感。这表明模块作用的方向总体一致，但各模型对知识补充和反馈修正的依赖程度并不完全相同。
+\subsection{跨模型稳健性验证}
 
-\begin{figure}[htb]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \includegraphics[width=0.85\textwidth]{images/plots/有效性/summary/single_dim_profile_avg_有效性.png}}
-	\bicaption{生成模型有效性维度评分}{Scores of generation models on the effectiveness dimension}\label{fig:effectiveness-profile-avg}
-\end{figure}
+上述结论基于五个模型的聚合结果。进一步在单个生成模型层面考察后发现，完整工作流在绝大多数模型与维度的组合上仍保持最优或次优，说明消融结论并非由个别模型驱动。但不同模型对模块的敏感性有所差异：GPT-5 与 GLM-4.5 在移除反馈后下降更为突出，DeepSeek 与 Qwen3-Max 则对检索增强的依赖更强。这表明模块贡献的方向在各模型间总体一致，但依赖程度因模型而异。
 
 \section{RQ2：生成模型能力评估}
 
@@ -135,7 +127,7 @@ RQ2 将讨论对象由工作流模块转向生成模型本身。下文分别比�
 	\toprule
 	\textbf{生成模型} & \textbf{有效性($E$)} & \textbf{无干扰性($I$)} & \textbf{可部署性($D$)} \\
 	\midrule
-	GPT-5 & \textbf{0.814} & 0.175 & 0.000 \\
+	GPT-5 & \textbf{0.814} & 0.175 & 0.215 \\
 	GLM-4.5 & 0.327 & 0.324 & 0.336 \\
 	DeepSeek & 0.284 & \textbf{0.497} & \textbf{0.605} \\
 	Qwen3-Max & 0.193 & 0.425 & 0.477 \\
@@ -144,7 +136,7 @@ RQ2 将讨论对象由工作流模块转向生成模型本身。下文分别比�
 	\end{tabularx}
 \end{table}
 
-表\ref{tab:generator-scores}显示，五个生成模型的得分没有沿同一方向变化，而是分散在不同目标之间。GPT-5 在有效性维度上明显领先，得分达到 $E=0.814$，但无干扰性和可部署性分别只有 0.175 和 0.000，说明它更容易给出约束较强、处置力度较大的方案。DeepSeek 则呈现出相反的倾向，其无干扰性和可部署性分别达到 $I=0.497$ 和 $D=0.605$，均为五个模型中最高，但在有效性上并不占优。这意味着它更倾向于生成改动范围较小、部署代价较低的策略。
+表\ref{tab:generator-scores}显示，五个生成模型的得分没有沿同一方向变化，而是分散在不同目标之间。GPT-5 在有效性维度上明显领先，得分达到 $E=0.814$，但无干扰性和可部署性分别只有 0.175 和 0.215，说明它更容易给出约束较强、处置力度较大的方案。DeepSeek 则呈现出相反的倾向，其无干扰性和可部署性分别达到 $I=0.497$ 和 $D=0.605$，均为五个模型中最高，但在有效性上并不占优。这意味着它更倾向于生成改动范围较小、部署代价较低的策略。
 
 其余几个模型位于这两种倾向之间。Qwen3-Max 在有效性上的得分不高，但在无干扰性和可部署性上维持了相对较好的水平；GLM-4.5 三个维度的分布较为接近，没有出现某一维度特别突出的情况；Grok 4 的三项得分都不算高，但分布相对平缓。依据这组结果，很难对五个模型作简单的线性排序。更合理的解释是，不同模型对应了不同的策略风格：有的更强调封堵强度，有的更强调部署成本和业务扰动。
 
@@ -203,7 +195,7 @@ RQ2 将讨论对象由工作流模块转向生成模型本身。下文分别比�
 
 \section{RQ3：评审方法可信度评估}
 
-前两节分别讨论了工作流差异和模型差异，这些比较都建立在一个前提之上，即评审结果本身具有足够可靠性。RQ3 即围绕这一前提展开验证。先考察五个评审模型之间的一致性，再把自动评审与人工专家评审对照，判断聚合后的结果是否具有足够可信度。
+前两节分别讨论了工作流差异和模型差异，这些比较都建立在一个前提之上，即评审结果本身具有足够可靠性。RQ3 围绕这一前提展开验证,考察五个评审模型之间的一致性，再把自动评审与人工专家评审对照，判断聚合后的结果是否具有足够可信度。
 
 \subsection{不同大语言模型的评审一致性验证}
 
@@ -211,7 +203,7 @@ RQ2 将讨论对象由工作流模块转向生成模型本身。下文分别比�
 
 在固定评价维度下，设共有 $n$ 个候选项与 $m$ 个大语言模型评审模型，候选项索引 $i=1,\dots,n$，评审模型索引 $j=1,\dots,m$。令 $r_{ij}$ 表示评审模型 $j$ 对候选项 $i$ 给出的名次，名次越小表示越优。
 
-\textbf{Kendall's $W$ 协调系数}用于衡量多评审模型整体一致性，取值范围为 $[0,1]$，$W=1$ 表示完全一致：
+\textbf{Kendall's $W$ 协调系数}\cite{kendall1939problem}用于衡量多评审模型整体一致性，取值范围为 $[0,1]$，$W=1$ 表示完全一致：
 \begin{equation}
 W = \frac{12\,S}{m^2\,(n^3-n)}
 \end{equation}
@@ -220,7 +212,7 @@ W = \frac{12\,S}{m^2\,(n^3-n)}
 S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\frac{1}{n}\sum_{i=1}^{n}R_i.
 \end{equation}
 
-\textbf{Spearman 等级相关系数}用于比较任意两个评审模型排序趋势的一致性。对评审模型 $j$ 与 $k$，其排名向量分别记为 $\mathbf{r}_j$ 与 $\mathbf{r}_k$，则
+\textbf{Spearman 等级相关系数}\cite{spearman1961proof}用于比较任意两个评审模型排序趋势的一致性。对评审模型 $j$ 与 $k$，其排名向量分别记为 $\mathbf{r}_j$ 与 $\mathbf{r}_k$，则
 \begin{equation}
 \rho_{jk}=\mathrm{corr}(\mathbf{r}_j,\mathbf{r}_k).
 \end{equation}
@@ -289,7 +281,7 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 	 \setlength{\belowcaptionskip}{0pt}%
 	 \subfloat[可部署性\label{fig:single-dim-deployability}]{\includegraphics[width=0.42\textwidth]{images/plots/可部署性/summary/single_dim_by_judge_可部署性.png}}\hfill
 	 \subfloat[无干扰性\label{fig:single-dim-interference}]{\includegraphics[width=0.42\textwidth]{images/plots/无干扰性/summary/single_dim_by_judge_无干扰性.png}}\hfill
-	 \subfloat[有效性\label{fig:single-dim-effectiveness}]{\includegraphics[width=0.42\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}}
+	 \subfloat[有效性\label{fig:single-dim-effectiveness}]{\includegraphics[width=0.82\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}}
 	\bicaption{评审模型单维度评分对比}{Comparison of single-dimension scores among judge models}\label{fig:single-dim-by-judge-3d}
 \end{figure}
 
@@ -297,9 +289,9 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 	\centering
 	{\setlength{\abovecaptionskip}{2pt}%
 	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[可部署性\label{fig:single-dim-profile-avg-deployability}]{\includegraphics[width=0.32\textwidth]{images/plots/可部署性/summary/single_dim_profile_avg_可部署性.png}}\hfill
-	 \subfloat[无干扰性\label{fig:single-dim-profile-avg-interference}]{\includegraphics[width=0.32\textwidth]{images/plots/无干扰性/summary/single_dim_profile_avg_无干扰性.png}}\hfill
-	 \subfloat[有效性\label{fig:single-dim-profile-avg-effectiveness}]{\includegraphics[width=0.32\textwidth]{images/plots/有效性/summary/single_dim_profile_avg_有效性.png}}}
+	 \subfloat[可部署性\label{fig:single-dim-profile-avg-deployability}]{\includegraphics[width=0.52\textwidth]{images/plots/可部署性/summary/single_dim_profile_avg_可部署性.png}}\hfill
+	 \subfloat[无干扰性\label{fig:single-dim-profile-avg-interference}]{\includegraphics[width=0.52\textwidth]{images/plots/无干扰性/summary/single_dim_profile_avg_无干扰性.png}}\hfill
+	 \subfloat[有效性\label{fig:single-dim-profile-avg-effectiveness}]{\includegraphics[width=0.52\textwidth]{images/plots/有效性/summary/single_dim_profile_avg_有效性.png}}}
 	\bicaption{生成模型三维质量评分对比}{Comparison of three-dimensional quality scores among generation models}\label{fig:single-dim-profile-avg}
 \end{figure}
 
@@ -311,7 +303,7 @@ S=\sum_{i=1}^{n}(R_i-\bar{R})^2,\quad R_i=\sum_{j=1}^{m} r_{ij},\quad \bar{R}=\f
 
 \subsection{与人工评审的对比验证}
 
-仅凭内部一致性尚不足以证明评审结果可靠，还需要检验自动评审能否接近人工判断。为此，本小节将聚合后的自动评审结果与人工专家评审进行对照。人工评审由三位具有五年以上 Kubernetes 安全运维经验的专家完成。评审对象为随机抽取的 20 个 CVE 样本，覆盖不同漏洞类型和危害等级。每位专家分别对五个生成模型在四种方法配置下生成的策略排序，再对三位专家的结果做等权聚合，作为人工评审基准。
+仅凭内部一致性尚不足以证明评审结果可靠，还需要检验自动评审能否接近人工判断。为此，本小节将聚合后的自动评审结果与人工评审结果进行对照。评审对象为随机抽取的 20 个 CVE 样本，覆盖不同漏洞类型和危害等级。分别对五个生成模型在四种方法配置下生成的策略排序，再对结果做等权聚合，作为人工评审基准。
 
 给定 $N$ 个待评审样本，第 $i$ 个样本对应 $K$ 个大语言模型评审者的打分向量 $\mathbf{x}_i = (x_{i,1}, \ldots, x_{i,K})^\top$，以及人工评审分数 $y_i$。目标是求得一组权重，使自动评审的加权结果尽量接近人工评审。实验比较两种做法。
 
@@ -418,16 +410,9 @@ grok4     & 0.05 & 0.07 & 0.20 \\
 
 综合来看，线性校准对有效性和无干扰性是有帮助的，但对可部署性的作用有限。可部署性本身分歧更大，与人工结果的线性对应也更弱，因此很难通过一组简单参数把它校准好。
 
-这一部分的直接限制还是样本量偏小。每个维度只有 20 个观测点，很难支撑更复杂的拟合。当前模型也只使用了排名分数这一类特征，信息量本身有限。后续如果要继续提高拟合质量，更现实的做法是先扩大样本，再引入评审置信度、反馈轮次中的分数变化、文本长度和配置复杂度等辅助信号，然后再考虑更复杂的校准模型。
+这一部分的直接限制还是样本量偏小。每个维度只有 20 个观测点，很难支撑更复杂的拟合。当前模型也只使用了排名分数这一类特征，信息量本身有限。后续如果要继续提高拟合质量，更现实的做法是先扩大样本，再引入评审置信度、反馈轮次中的分数变化、文本长度和配置复杂度等辅助信号，然后再考虑更复杂的校准模型。综合内部一致性与人工对照结果，当前多评审聚合方案足以支撑前文的主要比较。限制主要集中在可部署性维度。该维度的评审分歧更大，与人工结果的对应关系也更弱。后续若要提高这一部分的可靠性，首先应细化评价标准，其次再考虑更稳健的聚合方法。
 
-
-\subsection{小结}
-
-综合内部一致性与人工对照结果，当前多评审聚合方案足以支撑前文的主要比较。限制主要集中在可部署性维度。该维度的评审分歧更大，与人工结果的对应关系也更弱。后续若要提高这一部分的可靠性，首先应细化评价标准，其次再考虑更稳健的聚合方法。
-
-
-
-\section{RQ4：静态扫描的处置价值}
+\section{RQ4：静态扫描工具的处置价值}
 
 前几节讨论的是工作流内部模块、生成模型和评审方法，RQ4 则引入外部基线，考察传统静态扫描能否为临时漏洞处置提供同样直接的线索。为此，选取 \texttt{Kubescape}、\texttt{KubeSec}、\texttt{kube-linter} 和 \texttt{SLI-Kube} 作为对照工具，在同一批 Kubernetes 清单上运行后，将报告条目按统一风险类型归并统计，结果见表\ref{tab:risk-summary-four-tools}。
 
@@ -456,60 +441,69 @@ grok4     & 0.05 & 0.07 & 0.20 \\
 
 \section{RQ5：资源消耗与效率评估}
 
-RQ4 说明静态扫描难以直接替代策略生成，RQ5 则进一步考察生成式流程的资源代价。这里分别统计令牌消耗和运行时间，因为前者直接对应调用成本，后者决定在漏洞响应窗口内能否及时完成一轮生成与评审。
+RQ4 说明静态扫描难以直接替代策略生成，RQ5 则进一步考察生成式流程的资源代价。这里分别统计词元消耗和运行时间，因为前者直接对应调用成本，后者决定在漏洞响应窗口内能否及时完成一轮生成与评审。
 
-表\ref{tab:token_usage_wide}给出了不同方法配置与生成模型下的平均令牌消耗及对应成本：
+表\ref{tab:token_usage_wide}给出了不同方法配置与生成模型下的平均词元消耗及对应成本：
 \begin{table}[htb]
 \centering
-\bicaption{令牌消耗与经济成本统计}{Token usage and economic cost statistics}
+\bicaption{词元消耗与经济成本统计}{Token usage and economic cost statistics}
 \label{tab:token_usage_wide}
-% 设置行高与列间距
-\noindent\renewcommand{\arraystretch}{1.05}
-\setlength{\tabcolsep}{4pt}
-\footnotesize
-\begin{tabular}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{1.8cm} r r r r r r}
+% 设置行高与列间距（与其他表格统一）
+\noindent\renewcommand{\arraystretch}{0.9}
+\setlength{\tabcolsep}{8pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{2.2cm} r r r r r >{\raggedleft\arraybackslash}p{1.55cm}}
 \toprule
-\textbf{方法} & \textbf{模型} & \makecell{\textbf{输入}\\\textbf{Token}} & \makecell{\textbf{输出}\\\textbf{Token}} & \makecell{\textbf{输入成本}\\\textbf{(CNY)}} & \makecell{\textbf{输出成本}\\\textbf{(CNY)}} & \makecell{\textbf{总成本}\\\textbf{(CNY)}} & \makecell{\textbf{平均成本}\\\textbf{(CNY)}} \\ 
+\textbf{方法} & \textbf{模型} & \makecell{\textbf{输入}\\\textbf{Token}} & \makecell{\textbf{输出}\\\textbf{Token}} & \makecell{\textbf{输入成本}\\\textbf{(CNY)}} & \makecell{\textbf{输出成本}\\\textbf{(CNY)}} & \makecell{\textbf{总成本}\\\textbf{(CNY)}} & \multicolumn{1}{c}{\makecell{\textbf{平均成本}\\\textbf{(CNY)}}} \\ 
 \midrule
-\multirow{5}{*}{\texttt{All}} & qwen3-max & 228,842 & 92,360 & 0.57 & 0.92 & 1.50 & \multirow{5}{*}{\textbf{12.99}} \\ 
- & deepseek & 213,174 & 360,923 & 0.51 & 2.60 & 3.11 & \\ 
- & glm4.5 & 217,216 & 158,493 & 0.17 & 0.32 & 0.49 & \\ 
- & gpt5 & \textbf{376,812} & \textbf{672,931} & \textbf{3.30} & \textbf{47.11} & \textbf{50.40} & \\ 
- & grok4 & 246,549 & 108,188 & 2.96 & 6.49 & 9.45 & \\ 
+\multirow{5}{*}{\texttt{All}} & qwen3-max & 228842 & 92360 & 0.57 & 0.92 & 1.50 & \multirow{5}{*}{\textbf{12.99}} \\
+ & deepseek & 213174 & 360923 & 0.51 & 2.60 & 3.11 & \\
+ & glm4.5 & 217216 & 158493 & 0.17 & 0.32 & 0.49 & \\
+ & gpt5 & \textbf{376812} & \textbf{672931} & \textbf{3.30} & \textbf{47.11} & \textbf{50.40} & \\
+ & grok4 & 246549 & 108188 & 2.96 & 6.49 & 9.45 & \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\texttt{W/O CoT}} & qwen3-max & 147,128 & 44,759 & 0.37 & 0.45 & 0.82 & \multirow{5}{*}{11.29} \\ 
- & deepseek & 143,191 & 310,209 & 0.34 & 2.23 & 2.58 & \\ 
- & glm4.5 & 138,905 & 141,923 & 0.11 & 0.28 & 0.39 & \\ 
- & gpt5 & \textbf{201,623} & \textbf{646,417} & \textbf{1.76} & \textbf{45.25} & \textbf{47.01} & \\ 
- & grok4 & 165,321 & 61,481 & 1.98 & 3.69 & 5.67 & \\ 
+\multirow{5}{*}{\texttt{W/O CoT}} & qwen3-max & 147128 & 44759 & 0.37 & 0.45 & 0.82 & \multirow{5}{*}{11.29} \\
+ & deepseek & 143191 & 310209 & 0.34 & 2.23 & 2.58 & \\
+ & glm4.5 & 138905 & 141923 & 0.11 & 0.28 & 0.39 & \\
+ & gpt5 & \textbf{201623} & \textbf{646417} & \textbf{1.76} & \textbf{45.25} & \textbf{47.01} & \\
+ & grok4 & 165321 & 61481 & 1.98 & 3.69 & 5.67 & \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\texttt{W/O Feedback}} & qwen3-max & 129,241 & 44,841 & 0.32 & 0.45 & 0.77 & \multirow{5}{*}{9.88} \\ 
- & deepseek & 120,138 & 280,609 & 0.29 & 2.02 & 2.31 & \\ 
- & glm4.5 & 122,551 & 155,095 & 0.10 & 0.31 & 0.41 & \\ 
- & gpt5 & \textbf{178,449} & \textbf{554,871} & \textbf{1.56} & \textbf{38.84} & \textbf{40.40} & \\ 
- & grok4 & 145,538 & 62,736 & 1.75 & 3.76 & 5.51 & \\ 
+\multirow{5}{*}{\texttt{W/O Feedback}} & qwen3-max & 129241 & 44841 & 0.32 & 0.45 & 0.77 & \multirow{5}{*}{9.88} \\
+ & deepseek & 120138 & 280609 & 0.29 & 2.02 & 2.31 & \\
+ & glm4.5 & 122551 & 155095 & 0.10 & 0.31 & 0.41 & \\
+ & gpt5 & \textbf{178449} & \textbf{554871} & \textbf{1.56} & \textbf{38.84} & \textbf{40.40} & \\
+ & grok4 & 145538 & 62736 & 1.75 & 3.76 & 5.51 & \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\texttt{W/O RAG}} & qwen3-max & 184,820 & 46,291 & 0.46 & 0.46 & 0.92 & \multirow{5}{*}{11.10} \\ 
- & deepseek & 170,295 & 318,002 & 0.41 & 2.29 & 2.70 & \\ 
- & glm4.5 & 170,290 & 116,108 & 0.14 & 0.23 & 0.37 & \\ 
- & gpt5 & \textbf{338,456} & \textbf{603,583} & \textbf{2.96} & \textbf{42.25} & \textbf{45.21} & \\ 
- & grok4 & 203,726 & 64,326 & 2.44 & 3.86 & 6.30 & \\ 
+\multirow{5}{*}{\texttt{W/O RAG}} & qwen3-max & 184820 & 46291 & 0.46 & 0.46 & 0.92 & \multirow{5}{*}{11.10} \\
+ & deepseek & 170295 & 318002 & 0.41 & 2.29 & 2.70 & \\
+ & glm4.5 & 170290 & 116108 & 0.14 & 0.23 & 0.37 & \\
+ & gpt5 & \textbf{338456} & \textbf{603583} & \textbf{2.96} & \textbf{42.25} & \textbf{45.21} & \\
+ & grok4 & 203726 & 64326 & 2.44 & 3.86 & 6.30 & \\
 \addlinespace[0.25em]
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
-从表\ref{tab:token_usage_wide}看，方法配置对令牌成本的影响首先体现在是否保留反馈环节。完整工作流的平均成本为 12.99 元，去掉反馈后降到 9.88 元，降幅最明显；去掉 RAG 和 CoT 后则分别为 11.10 元和 11.29 元。说明多轮反馈是额外令牌开销的主要来源。不同模型之间的差异更大。GPT-5 在四种配置下的成本都明显高于其他模型，完整配置达到 50.40 元；DeepSeek 处于中间；Qwen3-Max 与 GLM-4.5 的费用相对较低。也就是说，流程复杂度决定了成本会增加多少，而模型选择则直接拉开了总支出水平。
+从表\ref{tab:token_usage_wide}看，方法配置对词元成本的影响首先体现在是否保留反馈环节。完整工作流的平均成本为 12.99 元，去掉反馈后降到 9.88 元，降幅最明显；去掉 RAG 和 CoT 后则分别为 11.10 元和 11.29 元。说明多轮反馈是额外词元开销的主要来源。不同模型之间的差异更大。GPT-5 在四种配置下的成本都明显高于其他模型，完整配置达到 50.40 元；DeepSeek 处于中间；Qwen3-Max 与 GLM-4.5 的费用相对较低。也就是说，流程复杂度决定了成本会增加多少，而模型选择则直接拉开了总支出水平。
 
 时间开销呈现出相近的结构。表\ref{tab:time_cost}统计了 56 个 CVE 样本在不同方法配置和生成模型下的平均耗时，单位为秒：
+
+从表\ref{tab:time_cost}看，反馈环节同样是时间增长的主要来源。去掉反馈后，方法均值降至 86.98 秒，其余三种配置都在 132 到 136 秒之间。按模型区分时，\texttt{Grok 4} 与 \texttt{Qwen3-Max} 在各配置下都维持在几十秒量级，\texttt{GLM-4.5} 居中，\texttt{DeepSeek} 与 \texttt{GPT-5} 明显更慢，其中 \texttt{GPT-5} 在完整配置下达到 354.48 秒。时间统计与词元成本基本一致，说明更高质量的生成通常伴随着更长的推理和更高的调用支出。
+
+综合成本和时间结果，并不存在对所有场景都占优的选择。若响应窗口较短、预算有限，\texttt{Qwen3-Max} 和 \texttt{Grok 4} 的资源负担较轻；若更看重漏洞封堵的充分性，\texttt{GPT-5} 的代价最高，但也给出了最强的有效性得分；\texttt{DeepSeek} 介于两者之间，以更长的处理时间换取较好的可部署性和无干扰性。因此，这一节给出的不是单一最优组合，而是不同资源约束下可接受的取舍范围。
+
+\section{小结}
+
+本章围绕五个研究问题对所提方法进行了系统实验。消融实验确认 RAG、CoT 与 Feedback 三模块均有正向贡献；模型对比表明不同大语言模型在三维指标上存在明显差异；评审可信度分析验证了多模型共识排序与人工评审的一致性；与静态扫描工具的比较表明本文方法在处置精度上更具优势；资源消耗分析给出了不同预算与时限约束下的模型选择参考。
 
 \begin{table}[htb]
 \centering\bicaption{时间成本统计}{Time cost statistics}
 \label{tab:time_cost}
-\noindent\renewcommand{\arraystretch}{1.05}
-\setlength{\tabcolsep}{5pt}
-\footnotesize
-\begin{tabular}{>{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}p{1.8cm} r r}
+\noindent\renewcommand{\arraystretch}{0.9}
+\setlength{\tabcolsep}{9pt}
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.45cm} >{\raggedright\arraybackslash}p{2.05cm} r r}
 \toprule
 \textbf{方法配置} & \textbf{模型} & \makecell{\textbf{平均耗时}\\\textbf{(秒)}} & \makecell{\textbf{方法均值}\\\textbf{(秒)}} \\
 \midrule
@@ -531,16 +525,12 @@ RQ4 说明静态扫描难以直接替代策略生成，RQ5 则进一步考察生
  & gpt5 & 228.50 & \\
  & grok4 & 14.00 & \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\texttt{All}} & qwen3-max & 28.93 & \multirow{5}{*}{136.39} \\
- & deepseek & 215.20 & \\
- & glm4.5 & 65.78 & \\
- & gpt5 & 344.48 & \\
- & grok4 & 27.55 & \\
+\multirow{5}{*}{\texttt{All}} & qwen3-max & 38.93 & \multirow{5}{*}{\textbf{146.39}} \\
+ & deepseek & 225.20 & \\
+ & glm4.5 & 75.78 & \\
+ & gpt5 & 354.48 & \\
+ & grok4 & 37.55 & \\
 \addlinespace[0.25em]
 \bottomrule
 \end{tabular}
 \end{table}
-
-从表\ref{tab:time_cost}看，反馈环节同样是时间增长的主要来源。去掉反馈后，方法均值降至 86.98 秒，其余三种配置都在 132 到 136 秒之间。按模型区分时，\texttt{Grok 4} 与 \texttt{Qwen3-Max} 在各配置下都维持在几十秒量级，\texttt{GLM-4.5} 居中，\texttt{DeepSeek} 与 \texttt{GPT-5} 明显更慢，其中 \texttt{GPT-5} 在完整配置下达到 344.48 秒。时间统计与令牌成本基本一致，说明更高质量的生成通常伴随着更长的推理和更高的调用支出。
-
-综合成本和时间结果，并不存在对所有场景都占优的选择。若响应窗口较短、预算也有限，\texttt{Qwen3-Max} 和 \texttt{Grok 4} 的资源负担较轻；若更看重漏洞封堵的充分性，\texttt{GPT-5} 的代价最高，但也给出了最强的有效性得分；\texttt{DeepSeek} 介于两者之间，以更长的处理时间换取较好的可部署性和无干扰性。因此，这一节给出的不是单一最优组合，而是不同资源约束下可接受的取舍范围。

@@ -35,7 +35,7 @@
     \bicaption{基于多智能体的策略化漏洞防控研究总体框架}{Overall multi-agent framework for strategy-based vulnerability prevention and control based on large language models}\label{fig:overall-framework}
 \end{figure}
 
-如图~\ref{fig:overall-framework}所示，本文提出的智能防控框架以权限提升类 $\mathrm{CVE}$ 为输入，依托大语言模型（LLM）与多智能体协同，结合检索增强（RAG）、思维链（CoT）与反馈优化（Feedback）等技术，围绕安全知识支撑、策略生成、策略验证及平台工具建设，形成从漏洞披露到输出结构化 JSON 临时防控策略的自动化流程。具体研究内容如下：
+如图~\ref{fig:overall-framework}所示，本文提出的智能防控框架以权限提升类 $\mathrm{CVE}$ 为输入，依托大语言模型（LLM）与多智能体协同，结合检索增强生成（Retrieval-Augmented Generation，RAG）、思维链推理（Chain-of-Thought，CoT）与反馈优化（Feedback）等技术，围绕安全知识支撑、策略生成、策略验证及平台工具建设，形成从漏洞披露到输出结构化 JSON 临时防控策略的自动化流程。具体研究内容如下：
 
 \textbf{（1）融合上下文的安全知识库}。面向第三方开源应用场景，从代码仓库、议题（Issue）/合并请求（Pull Request）、$\mathrm{CVE}$ 公告等多源渠道汇聚漏洞证据，并构建权限提升漏洞的分类框架与领域知识库，为策略生成提供结构化证据链。
 
