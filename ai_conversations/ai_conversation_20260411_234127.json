@@ -1,0 +1,28 @@
+{
+  "conversation_id": "ai_conversation_20260411_234127",
+  "timestamp": "2026-04-11T23:41:27.257762",
+  "summary": "刚完成中英文摘要改写，主要改动：贡献拓展为4项、修正无依据百分比、补充核心方法细节，等待反馈",
+  "feedback_count": 1,
+  "feedback": [
+    {
+      "user_input": "[约束条件]\n- 禁止生成总结性Markdown文档\n- 禁止生成测试脚本\n- 禁止编译项目\n- 禁止运行项目",
+      "selected_options": [
+        "继续当前任务"
+      ],
+      "images": [],
+      "metadata": {
+        "timestamp": "2026-04-11T15:41:26.253Z",
+        "request_id": "req_657d975e9a91",
+        "source": "popup_submit"
+      }
+    }
+  ],
+  "system_info": {
+    "platform": "Windows",
+    "version": "10.0.26100",
+    "architecture": "64bit",
+    "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+    "python_version": "3.8.6",
+    "username": "HXY"
+  }
+}

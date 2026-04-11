@@ -1,0 +1,26 @@
+{
+  "conversation_id": "ai_conversation_20260411_234829",
+  "timestamp": "2026-04-11T23:48:29.910152",
+  "summary": "刚修改了摘要贡献1和2的标题与表述，去除了括号和AI味，等待确认",
+  "feedback_count": 1,
+  "feedback": [
+    {
+      "user_input": "要不第二条改为多智能体协同的策略化漏洞防控方法？此外同时尝试给全文统一这种说法，。\n\n\n[约束条件]\n- 禁止生成总结性Markdown文档\n- 禁止生成测试脚本\n- 禁止编译项目\n- 禁止运行项目",
+      "selected_options": [],
+      "images": [],
+      "metadata": {
+        "timestamp": "2026-04-11T15:48:28.904Z",
+        "request_id": "req_a8b881364ab5",
+        "source": "popup_submit"
+      }
+    }
+  ],
+  "system_info": {
+    "platform": "Windows",
+    "version": "10.0.26100",
+    "architecture": "64bit",
+    "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+    "python_version": "3.8.6",
+    "username": "HXY"
+  }
+}

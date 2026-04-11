@@ -1,0 +1,21 @@
+{
+  "conversation_id": "ai_conversation_20260411_235624",
+  "timestamp": "2026-04-11T23:56:24.697565",
+  "summary": "摘要和全文术语统一工作已完成，等待下一步指示",
+  "feedback_count": 1,
+  "feedback": [
+    {
+      "type": "text",
+      "content": "我更改了一下摘要。请删除不必要的空格 并修改对应的英文摘要。",
+      "timestamp": "2026-04-11T23:56:22.507460"
+    }
+  ],
+  "system_info": {
+    "platform": "Windows",
+    "version": "10.0.26100",
+    "architecture": "64bit",
+    "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+    "python_version": "3.8.6",
+    "username": "HXY"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "conversation_id": "ai_conversation_20260412_004747",
+  "timestamp": "2026-04-12T00:47:47.020080",
+  "summary": "已充实chap2两段文献综述（体系结构缺陷+网络运行时隔离），补充了具体数据和方法细节，等待确认",
+  "feedback_count": 1,
+  "feedback": [
+    {
+      "user_input": "可以不显示具体数据的。。强调方法就行。同时对这里也进行充实：后续研究进一步结合最小执行权限要求，引入强制访问控制机制\\cite{bagheri2019deldroid,wu2016seccomp}\n\n\n[约束条件]\n- 禁止生成总结性Markdown文档\n- 禁止生成测试脚本\n- 禁止编译项目\n- 禁止运行项目",
+      "selected_options": [],
+      "images": [],
+      "metadata": {
+        "timestamp": "2026-04-11T16:47:46.013Z",
+        "request_id": "req_cfd8c2c26cdf",
+        "source": "popup_submit"
+      }
+    }
+  ],
+  "system_info": {
+    "platform": "Windows",
+    "version": "10.0.26100",
+    "architecture": "64bit",
+    "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+    "python_version": "3.8.6",
+    "username": "HXY"
+  }
+}

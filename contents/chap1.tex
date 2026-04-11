@@ -2,19 +2,13 @@
 本章节主要介绍课题的研究背景与意义、研究内容与成果，以及论文的组织结构。
 
 \section{背景与意义}
-容器技术借助内核级资源隔离与标准化镜像分发，改变了微服务应用的构建与交付方式\cite{wuyiwen2023docker}。$\mathrm{Kubernetes}$ 作为主流容器编排平台，为复杂业务的部署与弹性扩展提供了基础支撑\cite{kubernetes2024,alibaba2024}。云原生计算基金会 $\mathrm{CNCF}$ 2025年度调查报告\cite{lawson2026cncf}显示，生产企业 Kubernetes 采用率已达98\%，66\% 的组织已在 Kubernetes 上运行AI工作负载。随着业务规模增长，$\mathrm{Kubernetes}$ 集群往往需要集成大量第三方开源组件，这些组件通过基于角色的访问控制（$\mathrm{RBAC}$）机制\cite{ferraiolo1995role}获取集群资源访问权限。然而，第三方应用在增强平台能力的同时也带来了安全隐患——多租户场景下，过度权限配置\cite{yang2023take}、权限管理缺陷、敏感信息泄露\cite{kubeguard_icws2025}、网络隔离缺失等因素都可能引发权限提升风险。此类漏洞威胁性高、修复周期不确定，且成因与利用路径各异，给企业安全防控带来持续压力。
+容器技术借助内核级资源隔离与标准化镜像分发，改变了微服务应用的构建与交付方式\cite{wuyiwen2023docker}。$\mathrm{Kubernetes}$ 作为主流容器编排平台，为复杂业务的部署与弹性扩展提供了基础支撑\cite{kubernetes2024,alibaba2024}。$\mathrm{CNCF}$ 2025年度调查报告\cite{lawson2026cncf}显示，生产企业 Kubernetes 采用率已达98\%。随着业务规模增长，$\mathrm{Kubernetes}$ 集群需集成大量第三方开源组件，这些组件通过 $\mathrm{RBAC}$ 机制\cite{ferraiolo1995role}获取集群资源访问权限。然而，第三方应用在增强平台能力的同时也引入了安全风险：过度权限配置\cite{yang2023take}、权限管理缺陷、敏感信息泄露\cite{kubeguard_icws2025}、网络隔离缺失等均可导致权限提升漏洞。此类漏洞威胁性高、修复周期不确定，且成因与利用路径各异，给安全防控带来持续压力。
 
-围绕云原生安全治理，学术界和工业界已积累了一定的工具链与方法体系。静态层面，针对镜像依赖、$\mathrm{Kubernetes}$ 清单及 $\mathrm{IaC}$ 模板的漏洞与误配置扫描被广泛用于风险前置发现\cite{shamim2025prescription,k8smanifests2023}；运行时层面，基于系统调用或 $\mathrm{eBPF}$ 事件的观测审计能够辅助异常检测与攻击取证\cite{falco2025}；防护层面，$\mathrm{OPA/Gatekeeper}$\cite{opa2025}、$\mathrm{Kyverno}$\cite{kyverno2025} 等准入控制器可拦截不合规资源进入集群，网络策略则通过最小连通约束抑制横向移动\cite{Minna_2021,Budigiri_2021}。然而上述手段在面对权限提升漏洞时仍有如下不足：
+围绕云原生安全治理，已有安全工具覆盖了完整安全治理周期。静态方面，镜像依赖与 $\mathrm{Kubernetes}$ 清单的静态扫描\cite{shamim2025prescription,k8smanifests2023}；动态方面，基于 $\mathrm{eBPF}$ 的运行时观测与审计\cite{falco2025}，$\mathrm{OPA/Gatekeeper}$\cite{opa2025}、$\mathrm{Kyverno}$\cite{kyverno2025} 等准入控制机制，以及网络策略对横向移动的最小连通约束\cite{Minna_2021,Budigiri_2021}。但上述手段主要面向通用配置基线与已知规则模式，缺乏将特定 $\mathrm{CVE}$ 的利用条件与集群上下文关联的能力\cite{shamim2025prescription,shamim2025dastk8s}，难以为具体漏洞给出针对性处置方案。
 
-\noindent\hangindent=1em\hangafter=1 (1) \textbf{处置精准度不足}。多数方法依赖通用静态规则或单一方向检测，无法结合特定 $\mathrm{CVE}$ 的利用前置条件与攻击链路给出有针对性的处置方案\cite{shamim2025prescription,shamim2025dastk8s}。
+大语言模型的推理与代码生成能力为自动化生成防控策略提供了新思路，但将其应用于漏洞防控场景仍面临以下挑战：
 
-\noindent\hangindent=1em\hangafter=1 (2) \textbf{防控策略难以复用}。已有研究大多围绕某一类权限提升问题展开\cite{yang2023take,gu2024epscan,pecka2022privilege}，但不同漏洞的应用上下文、利用前提和影响范围差异较大，所得策略往往只适用于特定场景，跨场景迁移困难。
-
-\noindent\hangindent=1em\hangafter=1 (3) \textbf{漏洞安全响应能力薄弱}。策略编写高度依赖安全专家的个人经验，面对复杂异构的生产环境，难以形成可规模化、可快速响应的工程流程。
-
-\textbf{大语言模型的推理与代码生成能力}为自动化生成防控策略提供了新的可能，但将其应用于漏洞防控场景仍需克服以下研究挑战：
-
-\noindent\hangindent=1em\hangafter=1 (1) \textbf{补丁窗口期内的快速响应}。权限提升漏洞从披露到官方补丁发布之间往往存在较长的空白期。本文对2020至2025年间55个云原生权限提升漏洞样本的统计表明，$30.4\%$ 的漏洞在披露后长时间处于无补丁状态（如图~\ref{fig:patch-window}所示）。补丁的发布、验证与分发本身需要时间，而生产环境的组件依赖复杂、兼容性要求严格，进一步拖延了升级进度。因此补丁在生产环境中就绪前如何快速生成可用的临时防控措施，是需要优先解决的问题。
+\noindent\hangindent=1em\hangafter=1 (1) \textbf{补丁窗口期内的快速响应}。权限提升漏洞从披露到补丁发布之间常存在攻击窗口期（图~\ref{fig:patch-window}）。本文对2020至2025年间55个云原生权限提升漏洞的统计表明，$30.4\%$ 因补丁延迟而长期处于可利用状态。生产环境组件依赖复杂，升级周期进一步延长。在补丁就绪前快速生成临时防控措施是补全第三方应用安全治理的关键环节；而当前策略编写高度依赖专家经验，响应效率受限，亟需引入自动化手段。
 
 \begin{figure}[htb]
     \centering
@@ -22,9 +16,9 @@
     \bicaption{云原生环境下权限提升漏洞的修复时间分布}{Distribution of remediation time for privilege escalation vulnerabilities in cloud-native environments}\label{fig:patch-window}
 \end{figure}
 
-\noindent\hangindent=1em\hangafter=1 (2) \textbf{多类型漏洞的领域知识融合}。权限提升漏洞涵盖 $\mathrm{RBAC}$ 滥用、容器逃逸、$\mathrm{API}$ 越权等多种攻击类型，各自的成因、利用前提和波及范围差别很大。要让大模型生成有针对性的策略，需要先将分散在代码仓库、漏洞公告、安全社区等渠道中的异构上下文信息加以收集与结构化组织，形成可被检索调用的领域知识体系。
+\noindent\hangindent=1em\hangafter=1 (2) \textbf{多类型漏洞的领域知识融合}。权限提升漏洞涵盖 $\mathrm{RBAC}$ 滥用、容器逃逸、$\mathrm{API}$ 越权等多种攻击类型，成因、利用前提和波及范围差异显著。生成针对性策略需要先将分散在代码仓库、漏洞公告、安全社区等渠道中的异构信息加以收集与结构化组织，形成可检索的领域知识体系。
 
-\noindent\hangindent=1em\hangafter=1 (3) \textbf{大模型生成的不确定性控制}。大语言模型在将漏洞语义转化为可执行策略代码时，存在产生幻觉、逻辑矛盾或偏离实际运行环境的风险。如果缺乏有效的验证与校正环节，生成的策略可能无法正确阻断攻击甚至干扰正常业务。
+\noindent\hangindent=1em\hangafter=1 (3) \textbf{生成结果的不确定性控制}。大语言模型在将漏洞语义转化为可执行策略代码时，存在幻觉、逻辑矛盾或偏离实际环境的风险。缺乏有效的验证与校正机制，生成的策略可能无法阻断攻击甚至干扰正常业务。
 
 \section{研究内容与成果}
 基于上述现实需求，本文聚焦于补丁窗口期内云原生权限提升漏洞的动态防控。按照控制手段的作用方式，可将相关措施概括为监控策略与防护策略两个互补层次。其中，防护策略侧重在漏洞利用发生前阻断关键条件并收敛攻击面；监控策略则侧重运行时异常行为的持续观测与取证。
@@ -48,4 +42,16 @@
 
 \section{论文组织结构}
 
-全文结构如下：第\ref{chap:background}章介绍相关概念、关键技术与国内外研究现状；第\ref{chap:method}章给出面向云原生权限提升漏洞的智能防控技术体系；第\ref{chap:system}章描述漏洞防控系统的设计与实现；第\ref{chap:experiment}章呈现实验设置与结果分析；第\ref{chap:case}章给出案例分析；第\ref{chap:conclusion}章总结全文并展望后续工作。
+\noindent\hangindent=5em\hangafter=1 第一章，\quad 引言，主要包括课题的研究背景与意义、研究内容与成果以及论文组织结构。
+
+\noindent\hangindent=5em\hangafter=1 第二章，\quad 背景介绍，主要包括相关概念及技术、云原生安全工具与国内外研究现状。
+
+\noindent\hangindent=5em\hangafter=1 第三章，\quad 面向云原生权限提升漏洞的智能动态防控技术，包括形式化定义与总体方法流程、开源应用漏洞安全知识库构建、基于多智能体协同的策略生成与优化以及策略评估与质量控制。
+
+\noindent\hangindent=5em\hangafter=1 第四章，\quad 智能化防控系统的设计与实现，包括需求分析、总体设计、详细设计与实现。
+
+\noindent\hangindent=5em\hangafter=1 第五章，\quad 实验研究，主要包括研究问题阐述、实验对象与设计、结果分析与讨论。
+
+\noindent\hangindent=5em\hangafter=1 第六章，\quad 案例分析，选取典型 CVE 案例进行漏洞复现与策略部署验证。
+
+\noindent\hangindent=5em\hangafter=1 第七章，\quad 研究工作的总结以及未来的展望。

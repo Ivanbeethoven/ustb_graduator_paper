@@ -1,0 +1,26 @@
+{
+  "conversation_id": "ai_conversation_20260410_162824",
+  "timestamp": "2026-04-10T16:28:24.596865",
+  "summary": "已删除chap5全文RQ引用并添加章节引言，等待反馈",
+  "feedback_count": 1,
+  "feedback": [
+    {
+      "user_input": "本章的实验围绕以下问题展开：\n(1)\tRPPrediction对冗余权限的预测效果如何？\n该方法将冗余权限检测建模为一个二分类预测任务，其预测的准确性和精确性有待评估。\n(2)\tRPEDetection对四种运行时权限提升行为的检测效果如何？\n验证该方法对四种类型的权限提升行为的检测效果。\n(3)\tSRLDetection对敏感资源泄漏行为的检测效果如何？\n通过匹配关键词来检测敏感资源泄漏必然会存在漏检和误报的情况。需要验证该方法的准确率和精确率。\n(4)\tKubeGuard对Kubernetes集群性能的影响如何？\nKubeGuard需要对Kubernetes中的资源访问和集群流量进行监控。需要评估这两种监控行为对集群资源访问速率和应用间通信速率的影响。\n你参考这里的写法。\n然后章节你参考这种形式：5 实证研究\t58\n5.1 研究问题\t58\n5.2 实验对象\t58\n5.2.1 实例1：Prometheus\t58\n5.2.2 实例2：Order-System\t59\n5.3 实验设计\t60\n5.3.1 实验环境\t60\n5.3.2 基准技术\t60\n5.3.3 度量指标\t60\n5.3.4 实验过程\t61\n5.4 结果分析与讨论\t65\n5.4.1 冗余权限预测方法有效性验证\t65\n5.4.2 运行时权限提升检测方法有效性验证\t66\n5.4.3 敏感资源泄漏检测方法有效性验证\t67\n5.4.4 对Kubernetes集群的性能影响评估\t68",
+      "selected_options": [],
+      "images": [],
+      "metadata": {
+        "timestamp": "2026-04-10T08:28:23.586Z",
+        "request_id": "req_1682a402d721",
+        "source": "popup_submit"
+      }
+    }
+  ],
+  "system_info": {
+    "platform": "Windows",
+    "version": "10.0.26100",
+    "architecture": "64bit",
+    "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+    "python_version": "3.8.6",
+    "username": "HXY"
+  }
+}

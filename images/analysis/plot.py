@@ -1130,6 +1130,7 @@ def plot_judge_consistency_extended(csv3: pd.DataFrame, out_dir: Path) -> None:
         bars = plt.bar(
             w_df["dimension"].astype(str).tolist(),
             w_df["kendalls_w"].astype(float).tolist(),
+            width=0.45,
             color=_bar_palette(len(w_df), monochrome=True),
         )
         plt.ylabel("Kendall's W", fontsize=12)
@@ -1153,6 +1154,7 @@ def plot_judge_consistency_extended(csv3: pd.DataFrame, out_dir: Path) -> None:
             x="dimension",
             y="corr",
             order=dim_order,
+            width=0.45,
             color="#A5A5A5",
             linewidth=1.0,
         )

@@ -1,0 +1,26 @@
+{
+  "conversation_id": "ai_conversation_20260410_171928",
+  "timestamp": "2026-04-10T17:19:28.800794",
+  "summary": "已删除所有subsubsection并融入父节，恢复secnumdepth为2",
+  "feedback_count": 1,
+  "feedback": [
+    {
+      "user_input": "表格5-10词元消耗与经济成本统计  图5-7生成模型三维质量评分对比（这个图本身排布就有点不合理 尝试改为第一列两个 第二列一个的形式，可以参考5-6）图5-8人工评审的三维度雷达图对比， 图5-9语言模型评审的三维度雷达图对比  表5-11时间成本统计等 都和文字描述的距离很远。。。尝试修复",
+      "selected_options": [],
+      "images": [],
+      "metadata": {
+        "timestamp": "2026-04-10T09:19:27.791Z",
+        "request_id": "req_310aae447635",
+        "source": "popup_submit"
+      }
+    }
+  ],
+  "system_info": {
+    "platform": "Windows",
+    "version": "10.0.26100",
+    "architecture": "64bit",
+    "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+    "python_version": "3.8.6",
+    "username": "HXY"
+  }
+}

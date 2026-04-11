@@ -1,0 +1,26 @@
+{
+  "conversation_id": "ai_conversation_20260410_173458",
+  "timestamp": "2026-04-10T17:34:58.899601",
+  "summary": "删除了judge-dispersion分歧程度统计图，等待反馈",
+  "feedback_count": 1,
+  "feedback": [
+    {
+      "user_input": "把\t\\bicaption{生成模型三维质量评分对比}{Comparison of three-dimensional quality scores among generation models}\\label{fig:single-dim-profile-avg}\n及其相关的部分也删除吧\n\n\n[约束条件]\n- 禁止生成总结性Markdown文档\n- 禁止生成测试脚本\n- 禁止编译项目\n- 禁止运行项目",
+      "selected_options": [],
+      "images": [],
+      "metadata": {
+        "timestamp": "2026-04-10T09:34:57.892Z",
+        "request_id": "req_6f3311442b8d",
+        "source": "popup_submit"
+      }
+    }
+  ],
+  "system_info": {
+    "platform": "Windows",
+    "version": "10.0.26100",
+    "architecture": "64bit",
+    "processor": "Intel64 Family 6 Model 197 Stepping 2, GenuineIntel",
+    "python_version": "3.8.6",
+    "username": "HXY"
+  }
+}

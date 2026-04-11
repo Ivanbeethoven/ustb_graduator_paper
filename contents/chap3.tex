@@ -1,7 +1,7 @@
 
-\chapter{面向云原生权限提升漏洞的智能防控技术}\label{chap:method}
+\chapter{面向云原生权限提升漏洞的智能动态防控技术}\label{chap:method}
 
-本章系统阐述面向云原生权限提升漏洞的智能防控方法，依次给出形式化定义与总体方法流程，并围绕知识库构建、多智能体策略生成与质量评估三项核心技术展开具体设计。
+本章系统阐述面向云原生权限提升漏洞的智能动态防控方法，依次给出形式化定义与总体方法流程，并围绕知识库构建、多智能体策略生成与质量评估三项核心技术展开具体设计。
 
 \section{形式化定义}
 
@@ -185,7 +185,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 \begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/method.png}
-    \bicaption{多智能体协同的安全策略生成框架}{Multi-agent collaborative framework for security strategy generation}\label{fig:method}
+    \bicaption{多智能体协同的策略化漏洞防控工作流}{Multi-agent collaborative framework for strategy-based vulnerability prevention and control}\label{fig:method}
 \end{figure}
 
 
@@ -315,7 +315,7 @@ CWE 体系在组织形态上并非严格正交的分类结构：同一漏洞可�
 \end{Verbatim}
 \end{PromptBox}
 
-为提高结构化输出的一致性，本文进一步引入外部校验器，对策略中的规则片段与配置表达进行语法与模式一致性检查，从而将部分可部署性风险前移到生成阶段。系统实现中，该校验器可通过模型上下文协议（MCP，Model Context Protocol）等接口接入，但该实现细节并不改变方法本身的定义。校验重点包括语法正确性、最小格式约束以及与 \texttt{type}、\texttt{method}、\texttt{action} 三字段模式的一致性。
+为提高结构化输出的一致性，本文进一步引入外部校验器，对策略中的规则片段与配置表达进行语法与模式一致性检查，从而将部分可部署性风险前移到生成阶段。系统实现中，该校验器可通过模型上下文协议（MCP，Model Context Protocol）等接口接入，但该实现细节并不改变方法本身的定义。校验重点包括语法正确性、格式约束一致性。
 
 当校验未通过时，外部校验器返回结构化错误摘要，并将其作为反馈信号回注至生成过程，触发对相关片段的局部修正。该修正过程仅作用于出错片段及其必要上下文，以避免对已通过校验的内容产生无关扰动；若在预设迭代轮次内仍无法满足校验要求，则将该候选标记为待人工复核或待补充信息，并在后续质量评价中降低其优先级。
 

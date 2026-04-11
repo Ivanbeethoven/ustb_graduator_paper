@@ -112,6 +112,7 @@
 \RequirePackage{colortbl}
 \RequirePackage{makecell}
 \RequirePackage{multirow}
+\RequirePackage{placeins}
 %%% 如果需要长的宏包的话，就添加长的宏包。
 \RequirePackage{longtable}
 \RequirePackage[justification=centering]{caption}
