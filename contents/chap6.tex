@@ -94,5 +94,27 @@
 
 \input{contents/chap6/case7.tex}
 
-\section{小节}
-通过本章的分析，本文所提多智能体协同的策略化漏洞防控框架能够有效应对多种云原生环境中的权限提升漏洞。通过对典型 CVE 案例的复现与分析，验证了自动生成的\textbf{监控策略}与\textbf{防护策略}在真实攻击场景中的有效性与适用性，为云原生应用的安全防护提供了有力支撑。
+表~\ref{tab:case-summary-eid}从有效性、无干扰性与可部署性三个维度汇总了 7 个案例的验证结论。
+
+\begin{table}[htb]
+    \centering\bicaption{案例验证三维质量汇总}{Summary of three-dimensional quality verification across cases}\label{tab:case-summary-eid}
+    \noindent\renewcommand{\arraystretch}{1.15}
+    \setlength{\tabcolsep}{3pt}
+    \small
+    \begin{tabularx}{\linewidth}{c >{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+        \toprule
+        \textbf{序号} & \textbf{CVE 编号} & \textbf{有效性 $E$} & \textbf{无干扰性 $I$} & \textbf{可部署性 $D$} \\
+        \midrule
+        1 & CVE-2022-24768 & 多环节阻断攻击链，复测确认提权失败 & 保留正常同步能力，建议先审计后强制 & RBAC/准入控制均为原生能力 \\
+        2 & CVE-2025-2241 & RBAC 收敛+审计告警+对象清理降低凭据暴露 & 需以按需授权替代全局可读 & 原生能力，准入建议 dryrun 起步 \\
+        3 & CVE-2023-30512 & 直接移除 secrets 读取能力，复测 can-i 为 no & 需验证 CSI 的 PVC/PV 生命周期 & RBAC/准入可模板化推广 \\
+        4 & CVE-2020-4062 & 默认拒绝策略阻断横向移动，复测端口不可达 & 需验证组件间通信与标签一致性 & NetworkPolicy 原生资源，维护成本低 \\
+        5 & CVE-2022-24877 & CI 校验阻断异常路径引用进入仓库 & 历史不规范写法可能触发误报 & CI 准入检查可复用，GitOps 交付 \\
+        6 & CVE-2022-29171 & 禁用 Gitolite 消除命令执行入口 & 影响依赖该集成的仓库同步功能 & 标准化配置管理，可模板化推广 \\
+        7 & CVE-2023-22482 & 前置网关 aud 校验阻断跨受众令牌复用 & 需评估对 CLI/Web/流水线的影响 & 身份侧配置可跨集群复用 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\section{小结}
+本章选取覆盖多种成因类型的 7 个典型 CVE，在隔离集群中完成漏洞复现与策略部署验证。如表~\ref{tab:case-summary-eid}所示，生成的监控策略与防护策略在有效性维度上均能阻断或显著缓解攻击路径；无干扰性维度上，多数策略对业务影响可控，但需在预生产环境充分验证；可部署性维度上，策略主要依赖 Kubernetes 原生能力与成熟准入控制组件，便于模板化推广。

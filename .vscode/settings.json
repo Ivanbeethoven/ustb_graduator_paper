@@ -109,5 +109,11 @@
     "code-runner.runInTerminal": true,
     "code-runner.executorMap": {
         "tex": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"xelatex -synctex=1 -interaction=nonstopmode -file-line-error \\\"$file\\\"; xelatex -synctex=1 -interaction=nonstopmode -file-line-error \\\"$file\\\"\""
+    },
+    "chat.tools.terminal.autoApprove": {
+        "/^& \"C:\\\\Users\\\\HXY\\\\Downloads\\\\柠檬酱windsurf无限对话\\.exe\" --gui --project \"d:\\\\论文\\\\latex\" --summary '已审阅第三章，修复小结中下一章指向错误，其余概念一致' --options '\\[\"进行git提交，保存进度\",\"继续当前任务\",\"修改要求\",\"结束\"\\]' --timeout 9999$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
