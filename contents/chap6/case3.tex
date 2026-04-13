@@ -14,12 +14,12 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 
 \textbf{主要成因分类}：配置缺陷 / 过度授权（Over-privileged RBAC）。
 
-\textbf{攻击链条描述}：该漏洞可抽象为“系统组件身份被过度授权\,$\rightarrow$\,被攻陷后可枚举集群秘密”的链条：
+\textbf{攻击链条描述}：攻击链可概括为系统组件身份被过度授权，且在被攻陷后可枚举集群秘密：
 \begin{enumerate}
 	\item \textbf{身份前置阶段}：CSI 组件使用默认或被误配置的 ServiceAccount 运行；
 	\item \textbf{权限放大阶段}：ServiceAccount 被绑定到含 \texttt{secrets} 读取能力的 ClusterRole；
 	\item \textbf{控制获取阶段}：攻击者控制某节点上的 CSI Pod（例如 \texttt{cfs-csi-node}）并获得其运行时上下文；
-	\item \textbf{数据获取阶段}：攻击者以该 ServiceAccount 身份读取集群 Secret，从而获取高价值凭据（管理员 Token、云凭据等），实现从“节点/Pod 控制”向“集群控制”的升级。
+	\item \textbf{数据获取阶段}：攻击者以该 ServiceAccount 身份读取集群 Secret，从而获取高价值凭据（管理员 Token、云凭据等），实现从节点或 Pod 控制向集群控制的升级。
 \end{enumerate}
 
 \begin{figure}[htb]
@@ -32,7 +32,7 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现（验证性复现）}
 
 考虑到本文面向论文复现实验，且该漏洞的攻击细节容易被滥用，本文采用\textbf{验证性复现}思路：
-以“RBAC 权限证据 + 受控权限验证”为主，证明 \texttt{cfs-csi-service-account} 具备不应存在的 \texttt{secrets} 读取能力；
+以 RBAC 权限证据与受控权限验证为主，证明 \texttt{cfs-csi-service-account} 具备不应存在的 \texttt{secrets} 读取能力；
 同时在策略部署后复测，验证该能力被有效移除。
 完整命令与策略清单见附录\ref{app:cve-2023-30512}。
 
@@ -42,7 +42,7 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 \begin{enumerate}
 	\item 盘点并导出 CSI 的 RBAC 绑定，确认 ClusterRole 规则含 \texttt{resources:\allowbreak[\allowbreak secrets\allowbreak]} 且 verbs 包含 \texttt{get/list/watch}；
 	\item 以该 ServiceAccount 身份执行权限验证（\texttt{kubectl auth can-i}），确认其具备跨命名空间读取 \texttt{Secret} 的能力；
-	\item 按“最小权限 + 准入防回归 + 审计检测”部署策略后，重复第 2 步验证权限应为 \texttt{no}。
+	\item 按最小权限、准入防回归与审计检测三项措施部署策略后，重复第 2 步验证权限应为 \texttt{no}。
 \end{enumerate}
 
 \begin{figure}[htb]
@@ -70,14 +70,14 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 
 \subsection{三因素分析}
 
-\noindent\textbf{有效性（Effectiveness）：}
+\noindent\textbf{有效性：}
 RBAC 最小化可直接移除攻击链关键条件，即 \texttt{secrets} 读取能力，从根源降低风险。准入防回归用于阻断误配置、版本回滚或安装脚本重复执行导致的过度授权再次出现。审计检测可在异常访问出现时提供证据并触发凭据轮换等止血动作。
 
-\noindent\textbf{无干扰性（Interference）：}
+\noindent\textbf{无干扰性：}
 RBAC 收敛可能影响 CSI 的部分诊断与自愈路径，应在预生产环境验证 PVC/PV 生命周期以及 attach/detach 等关键流程。准入策略若采用 \texttt{deny} 强制模式，需要避免误拦截平台必需组件的合法权限，建议先以 \texttt{dryrun/audit} 运行并结合白名单迭代。审计与检测会增加日志量与告警治理成本，但通常不影响业务链路。
 
-\noindent\textbf{可部署性（Deployability）：}
+\noindent\textbf{可部署性：}
 RBAC 与审计属于平台原生能力，适合在多集群场景中模板化推广。准入策略与网络收敛属于长期基线治理内容，可通过 GitOps 与策略即代码持续交付。工程落地时建议提供回滚与分批推进路径，先在测试与预生产验证后再逐步推广至生产。
 
-综合以上分析，本文方法针对CVE-2023-30512生成的策略能够有效检测并防护该攻击。通过RBAC最小化直接移除了CSI ServiceAccount不应具备的\texttt{secrets}读取能力，配合准入策略阻断了过度授权的重新引入，复测实验确认了\texttt{kubectl auth can-i}结果从\texttt{yes}变为\texttt{no}。该方案需要在部署前充分验证CSI插件的PVC/PV生命周期功能不受影响，适用于使用第三方CSI插件的Kubernetes集群环境。
+就 CVE-2023-30512 而言，本文方法生成的策略通过 RBAC 最小化直接移除了 CSI ServiceAccount 不应具备的 \texttt{secrets} 读取能力，并以准入策略阻止过度授权再次引入。复测显示 \texttt{kubectl auth can-i} 的结果由 \texttt{yes} 变为 \texttt{no}。部署时仍需验证 CSI 的 PVC/PV 生命周期与相关功能不受影响。
 

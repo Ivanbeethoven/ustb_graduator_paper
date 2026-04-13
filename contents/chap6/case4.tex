@@ -52,13 +52,13 @@ Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平�
 
 \subsection{三因素分析}
 
-\noindent\textbf{有效性（Effectiveness）：}
+\noindent\textbf{有效性：}
 NetworkPolicy 能直接收敛数据库暴露面，将任意 Pod 可达降至仅 Conjur Server 可达，从网络层阻断横向直连路径。命名空间隔离与 RBAC 收敛可进一步降低数据库凭据被读取或滥用的概率，与网络隔离相互配合。基线检测用于在 Helm 回滚或配置漂移时，及时发现 NetworkPolicy 缺失、规则被弱化等回归风险。
 
-\noindent\textbf{无干扰性（Interference）：}
+\noindent\textbf{无干扰性：}
 NetworkPolicy 的引入可能影响 Conjur 组件间通信与运维排障，需在预生产完成连通性与回归验证，并准备回滚方案。若集群 CNI 不支持 NetworkPolicy，则相关策略无法执行，应优先通过命名空间隔离等手段降低暴露面，或在平台层面选用支持策略的 CNI。精确放通依赖正确的标签选择器，标签不一致可能造成误拦截，需要与 Chart 模板保持一致。
 
-\noindent\textbf{可部署性（Deployability）：}
+\noindent\textbf{可部署性：}
 NetworkPolicy 属于 Kubernetes 原生资源，便于纳入 GitOps 流程并在多集群环境中复制推广。由于数据库服务与端口相对稳定，规则维护成本较低。为避免遗漏与回归，可将 NetworkPolicy 纳入 Helm values 或部署流水线的强制检查项，并与基线检测配合使用。
 
-综合以上分析，本文方法针对CVE-2020-4062生成的策略能够有效检测并防护该攻击。通过NetworkPolicy建立默认拒绝策略，将数据库访问面从集群内任意Pod可达收敛至仅Conjur Server可达，从网络层直接阻断了横向移动路径，复现实验验证了策略部署后非授权Pod无法连通Postgres 5432端口。该方案要求集群CNI支持NetworkPolicy，对于不支持的环境需采用命名空间隔离等替代手段。
+就 CVE-2020-4062 而言，本文方法生成的策略以 NetworkPolicy 建立默认拒绝，将数据库访问面从集群内任意 Pod 可达收敛为仅 Conjur Server 可达。复现实验表明，策略部署后非授权 Pod 无法连通 Postgres 5432 端口。该方案依赖集群 CNI 对 NetworkPolicy 的支持，不支持时需采用命名空间隔离等替代手段。

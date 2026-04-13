@@ -1,10 +1,10 @@
 \chapter{引言}
-本章节主要介绍课题的研究背景与意义、研究内容与成果，以及论文的组织结构。
+本章介绍课题的研究背景与意义、研究内容与成果，以及论文的组织结构。
 
 \section{背景与意义}
 容器技术借助内核级资源隔离与标准化镜像分发，改变了微服务应用的构建与交付方式\cite{wuyiwen2023docker}。$\mathrm{Kubernetes}$ 作为主流容器编排平台，为复杂业务的部署与弹性扩展提供了基础支撑\cite{kubernetes2024,alibaba2024}。$\mathrm{CNCF}$ 2025年度调查报告\cite{lawson2026cncf}显示，生产企业 Kubernetes 采用率已达98\%。随着业务规模增长，$\mathrm{Kubernetes}$ 集群需集成大量第三方开源组件，这些组件通过 $\mathrm{RBAC}$ 机制\cite{ferraiolo1995role}获取集群资源访问权限。然而，第三方应用在增强平台能力的同时也引入了安全风险：过度权限配置\cite{yang2023take}、权限管理缺陷、敏感信息泄露\cite{kubeguard_icws2025}、网络隔离缺失等均可导致权限提升漏洞。此类漏洞威胁性高、修复周期不确定，且成因与利用路径各异，给安全防控带来持续压力。
 
-围绕云原生安全治理，已有安全工具覆盖了完整安全治理周期。静态方面，镜像依赖与 $\mathrm{Kubernetes}$ 清单的静态扫描\cite{shamim2025prescription,k8smanifests2023}；动态方面，基于 $\mathrm{eBPF}$ 的运行时观测与审计\cite{falco2025}，$\mathrm{OPA/Gatekeeper}$\cite{opa2025}、$\mathrm{Kyverno}$\cite{kyverno2025} 等准入控制机制，以及网络策略对横向移动的最小连通约束\cite{Minna_2021,Budigiri_2021}。但上述手段主要面向通用配置基线与已知规则模式，缺乏将特定 $\mathrm{CVE}$ 的利用条件与集群上下文关联的能力\cite{shamim2025prescription,shamim2025dastk8s}，难以为具体漏洞给出针对性处置方案。
+围绕云原生安全治理，现有工具已经覆盖了较完整的风险管控周期。静态层面，已有方法可对镜像依赖与 $\mathrm{Kubernetes}$ 清单进行扫描\cite{shamim2025prescription,k8smanifests2023}；动态层面，则包括基于 $\mathrm{eBPF}$ 的运行时观测与审计\cite{falco2025}、$\mathrm{OPA/Gatekeeper}$\cite{opa2025} 和 $\mathrm{Kyverno}$\cite{kyverno2025} 等准入控制机制，以及通过网络策略约束横向连通范围的防护手段\cite{Minna_2021,Budigiri_2021}。但这些方法主要面向通用配置基线与已知规则模式，缺乏将特定 $\mathrm{CVE}$ 的利用条件与集群上下文对应起来的能力\cite{shamim2025prescription,shamim2025dastk8s}，因此难以直接为具体漏洞给出针对性处置方案。
 
 大语言模型的推理与代码生成能力为自动化生成防控策略提供了新思路，但将其应用于漏洞防控场景仍面临以下挑战：
 
@@ -16,9 +16,9 @@
     \bicaption{云原生环境下权限提升漏洞的修复时间分布}{Distribution of remediation time for privilege escalation vulnerabilities in cloud-native environments}\label{fig:patch-window}
 \end{figure}
 
-\noindent\hangindent=1em\hangafter=1 (2) \textbf{多类型漏洞的领域知识融合}。权限提升漏洞涵盖 $\mathrm{RBAC}$ 滥用、容器逃逸、$\mathrm{API}$ 越权等多种攻击类型，成因、利用前提和波及范围差异显著。生成针对性策略需要先将分散在代码仓库、漏洞公告、安全社区等渠道中的异构信息加以收集与结构化组织，形成可检索的领域知识体系。
+\noindent\hangindent=1em\hangafter=1 (2) \textbf{多类型漏洞的领域知识融合}。权限提升漏洞涵盖 $\mathrm{RBAC}$ 滥用、容器逃逸、$\mathrm{API}$ 越权等多种攻击类型，成因、利用前提和波及范围差异显著。若要生成针对性策略，首先需要把分散在代码仓库、漏洞公告和安全社区中的异构信息组织为可检索、可复核的领域知识体系。
 
-\noindent\hangindent=1em\hangafter=1 (3) \textbf{生成结果的不确定性控制}。大语言模型在将漏洞语义转化为可执行策略代码时，存在幻觉、逻辑矛盾或偏离实际环境的风险。缺乏有效的验证与校正机制，生成的策略可能无法阻断攻击甚至干扰正常业务。
+\noindent\hangindent=1em\hangafter=1 (3) \textbf{生成结果的不确定性控制}。大语言模型在将漏洞语义转化为可执行策略代码时，仍可能出现幻觉、逻辑矛盾或偏离实际环境的情况。若缺乏有效的验证与校正机制，生成策略不仅可能无法阻断攻击，还可能干扰正常业务。
 
 \section{研究内容与成果}
 基于上述现实需求，本文聚焦于补丁窗口期内云原生权限提升漏洞的动态防控。按照控制手段的作用方式，可将相关措施概括为监控策略与防护策略两个互补层次。其中，防护策略侧重在漏洞利用发生前阻断关键条件并收敛攻击面；监控策略则侧重运行时异常行为的持续观测与取证。
@@ -29,28 +29,28 @@
     \bicaption{基于多智能体的策略化漏洞防控研究总体框架}{Overall multi-agent framework for strategy-based vulnerability prevention and control based on large language models}\label{fig:overall-framework}
 \end{figure}
 
-如图~\ref{fig:overall-framework}所示，本文提出的智能防控框架以权限提升类 $\mathrm{CVE}$ 为输入，依托大语言模型（LLM）与多智能体协同，结合检索增强生成（Retrieval-Augmented Generation，RAG）、思维链推理（Chain-of-Thought，CoT）与反馈优化（Feedback）等技术，围绕安全知识支撑、策略生成、策略验证及平台工具建设，形成从漏洞披露到输出结构化 JSON 临时防控策略的自动化流程。具体研究内容如下：
+如图~\ref{fig:overall-framework}所示，本文提出的智能防控框架以权限提升类 $\mathrm{CVE}$ 为输入，依托大语言模型与多智能体协同，结合检索增强生成、思维链推理与反馈优化等技术，围绕安全知识支撑、策略生成、策略验证和平台工具建设，形成从漏洞披露到输出结构化 JSON 临时防控策略的自动化流程。具体研究内容如下：
 
 \textbf{（1）融合上下文的漏洞安全知识库构建}。面向第三方开源应用场景，从代码仓库、议题（Issue）/合并请求（Pull Request）、$\mathrm{CVE}$ 公告等多源渠道汇聚漏洞证据，并构建权限提升漏洞的分类框架与领域知识库，为策略生成提供结构化证据链。
 
-\textbf{（2）大模型驱动的漏洞防控策略生成方法}。依托多智能体协同机制，经由证据检索、威胁分析、策略草案生成、评审与迭代修订等阶段，将漏洞攻击链转化为可在 $\mathrm{Kubernetes}$ 平台快速落地的监控与防护策略。
+\textbf{（2）多智能体驱动的漏洞防控策略生成方法}。依托多智能体协同机制，经过证据检索、威胁分析、策略草案生成、评审与迭代修订等阶段，将漏洞攻击链转化为可在 $\mathrm{Kubernetes}$ 平台快速落地的监控与防护策略。
 
 \textbf{（3）原型系统实现}。开发了涵盖知识库构建、工作流管理、模型对接、人工交互与策略部署的平台化工具，支持本研究方法实践落地。
 
-\textbf{（4）实验验证与案例分析}。对研究方法开展静态评估与动态验证：静态阶段提出多维度多主体交叉评审方法，对防控策略进行静态质量评估；动态阶段在实验环境中进行案例分析，基于漏洞复现与策略部署对策略效果进行动态评估。
+\textbf{（4）实验验证与案例分析}。对研究方法开展静态评估与动态验证。静态阶段采用多维度、多主体交叉评审方法评估防控策略质量；动态阶段则在实验环境中结合漏洞复现与策略部署，对策略效果进行验证。
 
 
 \section{论文组织结构}
 
-\noindent\hangindent=5em\hangafter=1 第一章，\quad 引言，主要包括课题的研究背景与意义、研究内容与成果以及论文组织结构。
+\noindent\hangindent=5em\hangafter=1 第一章，\quad 引言，交代课题的研究背景与意义、研究内容与成果以及论文组织结构。
 
-\noindent\hangindent=5em\hangafter=1 第二章，\quad 背景介绍，主要包括相关概念及技术、云原生安全工具与国内外研究现状。
+\noindent\hangindent=5em\hangafter=1 第二章，\quad 背景介绍，梳理相关概念及技术、云原生安全工具与国内外研究现状。
 
 \noindent\hangindent=5em\hangafter=1 第三章，\quad 面向云原生权限提升漏洞的智能动态防控技术，包括形式化定义与总体方法流程、开源应用漏洞安全知识库构建、基于多智能体协同的策略生成与优化以及策略评估与质量控制。
 
 \noindent\hangindent=5em\hangafter=1 第四章，\quad 智能化防控系统的设计与实现，包括需求分析、总体设计、详细设计与实现。
 
-\noindent\hangindent=5em\hangafter=1 第五章，\quad 实验研究，主要包括研究问题阐述、实验对象与设计、结果分析与讨论。
+\noindent\hangindent=5em\hangafter=1 第五章，\quad 实验研究，围绕研究问题、实验对象与设计以及结果分析展开。
 
 \noindent\hangindent=5em\hangafter=1 第六章，\quad 案例分析，选取典型 CVE 案例进行漏洞复现与策略部署验证。
 

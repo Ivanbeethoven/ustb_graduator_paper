@@ -13,9 +13,9 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 
 \textbf{CVSS 信息}：CNA（Red Hat）给出的向量为 \texttt{CVSS:3.1/AV:N/AC:H/PR:L}，基准分 8.2（High）。其含义可理解为：攻击者需要一定前置权限（PR:L）和较高攻击复杂度（AC:H），但一旦满足条件，影响范围跨越安全边界（S:C），并造成高机密性与完整性影响（C:H/I:H）。
 
-\textbf{主要成因分类}：敏感信息泄露 / 配置与对象生命周期缺陷（“Secret 旁路”：敏感数据出现在可读的 CR 状态字段中）。
+\textbf{主要成因分类}：敏感信息泄露 / 配置与对象生命周期缺陷（Secret 旁路，即敏感数据出现在可读的 CR 状态字段中）。
 
-\textbf{攻击链条描述}：该漏洞可抽象为“\texttt{Secret} 隔离被 CR 可读性绕过”的链条：
+\textbf{攻击链条描述}：攻击链可概括为 \texttt{Secret} 隔离被 CR 可读性绕过：
 \begin{enumerate}
 	\item \textbf{权限前置阶段}：攻击者拥有对 \texttt{ClusterProvision} 的 \texttt{get/list/watch} 权限（通常来自聚合角色 \texttt{view/edit} 或错误的绑定）；
 	\item \textbf{数据旁路阶段}：Hive 将 vCenter 凭据写入 \texttt{ClusterProvision},位于 \texttt{status} 字段；
@@ -45,7 +45,7 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 	\item 在输出中定位 vCenter 用户名/密码等敏感字段（例如 \texttt{status.\allowbreak vCenter.\allowbreak credentials\allowbreak.*} 或同类结构）。
 \end{enumerate}
 
-\textbf{攻击结果}：若在 \texttt{ClusterProvision} 的可读字段中发现明文凭据，则说明“敏感信息通过 CR 状态旁路泄露”成立；该风险不依赖 \texttt{Secret} 读取权限，属于权限边界外泄。
+\textbf{攻击结果}：若在 \texttt{ClusterProvision} 的可读字段中发现明文凭据，则说明存在经由 CR 状态字段的敏感信息旁路泄露；该风险不依赖 \texttt{Secret} 读取权限，属于权限边界外泄。
 
 \subsection{策略部署}
 本节给出可落地的缓解策略。本案例侧重敏感信息泄露的多层次控制：通过\textbf{防护策略}收敛读权限面，通过\textbf{监控策略}减少暴露时间。
@@ -60,14 +60,14 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 
 \subsection{三因素分析}
 
-\noindent\textbf{有效性（Effectiveness）：}\par
-RBAC 收敛可直接降低非必要主体读取 \texttt{ClusterProvision} 的概率，是风险抑制的关键手段。审计与告警用于发现异常读取行为，并可在凭据轮换后用于验证风险是否仍然存在。对象清理及其自动化可以减少凭据暴露时间，降低可利用时间。审计型准入检测则有助于在配置漂移或版本回退时及时发现敏感字段再次出现。
+\noindent\textbf{有效性：}
+RBAC 收敛可直接降低非必要主体读取 \texttt{ClusterProvision} 的概率，是风险抑制的关键手段。审计与告警用于发现异常读取行为，并在凭据轮换后复核风险是否仍然存在。对象清理及其自动化能够缩短凭据暴露窗口。审计型准入检测则用于在配置漂移或版本回退时及时发现敏感字段再次出现。
 
-\noindent\textbf{无干扰性（Interference）：}\par
+\noindent\textbf{无干扰性：}
 RBAC 收敛主要影响运维与排障可见性，需要以按需、限时、可审计的授权流程替代全局可读。审计与告警对业务链路通常无直接影响，但会增加日志量与告警治理成本。自动化清理需避免破坏 Hive 的对账或回收流程，建议先在预生产验证，并以标签或状态条件精确匹配对象后再删除。
 
-\noindent\textbf{可部署性（Deployability）：}\par
+\noindent\textbf{可部署性：}
 \textbf{防护策略}层：RBAC 收敛属于平台原生能力，可在多集群中以模板化方式发布。准入\textbf{防护策略}建议从 $\texttt{dryrun/Audit}$ 起步，用于检测与辅助治理，通常不建议强制拦截控制器写入 $\texttt{status}$ 字段，以避免影响供应流程。\textbf{监控策略}层：审计与告警对业务链路通常无直接影响，但会增加日志量与告警治理成本。自动化清理属运维流程治理，建议与 GitOps 或流水线集成，在供应完成后打标签并由定时任务触发清理。
 
-综合以上分析，本文方法针对CVE-2025-2241生成的策略能够有效缓解该漏洞的风险。通过RBAC收敛限制了非必要主体对\texttt{ClusterProvision}的读取，配合审计告警与对象自动清理减少了凭据的暴露时间，从而在升级补丁之前有效降低了凭据被提取的可能性。由于该漏洞的根因在于Hive控制器将凭据写入CR状态字段，上述策略属于补充缓解措施，完整修复仍需升级至厂商发布的补丁版本。
+就 CVE-2025-2241 而言，本文方法生成的策略通过 RBAC 收敛限制了非必要主体对 \texttt{ClusterProvision} 的读取，并配合审计告警与对象自动清理缩短了凭据暴露窗口。该方案适合作为补丁发布前的临时缓解，但根因仍在于 Hive 控制器将凭据写入 CR 状态字段，最终修复仍依赖厂商补丁。
 
