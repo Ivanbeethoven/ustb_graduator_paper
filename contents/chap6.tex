@@ -40,7 +40,7 @@
 
 \subsection{实验环境与复现流程}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{环境搭建}。所有漏洞复现与策略验证在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总如表~\ref{tab:chap6-env}。
+\noindent\hangindent=2em\hangafter=1 \textbf{环境搭建}。所有漏洞复现与策略验证均在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总于表~\ref{tab:chap6-env}。
 
 \begin{table}[htb]
     \centering\bicaption{实验环境软硬件配置与工具版本汇总}{Summary of hardware and software environment configuration and tool versions}\label{tab:chap6-env}
@@ -60,14 +60,14 @@
     \end{tabularx}
 \end{table}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现流程}。对每个 CVE，按以下步骤进行复现：
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现流程}。对每个 CVE，本文按以下步骤进行复现：
 \begin{enumerate}
     \item \textbf{基线环境准备}：部署受影响版本的目标组件，并创建模拟的业务负载与用户身份（如低权限 ServiceAccount）；
     \item \textbf{攻击执行}：根据公开 PoC 或技术分析，模拟攻击者执行权限提升攻击，记录攻击步骤与观测到的异常行为；
     \item \textbf{影响确认}：验证攻击是否成功实现权限提升（如获取集群管理员权限、访问受限资源、执行特权操作等）；
 \end{enumerate}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{策略生成与验证}。复现成功后，使用本文方法生成安全策略并进行三维评价：
+\noindent\hangindent=2em\hangafter=1 \textbf{策略生成与验证}。漏洞复现成功后，使用本文方法生成安全策略并进行三维评价：
 \begin{enumerate}
     \item \textbf{安全上下文构建（检索增强（RAG））}：将 CVE 公告、受影响组件文档、攻击日志与社区讨论输入向量知识库，检索与漏洞相关的证据；
     \item \textbf{策略生成（思维链推理（CoT）与反馈优化（Feedback））}：基于检索增强上下文与漏洞分析结果，生成候选策略并进行评审反馈优化；
@@ -75,7 +75,7 @@
     \item \textbf{三维质量评价}：
     \begin{itemize}
         \item \textbf{有效性（E）}：策略能否成功阻断原攻击路径，是否存在绕过可能；
-        \item \textbf{无干扰性（I）}：策略对正常业务流量的影响（如误报率、性能开销、运维复杂度）；
+        \item \textbf{无干扰性（I）}：策略对正常业务流量的影响，如误报率、性能开销与运维复杂度；
         \item \textbf{可部署性（D）}：策略配置的完整性与可执行性，是否包含清晰的验证与回滚方案。
     \end{itemize}
 \end{enumerate}
