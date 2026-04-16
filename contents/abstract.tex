@@ -1,35 +1,29 @@
 %% 中文摘要页
 \begin{ChineseAbstract}
-Kubernetes 生态中的第三方开源应用普遍存在过度授权、访问控制缺陷、敏感信息泄露和网络隔离不足等高危漏洞，易被利用实施权限提升攻击。从漏洞披露到补丁在生产环境中完成就绪往往存在不可忽视的窗口期，本文统计的样本中有 30.4\% 在披露后仍处于无补丁状态。现有方法偏重通用静态核查与配置审计，难以围绕具体漏洞快速形成可落地的防控方案，策略制定仍高度依赖专家经验。
+Kubernetes 生态中的第三方云原生应用存在可导致权限提升的高危漏洞。在漏洞披露至补丁落地的窗口期内，Kubernetes集群面临较高的被攻击风险。现有针对该类漏洞的防控方法主要依赖静态核查与配置审计，难以围绕具体漏洞快速生成可落地的临时防控策略，相关安全工具的规则编写与策略制定也高度依赖专家经验。
 
-本文围绕补丁窗口期内云原生权限提升漏洞的临时防控需求，利用大语言模型的语义理解与代码生成能力，提出一种基于多智能体协同的策略化漏洞防控框架。本文主要贡献如下。
+针对Kubernetes权限提升漏洞问题，本文提出一种基于多智能体安全策略管理的智能化漏洞防控技术，基于多种安全工具的策略化代码生成、评估与部署实现对权限提升相关漏洞的动态防护与监控,开发了对应的原型系统。本文的主要工作如下。
 
-\textbf{（1）融合上下文的漏洞安全知识库构建}：从代码仓库、漏洞公告、议题与合并请求等多源渠道汇聚漏洞证据，构建带来源标识的向量化安全知识库，并提出面向策略生成的两级成因分类框架，为后续漏洞分析与策略生成提供结构化证据支撑。
+\textbf{（1）多智能体安全策略管理的漏洞防控技术}：首先,本文收集了近年来Kubernetes第三方云原生应用中的权限提升漏洞样本并设计了漏洞成因分类框架，同时基于开源代码仓库中等多源信息构建了云原生权限提升安全知识库。然后，构建由安全知识、代码生成与安全评审等六个智能体组成的工作流，进行针对特定权限提升漏洞防护与监控策略代码的自动生成、迭代优化与质量评估。最后，针对安全策略代码的实际应用需求，设计了覆盖有效性、非干扰性与可部署性的三维质量评价指标。
 
-\textbf{（2）多智能体驱动的漏洞防控策略生成方法}：给出安全策略的三元组形式化表示，并建立有效性、无干扰性与可部署性三维质量评价体系。围绕安全知识整理、漏洞分析、策略生成、策略评审、策略优化与评价六类智能体，构建包含检索增强、思维链推理和反馈优化的协同工作流，并通过多评审主体的排序聚合机制评估策略代码质量。
+\textbf{（2）开发原型系统}：设计并实现原型系统KPEAgent，集成知识库管理、策略生成工作流、专家评审排序与策略部署验证等功能模块，形成面向云原生权限提升漏洞的策略化防控流程。
 
-\textbf{（3）原型系统实现}：设计并实现原型系统 KPEAgent，集成知识库管理、策略生成工作流、专家评审排序与策略部署等功能模块。
-
-\textbf{（4）实验验证与案例分析}：在 55 个漏洞样本上，使用 5 种大语言模型开展消融实验与模型对比实验。结果表明，完整工作流在三个评价维度上均取得最优表现，其中反馈优化对策略质量影响最大，移除后有效性下降 79\%。与四种静态扫描工具相比，本文方法能够围绕具体漏洞提供更有针对性的防控方案。此外，本文还选取 7 个覆盖不同成因类型的典型 CVE，在隔离集群中完成漏洞复现与策略部署验证，从三个维度进一步确认了方法的实际效果。
+\textbf{（3）实验验证与案例分析}：在 55 个漏洞样本上，基于 5 种大语言模型开展消融实验与模型对比实验。结果表明，完整工作流在三个评价维度上均取得最优表现，其中反馈优化对策略质量的影响最为显著，移除该模块后策略有效性下降 79\%。与四种静态扫描工具相比，本文方法能够围绕具体漏洞生成更具针对性的临时防控方案。进一步地，本文选取 7 个覆盖不同成因类型的典型 CVE，在隔离集群中完成漏洞复现与策略部署验证，从三个维度进一步验证了所提方法的实际效果。
 
 \ChineseKeywords{云原生安全；权限提升漏洞；策略代码生成；补丁窗口期防控；多智能体协同}
 \end{ChineseAbstract}
 
 %% 英文摘要页
 \begin{EnglishAbstract}
-Third-party open-source applications in the Kubernetes ecosystem commonly suffer from high-risk vulnerabilities such as excessive privileges, access-control flaws, sensitive information exposure, and insufficient network isolation, making them vulnerable to privilege escalation attacks. A non-negligible window often exists between vulnerability disclosure and patch readiness in production environments, and 30.4\% of disclosed vulnerabilities remain unpatched during this period. Existing methods primarily rely on generic static checks and configuration auditing, and therefore struggle to rapidly generate actionable defense-and-control strategies for specific vulnerabilities. Moreover, strategy formulation is heavily dependent on expert experience.
+Third-party open-source applications in the Kubernetes ecosystem commonly contain high-risk vulnerabilities that may lead to privilege escalation. During the window between vulnerability disclosure and patch deployment, Kubernetes clusters remain exposed to a considerable risk of attack. Existing defense methods for such vulnerabilities mainly rely on static inspection and configuration auditing, and therefore struggle to rapidly produce actionable interim mitigation strategies for specific vulnerabilities. In addition, the formulation of security rules and mitigation strategies still depends heavily on expert experience.
 
-To address the need for interim defense and control of cloud-native privilege escalation vulnerabilities during the patch-gap window, this thesis leverages the semantic understanding and code generation capabilities of large language models and proposes a multi-agent collaborative framework for strategy-based vulnerability prevention and control. The main contributions are as follows.
+To address the problem of privilege escalation vulnerabilities in Kubernetes, this thesis proposes an intelligent vulnerability prevention and control technique based on multi-agent security strategy management. By generating, evaluating, and deploying strategy code for multiple security tools, the proposed method enables dynamic protection and monitoring for privilege-escalation-related vulnerabilities, and a corresponding prototype system is developed. The main work of this thesis is as follows.
 
-\textbf{(1) Context-enriched vulnerability security knowledge base:} Multi-source evidence from code repositories, vulnerability advisories, issues, and pull requests is aggregated to build a provenance-annotated vectorized security knowledge base. A two-level root-cause classification framework is proposed to provide structured evidence for downstream vulnerability analysis and strategy generation.
+\textbf{(1) Vulnerability prevention and control technique based on multi-agent security strategy management:} First, this thesis collects privilege escalation vulnerability samples from third-party open-source applications in the Kubernetes ecosystem in recent years, and designs a root-cause classification framework for such vulnerabilities. Meanwhile, a cloud-native security knowledge base for privilege escalation is constructed based on multi-source information, including open-source code repositories. Then, a workflow consisting of six agents for security knowledge, code generation, and security review is built to support the automatic generation, iterative optimization, and quality evaluation of protection and monitoring strategy code for specific privilege escalation vulnerabilities. Finally, to meet the practical requirements of security strategy code, a three-dimensional quality evaluation framework is designed, covering effectiveness, non-interference, and deployability.
 
-\textbf{(2) Multi-agent collaborative method for strategy-based vulnerability prevention and control:} A triplet formalization of security strategies is defined, together with a three-dimensional quality evaluation framework spanning effectiveness, non-interference, and deployability. A generation workflow comprising six agent types is designed, forming three modules: retrieval-augmented knowledge, chain-of-thought reasoning, and feedback refinement. A multi-judge ranking aggregation mechanism is further introduced to assess the quality of generated strategy code.
+\textbf{(2) Prototype system development:} A prototype system, named KPEAgent, is designed and implemented. It integrates functional modules for knowledge base management, strategy generation workflow, expert review and ranking, and strategy deployment verification, thereby forming a strategy-based prevention and control process for cloud-native privilege escalation vulnerabilities.
 
-\textbf{(3) Prototype system implementation:} A prototype system called KPEAgent is designed and implemented, integrating modules for knowledge base management, strategy generation workflow, expert review and ranking, and strategy deployment.
+\textbf{(3) Experimental validation and case studies:} Ablation studies and model comparison experiments are conducted on 55 vulnerability samples using five large language models. The results show that the complete workflow achieves the best performance across all three evaluation dimensions. Among all components, feedback optimization has the most significant impact on strategy quality: removing this module reduces strategy effectiveness by 79\%. Compared with four static scanning tools, the proposed method can generate more targeted interim mitigation strategies for specific vulnerabilities. Furthermore, seven representative CVEs covering different root-cause categories are selected for vulnerability reproduction and strategy deployment verification in an isolated cluster, which further demonstrates the practical effectiveness of the proposed method from the three evaluation dimensions.
 
-\textbf{(4) Experimental validation and case studies:} Ablation and comparative experiments are conducted on 55 vulnerability samples using five large language models. Results show that the complete workflow achieves the best performance across all three evaluation dimensions. Feedback refinement has the greatest impact on strategy quality: removing it reduces effectiveness by 79\%. Compared with four static scanning tools, the proposed method provides more targeted defense-and-control strategies for specific vulnerabilities. Additionally, seven representative CVEs covering multiple root-cause types are selected for vulnerability reproduction and strategy deployment verification in an isolated cluster, confirming the practical effectiveness of the proposed method across all three evaluation dimensions.
-
-\EnglishKeywords{Cloud-native security; Privilege escalation vulnerability; Strategy code generation; Patch-gap defense and control; Multi-agent collaboration}
-
-
+\EnglishKeywords{Cloud-native security; Privilege escalation vulnerabilities; Strategy code generation; Patch-window defense and control; Multi-agent collaboration}
 \end{EnglishAbstract}

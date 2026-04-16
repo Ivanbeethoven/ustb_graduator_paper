@@ -61,78 +61,20 @@ Kubernetes 通过一系列持久化\textbf{资源对象}描述集群中不同资
 \end{figure}
 
 
-\section{云原生安全工具}
+\subsection{云原生安全技术}
 
-云原生安全工具为 Kubernetes 集群提供全生命周期的安全风险监管机制。相关安全工具可基于规则化DSL代码对容器镜像、静态配置、集群系统行为、容器运行时等维度进行安全检查。下文将介绍几种广泛使用的云原生安全工具。
+云原生安全技术围绕镜像构建、资源准入、网络通信和运行时行为等关键环节形成分层防线，常见工具大多以规则化策略或声明式配置为载体，用于在不同阶段识别或约束风险。从作用位置看，这类技术大致可归纳为静态扫描与配置审计、准入控制、网络隔离和运行时监控四类，它们共同构成 Kubernetes 集群全生命周期安全治理的基础能力。
 
-\subsection{监控工具：Falco}
-Falco\cite{falco2025} 是云原生环境中广泛使用的开源容器运行时威胁检测引擎，主要用于为集群工作负载提供实时异常行为监控与告警能力。其实现机制可以概括为内核态数据采集与规则引擎分析两个环节：一方面，Falco 利用 eBPF 技术\cite{hoiland2018express}在内核层以较低侵入性的方式动态捕获系统调用事件，并将其转换为包含云原生上下文的信息流；另一方面，系统再借助基于领域特定语言构建的声明式规则引擎完成模式匹配，从而在不阻断正常业务的前提下识别风险行为。除系统调用外，Falco 也支持对 Kubernetes 事件、资源对象和 API 调用等业务侧行为进行监控。
+静态扫描与配置审计主要用于在镜像构建与部署前发现已知漏洞、弱配置和权限异常。代表性工具包括 Trivy\cite{trivy2025}、Grype/Anchore\cite{grype2025} 等镜像与依赖漏洞扫描工具，Syft\cite{syft2025} 等 SBOM 生成工具，以及 Kubescape\cite{kubescape2025}、kube-linter\cite{kubelinter2025}、kube-score\cite{kubescore2025}、KubeSec\cite{kubesec2025}、Polaris\cite{polaris2025}、Checkov\cite{checkov2025}、KubiScan\cite{kubiscan2024}、Krane\cite{krane2024} 和 RBAC Police\cite{paloalto2024} 等面向清单、IaC 与 RBAC 的审计工具。这类方法便于集成到 CI/CD 流程中，能够提前暴露高风险对象，但其判断依据主要来自既有漏洞库、配置基线和审计规则，对特定漏洞的真实利用条件仍缺乏上下文感知能力。
 
-例如，图\ref{fig:falco} 展示了用于监测容器内启动交互式 shell 进程的规则。这种白盒化检测方式具有较强的可解释性，能够将告警直接关联到具体云原生实体，从而缩短安全定位路径。但该机制也存在局限：其一，静态规则高度依赖专家知识持续更新，对未知攻击和变种攻击的泛化能力较弱；其二，其观测视野主要停留在系统调用层，难以有效感知应用层协议滥用或纯内存型攻击。
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/falco.png}
-    \bicaption{Falco 运行时监控与规则示意}{Illustration of Falco runtime monitoring and rules}\label{fig:falco}
-\end{figure}
-
-\subsection{防护工具：准入控制工具}
-准入控制是 Kubernetes 中典型的事前防护机制，其核心是在 API Server 持久化资源之前执行规则化校验，以拦截特权容器、危险挂载和敏感权限增加等高风险配置变更。主流方案中，OPA/Gatekeeper 依托 Rego 语言，适合表达较复杂的组织策略；Kyverno 则采用 YAML 描述规则，更贴近运维习惯，落地成本相对较低。在补丁窗口期，这类规则化准入控制能够快速阻断与漏洞相关的敏感资源操作。如图~\ref{fig:kyverno-demo} 所示，该 Kyverno 策略可以拒绝未携带 owner 标签的 Pod 创建请求。
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=0.8\linewidth]{images/kyverno.png}
-    \bicaption{Kyverno 策略示例：强制要求 Pod 包含 owner 标签}{Example of a Kyverno policy enforcing owner labels on Pods}\label{fig:kyverno-demo}
-\end{figure}
-
-\subsection{网络防护工具：NetworkPolicy}
-网络隔离是降低横向移动与数据外传风险的重要手段，也是云原生环境中与身份权限控制互补的关键防线。Kubernetes 的 NetworkPolicy 提供了声明式网络防护机制，在多租户或微服务场景中能够将控制粒度下沉到命名空间与工作负载级别，从而减少单点失陷后向整个集群扩散的风险。常见的 Kubernetes 网络插件，如 Calico、Cilium 和 Weave Net，均支持 NetworkPolicy 的实现。
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=0.8\linewidth]{images/networkpolicy.png}
-    \bicaption{NetworkPolicy 示例：限制数据库仅允许前端服务访问}{Example of a NetworkPolicy allowing only frontend services to access the database}\label{fig:networkpolicy-demo}
-\end{figure}
-
-如图~\ref{fig:networkpolicy-demo} 所示，该策略定义了一个典型的微服务网络隔离场景：对于带有 \texttt{role: db} 标签的数据库工作负载，仅允许来自 \texttt{role: frontend} 前端服务的流量通过 TCP 5432 端口访问。这种基于标签选择器的白名单机制能够有效构建微服务之间的隔离边界，确保即使集群内其他容器尝试横向访问数据库，也会在网络层被直接阻断。
-
-\subsection{静态扫描与配置审计工具}
-与运行时检测相比，静态扫描更侧重事前发现与持续治理。它在镜像构建、交付和部署前通过自动化检查提前识别已知漏洞、弱配置与合规风险，从而避免高风险对象进入集群。
-
-第一类是\textbf{镜像与依赖漏洞扫描}。这类工具通常通过解析镜像分层文件系统与软件包清单，结合公开漏洞库匹配已知 CVE，并输出风险等级、受影响版本与修复建议。代表性工具包括 Trivy\cite{trivy2025}、Grype/Anchore\cite{grype2025} 等；其中，Syft\cite{syft2025} 等工具还可生成软件物料清单（SBOM），用于增强漏洞告警的可追溯性与供应链治理能力。
-
-第二类是\textbf{Kubernetes 清单与基础设施即代码（IaC）扫描}。这类工具面向 YAML、Helm、Terraform 等配置，以规则化方式识别特权容器、宿主机路径挂载、过宽权限、明文密钥和资源限制缺失等风险，可用于代码评审、部署前基线核查与准入前置门禁。典型工具包括面向工作负载清单的 kube-linter\cite{kubelinter2025}、Kubescape\cite{kubescape2025}、kube-score\cite{kubescore2025}、KubeSec\cite{kubesec2025}、Polaris\cite{polaris2025}，以及面向 IaC 模板的 Checkov\cite{checkov2025}；面向权限审计的工具则包括 KubiScan\cite{kubiscan2024}、Krane\cite{krane2024} 和 RBAC Police\cite{paloalto2024}。这类方法易于规模化落地，但也可能因业务差异产生误报，因此通常仍需结合人工二次审查。表\ref{tab:k8s-security-scan-tools} 对 Kubernetes 常见安全扫描与审计工具进行了分类整理。
-\begin{table}[htb!]
-    \centering\bicaption{Kubernetes 常见安全扫描与审计工具整理}{Classification of common Kubernetes security scanning and auditing tools}\label{tab:k8s-security-scan-tools}
-    \noindent\renewcommand{\arraystretch}{1.25}
-    \setlength{\tabcolsep}{1.5mm}
-    \small
-    \begin{tabular}{>{\centering\arraybackslash}m{2.2cm}m{5.5cm}>{\raggedright\arraybackslash}m{4.0cm}}
-    \toprule
-    \textbf{类别} & \textbf{代表性工具} & \textbf{主要用途}\\
-    \midrule
-    镜像/依赖漏洞扫描
-    & \texttt{Trivy}、\texttt{Grype}、\texttt{Clair}、\texttt{Snyk}
-    & 发现镜像与依赖漏洞，用于 CI 门禁、制品准入与修复建议。\\
-    \midrule
-    SBOM 生成与供应链
-    & \texttt{Syft}、\texttt{CycloneDX}、\texttt{cosign}
-    & 生成 SBOM 与签名校验，用于供应链追溯和完整性校验。\\
-    \midrule
-    配置与 IaC 安全扫描
-    & \texttt{Kubescape}、\texttt{kube-score}、\texttt{kube-linter}、\texttt{Polaris}、\texttt{KubeSec}、\texttt{datree}、\texttt{Checkov}、\texttt{KICS}、\texttt{tfsec}
-    & 扫描 YAML/Helm/IaC 弱配置与基线违规，用于评审和部署前核查。\\
-    \midrule
-    RBAC/权限审计
-    & \texttt{KubiScan}、\texttt{Krane}、\texttt{RBAC Police}、\texttt{kubeaudit}、\texttt{rakkess}、\texttt{kubectl-who-can}
-    & 审计角色、绑定和账户权限，用于过宽授权识别与权限查询。\\
-    \bottomrule
-    \end{tabular}
-\end{table}
+与之相比，准入控制、网络隔离与运行时监控更侧重集群运行阶段的风险约束。OPA/Gatekeeper\cite{opa2025} 与 Kyverno\cite{kyverno2025} 在 API Server 持久化资源前执行策略校验，可用于拦截特权容器、危险挂载和敏感权限变更；NetworkPolicy 及其在 Calico、Cilium 和 Weave Net 等插件中的实现，用于收敛服务间连通范围并降低横向移动风险；Falco\cite{falco2025} 则依托 eBPF 技术\cite{hoiland2018express}采集系统调用和 Kubernetes 事件，并通过规则引擎对异常行为进行实时检测与告警。这些技术分别从事前阻断、横向隔离和事中观测三个层面增强了集群安全性，但整体上仍以通用规则为主，难以直接围绕某一具体漏洞在补丁窗口期快速生成兼顾针对性与可部署性的临时防控策略。
 
 
 \section{国内外研究现状}
 
 本节按照通用系统权限安全研究、Kubernetes 场景安全研究和课题组已有工作这一顺序展开。前两部分分别概括权限提升风险在一般系统与云原生环境中的研究脉络，最后结合课题组前期成果说明本文工作的承接关系与问题切入点。
 
-\subsection{系统权限安全问题}
+\subsection{系统权限安全}
 系统权限安全研究最初聚焦访问控制模型与最小授权原则，随后逐步扩展到对过度授权、运行时提权行为和信息流泄露的综合治理。在基础设计原则层面，Saltzer 与 Schroeder\cite{saltzer1975protection}于 1975 年指出，\textbf{最小权限原则}是实现特权隔离的重要基础。基于这一原则，Ferraiolo 等\cite{ferraiolo1995role}提出基于角色的访问控制模型（RBAC），通过角色组织多类权限并将其映射至不同主体，从而缓解规模化授权中的管理难题。然而，\textbf{过度授权}现象始终普遍存在，并显著扩大了系统攻击面\cite{o1995redundant}。为收敛这类风险，Molloy 等\cite{molloy2012generative}以及 Sanders 与 Yue\cite{sanders2018minimizing}分别提出基于日志与算法模型逆向生成应用最小权限集的策略，使权限治理从静态制度设计进一步走向结合实际使用行为的最小权限推断。
 
 随着系统组件化程度不断提高，权限提升风险不再局限于单一主体的越权访问，而更多表现为跨组件、跨应用乃至跨平台的调用链滥用。在典型移动操作系统 Android中，访问控制的粗粒度特性带来了更突出的权限提升与隐蔽滥用风险。Davi等人\cite{davi2010privilege}较早揭示了\textbf{混淆代理}攻击模型，即低权限应用可通过伪造合法请求，诱导高权限组件执行敏感操作。Hutchinson 等\cite{hutchinson2018survey}进一步将该模型概括为三个条件：请求敏感权限、开放导出组件以及存在通向敏感 API 的执行路径。随着攻防对抗持续升级，提权漏洞的利用方式也由单一组件劫持\cite{wu2016seccomp}，演变为多重调用链上的跨应用共谋\cite{elzawawy2025hidden}，甚至扩展到同一设备内由第三方 SDK 发起的共谋攻击\cite{taylor2017intralibrary}。
@@ -143,7 +85,7 @@ Falco\cite{falco2025} 是云原生环境中广泛使用的开源容器运行时�
 
 上述思路随后被扩展到小程序等宿主内嵌生态的权限安全研究。Zhang 等\cite{zhang2023small}对多个主流小程序生态开展系统性研究，提取了通用的权限控制抽象模型，揭示了跨运行态环境下的多类典型越权漏洞并通过实际攻击加以验证；Wang 等\cite{wang2024minichecker}则聚焦小程序数据权限滥用问题，定义了多种违规权限申请模式，并设计静态分析工具 MiniChecker 开展规模化检测，指出现有平台权限机制在底层设计上仍存在固有缺陷。总体来看，通用系统中的相关研究为识别跨组件调用、越权传播和后果溯源提供了重要方法基础，但其分析对象和执行环境与 Kubernetes 仍存在明显差异。
 
-\subsection{Kubernetes 安全问题}
+\subsection{Kubernetes 安全}
 在云原生场景中，Kubernetes 将配置、控制平面、网络与运行时机制耦合在同一系统之中，权限风险往往沿部署模板、授权链路和组件交互同步扩散。因此，相关研究既继承了通用系统中的最小授权与行为检测思路，又形成了更强调配置语义和多层联动的分析路径。现有工作大体可分为配置风险识别、模板与 IaC 安全分析、架构与权限链风险挖掘以及网络与运行时防护四类。
 
 安全误配置是 Kubernetes 场景中最常见、也最早受到关注的风险来源。早期研究主要用于勾勒配置风险的整体图景：Islam Shamim 等\cite{Islam_Shamim_2020}系统总结了 Kubernetes 安全实践，Shamim\cite{Shamim_2021}进一步指出部署清单偏离最佳实践可能直接演化为可利用的提权路径，Curtis 与 Eisty\cite{Curtis_2025}基于 Stack Overflow 数据的实证分析也表明配置安全始终是开发侧的核心关切。在此基础上，Rahman 等\cite{k8smanifests2023}对开源清单中的典型安全误配置进行了大规模归纳与实证研究。然而，仅依赖静态扫描仍难以完整反映风险的真实可利用性。Shamim 等\cite{shamim2025prescription}评估了 CIS 推荐配置的合规现状，发现从业人员对安全基线的理解存在显著差异，现有 SAST 工具的检测覆盖也有明显不足；其后续工作\cite{shamim2025dastk8s}进一步结合工业界部署实践，论证了将 DAST 动态分析纳入配置核验流程的必要性。上述研究说明，Kubernetes 配置安全研究正由基线合规判断转向实际可利用风险评估。
@@ -155,7 +97,7 @@ Falco\cite{falco2025} 是云原生环境中广泛使用的开源容器运行时�
 即便控制平面配置与授权链路得到一定约束，底层网络与运行时隔离仍是 Kubernetes 安全防护不可缺少的一环。容器编排引入的网络抽象与传统安全模型存在显著差异，Minna 等\cite{Minna_2021}指出这种差异可能衍生非预期的攻击路径。在网络策略的工程落地层面，Budigiri 等\cite{Budigiri_2021}基于 eBPF 评估了网络策略的性能代价，Kim 等\cite{Kim_2025}对比了多种容器网络接口插件的安全能力，两项工作共同揭示了协议过滤深度与转发性能之间的固有权衡。在缓解机制方面，研究视角涵盖了从 DevOps 流水线到节点侧运行时的多个层面：Pecka 等\cite{pecka2022privilege}通过构造流水线攻击场景证明了工具合规并不等同于安全，Cesarano 与 Natella\cite{cesarano2025kubefence}提出的 KubeFence 通过裁剪非必要 API 参数实现了比 RBAC 更细粒度的接口过滤，Zhu 与 Gehrmann\cite{Zhu_2022}和 Le 等\cite{Le_2023}则分别在 AppArmor 配置自动生成与系统调用感知调度方向上强化了节点侧防护。综合来看，现有研究已经从清单级合规检查推进到跨组件授权链与运行时隔离的综合分析，但对于权限提升漏洞在暴露窗口期如何快速生成兼顾监控与防护的协同策略，仍缺乏统一的方法框架。
 
 
-\subsection{本课题组研究基础}
+\subsection{前期工作}
 在上述研究基础上，课题组围绕 Kubernetes 权限风险检测开展了系统研究，已形成覆盖风险建模、原型实现与实验验证的前期积累。其中，代表性成果为 KubeGuard 框架。该框架面向过度权限、权限提升和敏感信息泄露三类风险，分别设计了最小权限集构建、规则化审计以及敏感词监测机制\cite{kubeguard_icws2025}。如图\ref{fig:kgf}所示，KubeGuard 由过度权限检测、权限提升检测和敏感信息泄露检测三个模块构成。
 
 \begin{figure}[htb]
@@ -172,4 +114,4 @@ Falco\cite{falco2025} 是云原生环境中广泛使用的开源容器运行时�
 
 
 \section{小结}
-本章介绍了容器、Kubernetes 及其权限模型等基础概念与云原生安全工具，并从系统权限安全、Kubernetes 安全与课题组前期工作三个层面梳理了国内外研究现状，为后续章节的方法设计与实验验证奠定了理论基础。
+本章介绍了容器、Kubernetes 及其权限模型等基础概念与云原生安全技术，并从系统权限安全、Kubernetes 安全与课题组前期工作三个层面梳理了国内外研究现状，为后续章节的方法设计与实验验证奠定了理论基础。

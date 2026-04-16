@@ -231,12 +231,12 @@
 \end{figure}
 
 部署完成后，系统通过部署管理面板统一展示跨集群、跨主机的策略实例。如图~\ref{fig:ui_deploy_manage} 所示，界面记录策略名称、目标对象、部署时间及当前状态等信息，并提供回滚与日志查看操作，便于开展部署结果核查、异常诊断与后续运维管理。
-\begin{figure}[htb]
+
+\begin{figure}[thb]
     \centering
-    \includegraphics[width=0.9\textwidth,height=0.5\textheight,keepaspectratio]{images/ui/策略部署-部署管理}
+    \includegraphics[width=0.8\textwidth,height=0.5\textheight,keepaspectratio]{images/ui/策略部署-部署管理}
     \bicaption{策略部署管理界面}{Interface for strategy deployment management}
     \label{fig:ui_deploy_manage}
 \end{figure}
-
 \section{小结}
 本章完成了 KPEAgent 原型系统的设计与实现。需求分析部分明确了两类用户角色和五项功能需求；总体设计部分给出了分层架构、数据模型、数据流转和交互时序；详细设计部分说明了知识库管理、策略生成与优化、专家评审与排序以及策略部署管理四个模块的交互流程与实现方式。这些设计为下一章的实验验证提供了平台支撑。

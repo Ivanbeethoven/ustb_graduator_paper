@@ -119,7 +119,6 @@
 本附录给出案例一的复现详细步骤与纵深防御策略代码清单，用于复核与工程复现。为降低对生产环境的风险，建议仅在隔离测试集群中执行。
 
 \section{漏洞复现详细步骤}\label{app:cve-2022-24768-repro}
-
 \textbf{步骤 1：部署漏洞版本 Argo CD（v2.3.1）}
 \begin{AppendixCode}
 kubectl create namespace argocd
@@ -967,6 +966,20 @@ EOF
 
 \textbf{步骤 1：在隔离命名空间部署旧版 Chart，并进行必要的兼容性适配}
 旧版 Chart 可能使用过时 API，例如 \texttt{apps/v1beta2}。在较新 Kubernetes 版本上复现时，可在\textbf{保持网络策略缺失这一特性不变}的前提下，将 Deployment API 适配为 \texttt{apps/v1} 并补齐 \texttt{selector} 字段以完成安装。
+\begin{AppendixCode}
+NAMESPACE=conjur-vuln
+
+helm repo add cyberark https://cyberark.github.io/helm-charts
+helm repo update
+helm search repo cyberark/conjur-oss --versions
+
+helm install conjur-oss cyberark/conjur-oss \
+	--namespace $NAMESPACE \
+	--create-namespace \
+	--version <2.0.0>
+
+kubectl -n $NAMESPACE get pods
+\end{AppendixCode}
 
 \textbf{步骤 2：确认 Postgres Service 与 5432 端口暴露}
 \begin{AppendixCode}
@@ -987,6 +1000,14 @@ kubectl -n $NAMESPACE get networkpolicy
 
 \textbf{步骤 4：连通性验证}
 在不执行数据库操作的前提下，使用 TCP 连通性探测验证非 Conjur 组件工作负载是否能够与 Postgres 的 5432 端口建立连接，以此作为暴露面存在的验证依据。
+\begin{AppendixCode}
+POSTGRES_SVC=<postgres-service-name>
+
+kubectl -n $NAMESPACE run netcheck \
+	--image=busybox:1.36 \
+	--restart=Never \
+	--rm -i -- sh -c "nc -vz $POSTGRES_SVC 5432"
+\end{AppendixCode}
 
 \section{策略代码清单}
 
@@ -1067,13 +1088,30 @@ kubectl -n conjur-vuln get networkpolicy
 修复信息：该漏洞已在 \texttt{kustomize-controller} v0.24.0 修复。
 该版本随 \texttt{flux} v0.29.0 集成发布。
 
-\textbf{步骤要点（受控）}
+\textbf{步骤要点}
 \begin{enumerate}
 	\item 在隔离仓库中准备最小化示例，包含 \texttt{kustomization.yaml} 及少量合法资源清单，用于建立可对比的基线构建产物。
 	\item 在受控条件下引入异常路径引用（例如包含父目录引用或绝对路径风格的条目），触发控制器重新拉取并执行构建。
 	\item 观察控制器日志与事件输出，记录与路径解析、文件读取失败或异常引用相关的报错/告警。
 	\item 对比构建产物与基线差异，检查是否出现“非预期文件内容进入产物”的迹象。该步骤应仅使用无敏感性的测试素材进行验证。
 \end{enumerate}
+
+\textbf{参考命令（用于采集受控证据）}
+\begin{AppendixCode}
+FLUX_NS=flux-system
+APP_NS=<kustomization-namespace>
+KS_NAME=<kustomization-name>
+
+kubectl -n $FLUX_NS get deploy kustomize-controller -o wide
+kubectl -n $APP_NS get kustomization $KS_NAME -o yaml
+
+# 在隔离仓库中准备异常路径测试样例后，触发一次受控重调和
+flux reconcile kustomization $KS_NAME -n $APP_NS --with-source
+
+# 采集控制器日志与事件作为证据
+kubectl -n $FLUX_NS logs deploy/kustomize-controller --tail=200
+kubectl -n $APP_NS get events --sort-by=.lastTimestamp | findstr /i "Kustomization Reconciliation"
+\end{AppendixCode}
 
 \textbf{证据判据与逻辑解释}
 该类漏洞的关键证据在于“路径解析是否受目录边界约束”。
@@ -1089,28 +1127,23 @@ kubectl -n conjur-vuln get networkpolicy
 在补丁窗口期或多团队协作场景下，可在 CI/CD 流水线中加入配置校验门禁。
 校验对象为 \texttt{kustomization\allowbreak.yaml}，要求其资源路径满足安全策略，例如：禁止绝对路径风格、禁止父目录引用、限制引用的文件类型与目录范围。
 下述示例为 \texttt{conftest}（OPA）策略骨架，用于展示如何对 \texttt{kustomization\allowbreak.yaml} 的路径字段进行约束；可按组织规范扩展字段列表与白名单策略。
-
 \begin{AppendixCode}
 package kustomizepolicy
-
 deny[msg] {
   some p
   p := input.resources[_]
   risky_path(p)
   msg := sprintf("kustomization.yaml: resources contains risky path: %s", [p])
 }
-
 deny[msg] {
   some i
   p := input.patches[i].path
   risky_path(p)
   msg := sprintf("kustomization.yaml: patches[%d].path contains risky path: %s", [i, p])
 }
-
 risky_path(p) {
   startswith(p, "/")
 }
-
 risky_path(p) {
   contains(p, "..")
 }
@@ -1141,7 +1174,7 @@ risky_path(p) {
 （iii）存在可编辑/新增 Gitolite code host 的管理权限；
 （iv）存在对内置 Grafana 的高权限访问，用于说明观测面可能降低内部寻址成本。
 
-\textbf{步骤要点（受控）}
+\textbf{步骤要点}
 \begin{enumerate}
 	\item 部署受影响版本 Sourcegraph，并确认 \texttt{gitserver} 作为独立工作负载运行（记录其命名空间与标签信息）。
 	\item 在管理面将 Gitolite 与 Phabricator 集成配置为可用状态，保证仓库元数据获取流程可被触发。
@@ -1149,6 +1182,18 @@ risky_path(p) {
 	\item 触发一次与该集成相关的元数据获取/同步流程，并观察 \texttt{gitserver} 日志、任务记录或审计日志中是否出现外部命令执行的迹象。
 	\item 禁用 Gitolite code host 后重复触发流程，确认相同迹象不再出现。
 \end{enumerate}
+
+\textbf{参考命令（用于日志与工作负载证据采集）}
+\begin{AppendixCode}
+NAMESPACE=sourcegraph
+
+kubectl -n $NAMESPACE get deploy,pod,svc | findstr /i "gitserver"
+kubectl -n $NAMESPACE logs deploy/gitserver --tail=200
+kubectl -n $NAMESPACE get events --sort-by=.lastTimestamp | findstr /i "gitserver"
+
+# 在管理面触发一次元数据获取/同步后，重复采集日志并与禁用集成后的结果对比
+kubectl -n $NAMESPACE logs deploy/gitserver --since=10m | findstr /i "gitolite phabricator callsign"
+\end{AppendixCode}
 
 \textbf{证据判据与逻辑解释}
 若在受影响版本中，\texttt{gitserver} 的运行日志或可观测数据中出现因集成配置而执行外部命令的明确迹象，可判定存在执行面风险。
@@ -1255,13 +1300,30 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 （iii）Argo CD 已配置为信任该 OIDC 提供方，并启用 \texttt{groups} 相关声明用于 RBAC 映射；
 （iv）具备可观察的审计与日志渠道，用于对登录校验与资源访问结果进行证据采集。
 
-\textbf{步骤要点（受控）}
+\textbf{步骤要点}
 \begin{enumerate}
 	\item 固化基线配置：记录 Argo CD 版本与 OIDC 配置要点（\texttt{issuer}、\texttt{clientID}、所请求的 scope），确认 Argo CD 能够正常使用 OIDC 完成会话建立。
 	\item 获取一枚由同一 OIDC 提供方签发、但 \texttt{aud} 指向其他受众的有效令牌。该令牌应满足验签可通过且包含可用于 RBAC 映射的 \texttt{groups} 声明。
 	\item 提取令牌声明证据：对该令牌解析其 payload，保留 \texttt{iss}、\texttt{aud}、\texttt{exp} 与 \texttt{groups} 等字段的记录，证明其受众并非 Argo CD。
 	\item 使用该令牌访问 Argo CD 的受保护接口，选择一个只读且便于判定的 API 作为验证点，记录响应结果与 Argo CD 侧日志。
 \end{enumerate}
+
+\textbf{参考命令（用于配置、令牌与响应证据采集）}
+\begin{AppendixCode}
+ARGO_NS=argocd
+ARGOCD_URL=https://argocd.example.com
+TOKEN=<oidc-token-with-wrong-aud>
+
+kubectl -n $ARGO_NS get cm argocd-cm -o yaml
+kubectl -n $ARGO_NS get deploy argocd-server -o wide
+
+# 保留令牌 payload 作为 aud/iss 证据（必要时补齐 base64 padding）
+printf '%s' "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d
+
+# 选择只读接口作为验证点
+curl -k -H "Authorization: Bearer $TOKEN" "$ARGOCD_URL/api/v1/applications"
+kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc token aud"
+\end{AppendixCode}
 
 \textbf{证据判据与逻辑解释}
 若在受影响版本中，Argo CD 在验签通过的前提下接受 \texttt{aud} 不匹配的令牌，并返回受 RBAC 控制的资源响应，可判定存在受众校验缺失。
