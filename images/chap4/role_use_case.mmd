@@ -1,38 +1,46 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'fontSize': '20px',
+    'fontFamily': '"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif',
+    'lineColor': '#5b6472',
+    'primaryBorderColor': '#8b5cf6',
+    'primaryTextColor': '#1f2937'
+  }
+}}%%
 flowchart LR
     %% UML Use Case Diagram — KPEAgent 系统
-    %% 椭圆 ([...]) 表示用例；(((...))) 表示参与者
+
+    classDef actor fill:none,stroke:none,color:#111827,font-family:monospace
+    classDef usecase fill:#f8f5ff,stroke:#8b5cf6,stroke-width:1.8px,color:#1f2937
 
     subgraph Actors[" "]
         direction TB
-        User((("安全工程师\n«Actor»")))
-        Reviewer((("专家评审员\n«Actor»")))
+        User["&nbsp;&nbsp;O<br/>&nbsp;/|\\<br/>&nbsp;/ \\<br/>安全工程师"]:::actor
+        Reviewer["&nbsp;&nbsp;O<br/>&nbsp;/|\\<br/>&nbsp;/ \\<br/>专家评审员"]:::actor
     end
     style Actors fill:none,stroke:none
 
-    subgraph System ["«System» KPEAgent"]
+    subgraph System["«System» KPEAgent"]
         direction TB
-        UC1(["浏览 CVE 知识库"])
-        UC2(["创建生成会话"])
-        UC3(["策略生成"])
-        UC3a(["检索增强 RAG"])
-        UC3b(["思维链推理 CoT"])
-        UC4(["人工修订与优化"])
-        UC5(["候选策略排序"])
-        UC6(["多维度评审"])
-        UC7(["发布最终决策"])
-        UC8(["策略部署"])
-        UC9(["查看仪表盘"])
+        UC1(["浏览漏洞知识与证据"]):::usecase
+        UC2(["创建生成会话"]):::usecase
+        UC3(["候选策略生成"]):::usecase
+        UC3a(["安全上下文构建"]):::usecase
+        UC3b(["结构化漏洞分析"]):::usecase
+        UC4(["反馈修订与再生成"]):::usecase
+        UC5(["同类型候选排序"]):::usecase
+        UC6(["三维质量评审"]):::usecase
+        UC7(["确认交付结果"]):::usecase
+        UC8(["策略部署与验证"]):::usecase
+        UC9(["查看评审与审计记录"]):::usecase
 
-        %% «include» 关系
         UC3 -.->|"«include»"| UC3a
         UC3 -.->|"«include»"| UC3b
-
-        %% «extend» 关系
         UC4 -.->|"«extend»"| UC3
         UC8 -.->|"«extend»"| UC7
     end
 
-    %% 安全工程师关联
     User --- UC1
     User --- UC2
     User --- UC3
@@ -40,7 +48,6 @@ flowchart LR
     User --- UC7
     User --- UC8
 
-    %% 专家评审员关联
     Reviewer --- UC1
     Reviewer --- UC5
     Reviewer --- UC6

@@ -1,37 +1,51 @@
-flowchart LR
-    %% 数据流图 (DFD Level-1) — KPEAgent 防控闭环（横向）
-    classDef process fill:#e1bee7,stroke:#6a1b9a,stroke-width:2px,color:#000
-    classDef store fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#000
-    classDef entity fill:#bbdefb,stroke:#1565c0,stroke-width:2px,color:#000
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'fontSize': '48px',
+    'fontFamily': '"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif',
+    'lineColor': '#64748b',
+    'primaryTextColor': '#1f2937',
+    'clusterBkg': '#f8fafc',
+    'clusterBorder': '#cbd5e1'
+  }
+}}%%
+flowchart TB
+    classDef entity fill:#e8f1ff,stroke:#4f7cff,stroke-width:3px,color:#172554
+    classDef process fill:#f6edff,stroke:#8b5cf6,stroke-width:3px,color:#3b0764
+    classDef store fill:#ecfdf3,stroke:#2f855a,stroke-width:3px,color:#14532d
 
-    %% 外部实体
-    User["安全工程师"]:::entity
-    Expert["专家评审员"]:::entity
+    subgraph role_row["外部角色"]
+        direction LR
+        User["安全工程师"]:::entity
+        Expert["专家评审员"]:::entity
+    end
 
-    %% 数据存储
-    D1[("D1 · CVE 知识库")]:::store
-    D2[("D2 · 策略库")]:::store
-    D3[("D3 · 审计日志")]:::store
+    subgraph process_row["核心流程"]
+        direction LR
+        P1["P1 安全上下文构建"]:::process
+        P2["P2 漏洞分析与<br/>候选策略生成"]:::process
+        P3["P3 评审反馈与<br/>策略优化"]:::process
+        P4["P4 质量排序与<br/>结果确认"]:::process
+        P5["P5 审计归档与<br/>可追溯存证"]:::process
+    end
 
-    %% 处理过程
-    P1("P1 漏洞载入\n与特征提取"):::process
-    P2("P2 策略生成\n(RAG + CoT)"):::process
-    P3("P3 人工评审\n与反馈"):::process
-    P4("P4 策略排序\n与选型"):::process
-    P5("P5 审计归档"):::process
+    subgraph data_row["数据资产"]
+        direction LR
+        D1[("D1 · 漏洞证据知识库")]:::store
+        D2[("D2 · 候选策略与中间结果")]:::store
+        D3[("D3 · 排序与审计记录")]:::store
+    end
 
-    %% 数据流
-    User -->|"CVE 原始数据"| P1
-    P1 -->|"结构化特征"| D1
-    D1 -.->|"检索语料"| P2
-    P1 -->|"分析请求"| P2
-    P2 -->|"候选策略集"| D2
-
-    D2 -.->|"待审策略"| P3
-    Expert -->|"评审意见"| P3
-    P3 -->|"修订反馈"| P2
-
-    P3 -->|"通过策略"| P4
+    User -->|"漏洞实例与分析任务"| P1
+    Expert -->|"结构化评审意见"| P3
     Expert -->|"排序偏好"| P4
-    P4 -->|"最终排名"| P5
-    P5 -->|"决策记录"| D3
+
+    P1 -->|"带来源标识的证据摘要"| D1
+    D1 -.->|"候选证据与安全上下文"| P2
+    P1 -->|"漏洞实例与上下文请求"| P2
+    P2 -->|"候选策略集与分析结果"| D2
+    D2 -.->|"待评审候选"| P3
+    P3 -->|"修订建议"| P2
+    P3 -->|"评审后候选"| P4
+    P4 -->|"最终交付结果"| P5
+    P5 -->|"排序记录与审计证据"| D3

@@ -185,7 +185,7 @@
 
 前两节分别讨论了工作流差异和模型差异，而这些比较都建立在评审结果足够可靠的前提之上。本节从内部一致性和人工对照两个角度验证这一前提。
 
-本小节使用度量指标中定义的 Kendall's $W$ 协调系数与 Spearman 等级相关系数，考察五个评审模型在三个维度上的排序一致性。表\ref{tab:judge-consistency-stats} 给出量化结果，图\ref{fig:judge-corr-3d} 至图\ref{fig:judge-spearman-box} 展示分布细节。
+本小节使用度量指标中定义的 Kendall's $W$ 协调系数与 Spearman 等级相关系数，考察五个评审模型在三个维度上的排序一致性。表\ref{tab:judge-consistency-stats} 给出量化结果，图\ref{fig:judge-agreement-summary} 至图\ref{fig:judge-spearman-box} 展示分布细节。
 
 \begin{table}[htb]
 	\centering\bicaption{不同维度下大语言模型评审一致性统计}{Consistency statistics of large-language-model judges across dimensions}
@@ -205,18 +205,7 @@
 	\end{tabularx}
 \end{table}
 
-评审模型在有效性维度上的一致性最高，在可部署性维度上的分歧最大。表\ref{tab:judge-consistency-stats} 显示，有效性维度的 Kendall's $W$ 达 0.955，Spearman 均值为 0.944，说明不同评审模型对漏洞封堵充分性的判断标准较为接近。无干扰性居中（$W=0.846$），可部署性最低（$W=0.687$）。这说明可部署性需要同时权衡工程依赖、部署成本和运维复杂度，评审模型更容易在该维度上出现偏差。图\ref{fig:judge-corr-3d} 的热力图进一步展示了各维度下评审模型两两之间的相关性分布。
-
-\begin{figure}[htb]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[有效性\label{fig:judge-corr-eff}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_有效性.png}}\hfill
-	 \subfloat[无干扰性\label{fig:judge-corr-noint}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_无干扰性.png}}\hfill
-	 \subfloat[可部署性\label{fig:judge-corr-deploy}]{\includegraphics[width=0.32\textwidth]{images/plots/judge_consistency/judge_correlation_heatmap_可部署性.png}}}
-	\bicaption{不同维度下大语言模型评审两两相关性热力图（Spearman）}{Pairwise correlation heatmaps of large-language-model judges across different dimensions (Spearman)}
-	\label{fig:judge-corr-3d}
-\end{figure}
+评审模型在有效性维度上的一致性最高，在可部署性维度上的分歧最大。表\ref{tab:judge-consistency-stats} 显示，有效性维度的 Kendall's $W$ 达 0.955，Spearman 均值为 0.944，说明不同评审模型对漏洞封堵充分性的判断标准较为接近。无干扰性居中（$W=0.846$），可部署性最低（$W=0.687$）。这说明可部署性需要同时权衡工程依赖、部署成本和运维复杂度，评审模型更容易在该维度上出现偏差。
 
 图\ref{fig:judge-agreement-summary}从 Kendall's $W$ 和两两 Spearman 分布两个角度汇总了一致性统计。从整体看，等权聚合后的排序在三个维度上均未出现明显失稳。
 
