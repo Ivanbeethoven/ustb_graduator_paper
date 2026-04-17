@@ -38,6 +38,9 @@
 
 \setCJKmainfont{SimSun}[AutoFakeBold=2.5]
 %\numberwithin{equation}{chapter}
+\makeatletter
+\@addtoreset{equation}{chapter}
+\makeatother
 \renewcommand{\theequation}{\arabic{chapter}-\arabic{equation}}
 %\renewcommand{\thefigure}{\enspace ss \arabic{figure}}
 %\renewcommand{\thetable}{\enspace ss\arabic{table} }
@@ -62,36 +65,26 @@
 
 
 \RenewDocumentCommand\contentsname{}{目\hspace{1em}录}
+\makeatletter
 \renewcommand\tableofcontents{%
-\cleardoublepage %保证在奇数页
-\pagestyle{fancy} %页面风格是empty
-%\setlength{\baselineskip}{20pt}
-\linespread{1.3} %设置1.3倍行距
-%\pdfbookmark[1]{目录}{tableofcontents}
-    \if@twocolumn
-        \@restonecoltrue\onecolumn
-    \else
-        \@restonecolfalse
-    \fi
-        \vskip17pt
-    %\centerline{\setstretch{2.41}
-    %        \Large\bfseries\heiti\contentsname
-    %    }\vskip16.5pt
-    \chapter*{目\quad 录}%\addcontentsline{toc}{chapter}{目录}%
-
-    \@starttoc{toc}%
-    \if@restonecol\twocolumn\fi
-    %\thispagestyle{empty} %
-    \cleardoublepage
+\begingroup
+\renewcommand{\bfseries}{\mdseries}%
+\cleardoublepage
+\pagestyle{fancy}
+\linespread{1.3}\selectfont
+\if@twocolumn
+    \@restonecoltrue\onecolumn
+\else
+    \@restonecolfalse
+\fi
+\vskip17pt
+\chapter*{目\quad 录}%
+\@starttoc{toc}%
+\if@restonecol\twocolumn\fi
+\cleardoublepage
+\endgroup
 }
-%% 去掉目录中的加粗
-\let\LaTeXStandardTableOfContents\tableofcontents
-\renewcommand{\tableofcontents}{% 
-\begingroup%
- \renewcommand{\bfseries}{\relax}%
- \LaTeXStandardTableOfContents% 
-\endgroup%
- }%
+\makeatother
 
 
 \RequirePackage{paralist}

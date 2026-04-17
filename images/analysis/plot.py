@@ -90,6 +90,26 @@ def _safe_name(name: str) -> str:
     return disp.replace("/", "_").replace(" ", "_")
 
 
+_COMPACT_JUDGE_SUMMARY_FIGSIZE = (8.4, 4.9)
+_COMPACT_JUDGE_SUMMARY_TITLE_SIZE = 15
+_COMPACT_JUDGE_SUMMARY_LABEL_SIZE = 13
+_COMPACT_JUDGE_SUMMARY_TICK_SIZE = 11
+_COMPACT_JUDGE_SUMMARY_BAR_LABEL_SIZE = 10
+_COMPACT_JUDGE_SUMMARY_LEGEND_SIZE = 13
+
+_COMPACT_HEATMAP_FIGSIZE = (6.2, 5.5)
+_COMPACT_HEATMAP_TITLE_SIZE = 15
+_COMPACT_HEATMAP_LABEL_SIZE = 13
+_COMPACT_HEATMAP_TICK_SIZE = 11
+_COMPACT_HEATMAP_ANNOT_SIZE = 11
+
+_COMPACT_RADAR_FIGSIZE = (6.4, 6.4)
+_COMPACT_RADAR_DIM_LABEL_SIZE = 13
+_COMPACT_RADAR_RING_LABEL_SIZE = 10
+_COMPACT_RADAR_TITLE_SIZE = 15
+_COMPACT_RADAR_LEGEND_SIZE = 13
+
+
 _BAR_COLORS = [
     "#1C1C1C",
     "#4F4F4F",
@@ -131,7 +151,7 @@ def _style_axes(ax: Axes, grid_axis: Literal["x", "y", "both"] | None = "y") -> 
         else:
             spine.set_color(spine_color)
             spine.set_linewidth(0.8)
-    ax.tick_params(axis="both", colors="#1F1F1F", labelsize=10, width=1, length=4)
+    ax.tick_params(axis="both", colors="#1F1F1F", labelsize=11, width=1, length=4)
     if grid_axis:
         ax.grid(axis=grid_axis, color="#D0D0D0", linestyle="--", linewidth=0.6, alpha=0.9)
     else:
@@ -146,9 +166,9 @@ def _style_colorbar(ax: Axes, label: str | None = None) -> None:
         colorbar = ax.collections[0].colorbar
         if colorbar is None:
             return
-        colorbar.ax.tick_params(labelsize=9, width=0.8, length=3, colors="#1F1F1F")
+        colorbar.ax.tick_params(labelsize=10, width=0.8, length=3, colors="#1F1F1F")
         if label:
-            colorbar.set_label(label, fontsize=10, color="#1F1F1F", rotation=90, labelpad=10)
+            colorbar.set_label(label, fontsize=11, color="#1F1F1F", rotation=90, labelpad=10)
     except Exception:
         return
 
@@ -290,16 +310,12 @@ def plot_grouped_bar(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         gen_dir.mkdir(parents=True, exist_ok=True)
         palette = _bar_palette(max(len(pivot.columns), 1))
         ax = pivot.plot(kind="bar", figsize=(12, 5.2), color=palette)
-        ax.set_title(
-            _title("方法对比：排序得分", dimension, [f"生成模型：{_display_label(gen)}"]),
-            fontsize=14,
-            pad=14,
-        )
+        ax.set_title("")
         ax.set_ylabel("排序得分", fontsize=12)
         ax.set_xlabel("方法", fontsize=12)
         leg = ax.get_legend()
         if leg is not None:
-            leg.set_title("评委模型")
+            leg.set_title("")
         ax.tick_params(axis="x", labelrotation=0)
         for container in ax.containers:
             ax.bar_label(cast(BarContainer, container), fmt="{:.2f}", padding=2, fontsize=9)
@@ -330,13 +346,14 @@ def plot_heatmap(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         gen_dir.mkdir(parents=True, exist_ok=True)
         plt.figure(figsize=(11, 5))
         ax = sns.heatmap(pivot, annot=True, fmt=".2f", cmap=_HEATMAP_CMAP, cbar_kws={"shrink": 0.8})
-        ax.set_title(
-            _title("评委模型 × 方法：排序得分", dimension, [f"生成模型：{_display_label(gen)}"]),
-            fontsize=14,
-            pad=12,
-        )
+        ax.set_title("")
         ax.set_ylabel("评委模型", fontsize=12)
         ax.set_xlabel("方法", fontsize=12)
+        ax.title.set_fontsize(_COMPACT_HEATMAP_TITLE_SIZE)
+        ax.title.set_y(1.01)
+        ax.xaxis.label.set_size(_COMPACT_HEATMAP_LABEL_SIZE)
+        ax.yaxis.label.set_size(_COMPACT_HEATMAP_LABEL_SIZE)
+        ax.tick_params(axis="both", labelsize=_COMPACT_HEATMAP_TICK_SIZE)
         _style_axes(ax, grid_axis=None)
         plt.tight_layout()
         plt.savefig(gen_dir / f"heatmap_{_safe_name(gen)}_{dimension}.png", dpi=200)
@@ -402,11 +419,7 @@ def plot_per_method(csv3: pd.DataFrame, out_dir: Path, dimension: str):
             pass
         plt.figure(figsize=(10.5, 4.8))
         ax = sns.heatmap(pivot, annot=True, fmt=".2f", cmap=_HEATMAP_CMAP, cbar_kws={"shrink": 0.8})
-        ax.set_title(
-            _title("评委模型 × 生成模型：排序得分", dimension, [f"方法：{_display_label(method)}"]),
-            fontsize=14,
-            pad=12,
-        )
+        ax.set_title("")
         ax.set_ylabel("评委模型", fontsize=12)
         ax.set_xlabel("生成模型", fontsize=12)
         _style_axes(ax, grid_axis=None)
@@ -422,11 +435,7 @@ def plot_per_method(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         if not by_judge.empty:
             palette = _bar_palette(len(by_judge), monochrome=True)
             ax = by_judge.plot(kind="bar", figsize=(4.6, 4.0), color=palette, width=0.45)
-            ax.set_title(
-                _title("评委模型汇总：加权平均得分", dimension, [f"方法：{_display_label(method)}"]),
-                fontsize=14,
-                pad=12,
-            )
+            ax.set_title("")
             ax.set_ylabel("加权平均得分", fontsize=12)
             ax.set_xlabel("评委模型", fontsize=12)
             ax.tick_params(axis="x", labelrotation=0)
@@ -448,11 +457,7 @@ def plot_per_method(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         if not by_gen.empty:
             palette = _bar_palette(len(by_gen), monochrome=True)
             ax = by_gen.plot(kind="bar", figsize=(4.6, 4.0), color=palette, width=0.45)
-            ax.set_title(
-                _title("生成模型汇总：加权平均得分", dimension, [f"方法：{_display_label(method)}"]),
-                fontsize=14,
-                pad=12,
-            )
+            ax.set_title("")
             ax.set_ylabel("加权平均得分", fontsize=12)
             ax.set_xlabel("生成模型", fontsize=12)
             ax.tick_params(axis="x", labelrotation=0)
@@ -484,11 +489,7 @@ def plot_per_generator(csv3: pd.DataFrame, out_dir: Path, dimension: str):
             pass
         plt.figure(figsize=(11.5, 5))
         ax = sns.heatmap(pivot, annot=True, fmt=".2f", cmap=_HEATMAP_CMAP, cbar_kws={"shrink": 0.8})
-        ax.set_title(
-            _title("评委模型 × 方法：排序得分", dimension, [f"生成模型：{_display_label(gen)}"]),
-            fontsize=14,
-            pad=12,
-        )
+        ax.set_title("")
         ax.set_ylabel("评委模型", fontsize=12)
         ax.set_xlabel("方法", fontsize=12)
         _style_axes(ax, grid_axis=None)
@@ -504,11 +505,7 @@ def plot_per_generator(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         if not by_method.empty:
             palette = _bar_palette(len(by_method), monochrome=True)
             ax = by_method.plot(kind="bar", figsize=(4.7, 4.0), color=palette, width=0.42)
-            ax.set_title(
-                _title("方法汇总：加权平均得分", dimension, [f"生成模型：{_display_label(gen)}"]),
-                fontsize=14,
-                pad=12,
-            )
+            ax.set_title("")
             ax.set_ylabel("加权平均得分", fontsize=12)
             ax.set_xlabel("方法", fontsize=12)
             ax.tick_params(axis="x", labelrotation=0)
@@ -530,11 +527,7 @@ def plot_per_generator(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         if not by_judge.empty:
             palette = _bar_palette(len(by_judge), monochrome=True)
             ax = by_judge.plot(kind="bar", figsize=(4.6, 4.0), color=palette, width=0.45)
-            ax.set_title(
-                _title("评委模型汇总：加权平均得分", dimension, [f"生成模型：{_display_label(gen)}"]),
-                fontsize=14,
-                pad=12,
-            )
+            ax.set_title("")
             ax.set_ylabel("加权平均得分", fontsize=12)
             ax.set_xlabel("评委模型", fontsize=12)
             ax.tick_params(axis="x", labelrotation=0)
@@ -623,7 +616,7 @@ def plot_single_dimension(out_dir: Path, dimension: str, in_dir: Optional[Path] 
             pivot.index = display_methods
             pivot.columns = display_judges
 
-            fig, ax = plt.subplots(figsize=(10.6, 4.85))
+            fig, ax = plt.subplots(figsize=_COMPACT_JUDGE_SUMMARY_FIGSIZE)
             x = np.arange(len(pivot.index), dtype=float)
             group_width = 0.72
             bar_width = group_width / max(len(pivot.columns), 1)
@@ -640,12 +633,18 @@ def plot_single_dimension(out_dir: Path, dimension: str, in_dir: Optional[Path] 
                 )
                 containers.append(cast(BarContainer, bars))
 
-            fig.suptitle(_title("方法 × 评委模型：排序得分概览", dimension), fontsize=14, y=0.935)
+                fig.suptitle("")
             ax.set_ylabel('排序得分', fontsize=12)
             ax.set_xlabel('方法', fontsize=12)
             ax.set_xticks(x)
             ax.set_xticklabels(list(pivot.index), rotation=0)
             ax.tick_params(axis='x', labelrotation=0)
+            if fig._suptitle is not None:
+                fig._suptitle.set_text("")
+            ax.xaxis.label.set_size(_COMPACT_JUDGE_SUMMARY_LABEL_SIZE)
+            ax.yaxis.label.set_size(_COMPACT_JUDGE_SUMMARY_LABEL_SIZE)
+            ax.tick_params(axis='x', labelsize=_COMPACT_JUDGE_SUMMARY_TICK_SIZE)
+            ax.tick_params(axis='y', labelsize=_COMPACT_JUDGE_SUMMARY_TICK_SIZE)
             fig.legend(
                 handles=containers,
                 labels=list(pivot.columns),
@@ -655,12 +654,23 @@ def plot_single_dimension(out_dir: Path, dimension: str, in_dir: Optional[Path] 
                 title=None,
                 frameon=False,
             )
+            legend = fig.legends[0] if fig.legends else None
+            if legend is not None:
+                legend.set_bbox_to_anchor((0.5, 0.81), transform=fig.transFigure)
+                try:
+                    legend.set_ncols(min(max(len(pivot.columns), 1), 3))
+                except AttributeError:
+                    pass
+                for text in legend.get_texts():
+                    text.set_fontsize(_COMPACT_JUDGE_SUMMARY_LEGEND_SIZE)
             for container in containers:
                 ax.bar_label(container, fmt="{:.2f}", padding=2, fontsize=9)
+            for text in ax.texts:
+                text.set_fontsize(_COMPACT_JUDGE_SUMMARY_BAR_LABEL_SIZE)
             _apply_y_padding(ax, pivot.values.flatten())
             _style_axes(ax)
             _accentuate_bars(ax)
-            plt.tight_layout(rect=(0, 0, 1, 0.80))
+            plt.tight_layout(rect=(0, 0, 1, 0.88))
             plt.savefig(plots_dir / f'single_dim_by_judge_{dimension}.png', dpi=200)
             plt.close()
 
@@ -692,19 +702,30 @@ def plot_radar_overall(csv3: pd.DataFrame, out_dir: Path) -> None:
 
         palette = sns.color_palette("husl", n_colors=len(pivot.index))
 
-        fig = plt.figure(figsize=(7.6, 7.6))
+        fig = plt.figure(figsize=_COMPACT_RADAR_FIGSIZE)
         ax = fig.add_subplot(111, polar=True)
         ax.set_theta_offset(np.pi / 2)
         ax.set_theta_direction(-1)
         theta_deg = np.degrees(angles[:-1])
         # Hide default tick labels and place custom labels at absolute positions
-        ax.set_thetagrids(theta_deg, [""] * len(dims), fontsize=11)
+        ax.set_thetagrids(theta_deg, [""] * len(dims), fontsize=_COMPACT_RADAR_DIM_LABEL_SIZE)
         # Absolute positions in axes coordinates (0..1)
         for label, (x, y) in label_positions.items():
-            ax.text(x, y, label, transform=ax.transAxes, ha="center", va="center", fontsize=11)
+            ax.text(
+                x,
+                y,
+                label,
+                transform=ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=_COMPACT_RADAR_DIM_LABEL_SIZE,
+            )
         ax.set_ylim(0, 0.7)
         ax.set_yticks([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7])
-        ax.set_yticklabels(["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7"], fontsize=9)
+        ax.set_yticklabels(
+            ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7"],
+            fontsize=_COMPACT_RADAR_RING_LABEL_SIZE,
+        )
         ax.grid(color="#D0D0D0", linestyle="--", linewidth=0.6, alpha=0.9)
 
         for (name, color) in zip(pivot.index.tolist(), palette):
@@ -716,12 +737,17 @@ def plot_radar_overall(csv3: pd.DataFrame, out_dir: Path) -> None:
                 mean_val = 0.0
             values = np.nan_to_num(values, nan=mean_val).tolist()
             values += values[:1]
-            ax.plot(angles, values, color=color, linewidth=3, label=_display_label(str(name)))
+            ax.plot(angles, values, color=color, linewidth=2.8, label=_display_label(str(name)))
             ax.fill(angles, values, color=color, alpha=0.15)
 
-        ax.set_title(title, fontsize=14, pad=20, fontweight="bold")
-        ax.legend(loc="upper right", bbox_to_anchor=(1.28, 1.10), frameon=False, fontsize=11)
-        plt.tight_layout()
+            ax.set_title("")
+        ax.legend(
+            loc="upper right",
+            bbox_to_anchor=(1.24, 1.08),
+            frameon=False,
+            fontsize=_COMPACT_RADAR_LEGEND_SIZE,
+        )
+        plt.tight_layout(pad=0.8)
         plt.savefig(plots_dir / filename, dpi=200, bbox_inches="tight")
         plt.close()
 
@@ -770,17 +796,28 @@ def plot_radar_for_judge(csv3: pd.DataFrame, out_dir: Path, judge_key: str, labe
 
         palette = sns.color_palette("husl", n_colors=len(pivot.index))
 
-        fig = plt.figure(figsize=(7.6, 7.6))
+        fig = plt.figure(figsize=_COMPACT_RADAR_FIGSIZE)
         ax = fig.add_subplot(111, polar=True)
         ax.set_theta_offset(np.pi / 2)
         ax.set_theta_direction(-1)
         theta_deg = np.degrees(angles[:-1])
-        ax.set_thetagrids(theta_deg, [""] * len(dims), fontsize=11)
+        ax.set_thetagrids(theta_deg, [""] * len(dims), fontsize=_COMPACT_RADAR_DIM_LABEL_SIZE)
         for lbl, (x, y) in label_positions.items():
-            ax.text(x, y, lbl, transform=ax.transAxes, ha="center", va="center", fontsize=11)
+            ax.text(
+                x,
+                y,
+                lbl,
+                transform=ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=_COMPACT_RADAR_DIM_LABEL_SIZE,
+            )
         ax.set_ylim(0, 1.0)
         ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.set_yticklabels(["0.2", "0.4", "0.6", "0.8", "1.0"], fontsize=9)
+        ax.set_yticklabels(
+            ["0.2", "0.4", "0.6", "0.8", "1.0"],
+            fontsize=_COMPACT_RADAR_RING_LABEL_SIZE,
+        )
         ax.grid(color="#D0D0D0", linestyle="--", linewidth=0.6, alpha=0.9)
 
         for (name, color) in zip(pivot.index.tolist(), palette):
@@ -792,12 +829,17 @@ def plot_radar_for_judge(csv3: pd.DataFrame, out_dir: Path, judge_key: str, labe
                 mean_val = 0.0
             values = np.nan_to_num(values, nan=mean_val).tolist()
             values += values[:1]
-            ax.plot(angles, values, color=color, linewidth=3, label=_display_label(str(name)))
+            ax.plot(angles, values, color=color, linewidth=2.8, label=_display_label(str(name)))
             ax.fill(angles, values, color=color, alpha=0.15)
 
-        ax.set_title(title, fontsize=14, pad=20, fontweight="bold")
-        ax.legend(loc="upper right", bbox_to_anchor=(1.28, 1.10), frameon=False, fontsize=11)
-        plt.tight_layout()
+            ax.set_title("")
+        ax.legend(
+            loc="upper right",
+            bbox_to_anchor=(1.24, 1.08),
+            frameon=False,
+            fontsize=_COMPACT_RADAR_LEGEND_SIZE,
+        )
+        plt.tight_layout(pad=0.8)
         plt.savefig(plots_dir / filename, dpi=200, bbox_inches="tight")
         plt.close()
 
@@ -863,7 +905,7 @@ def plot_method_report(overall: pd.DataFrame, csv3: pd.DataFrame, out_dir: Path,
     pivot.columns = [_display_label(c) for c in pivot.columns]
     plt.figure(figsize=(6.4, 4.2))
     ax = sns.heatmap(pivot, annot=True, fmt=".2f", cmap=_HEATMAP_CMAP, cbar_kws={"shrink": 0.8})
-    ax.set_title(_title("方法 × 生成模型：排序得分矩阵", dimension), fontsize=14, pad=12)
+    ax.set_title("")
     ax.set_xlabel("生成模型", fontsize=12)
     ax.set_ylabel("方法", fontsize=12)
     _style_axes(ax, grid_axis=None)
@@ -908,7 +950,7 @@ def plot_generator_report(overall: pd.DataFrame, csv3: pd.DataFrame, out_dir: Pa
     pivot.columns = [_display_label(c) for c in pivot.columns]
     plt.figure(figsize=(6.4, 4.2))
     ax = sns.heatmap(pivot, annot=True, fmt=".2f", cmap=_HEATMAP_CMAP, cbar_kws={"shrink": 0.8})
-    ax.set_title(_title("生成模型 × 方法：排序得分矩阵", dimension), fontsize=14, pad=12)
+    ax.set_title("")
     ax.set_xlabel("方法", fontsize=12)
     ax.set_ylabel("生成模型", fontsize=12)
     _style_axes(ax, grid_axis=None)
@@ -952,7 +994,7 @@ def plot_judge_report(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         pivot.columns = [_display_label(c) for c in pivot.columns]
         plt.figure(figsize=(6.4, 4.2))
         ax = sns.heatmap(pivot, annot=True, fmt=".2f", cmap=_HEATMAP_CMAP, cbar_kws={"shrink": 0.8})
-        ax.set_title(_title("评委模型 × 方法：排序得分矩阵", dimension), fontsize=14, pad=12)
+        ax.set_title("")
         ax.set_xlabel("方法", fontsize=12)
         ax.set_ylabel("评委模型", fontsize=12)
         _style_axes(ax, grid_axis=None)
@@ -967,7 +1009,7 @@ def plot_judge_report(csv3: pd.DataFrame, out_dir: Path, dimension: str):
         pivot.columns = [_display_label(c) for c in pivot.columns]
         plt.figure(figsize=(6.4, 4.2))
         ax = sns.heatmap(pivot, annot=True, fmt=".2f", cmap=_HEATMAP_CMAP, cbar_kws={"shrink": 0.8})
-        ax.set_title(_title("评委模型 × 生成模型：排序得分矩阵", dimension), fontsize=14, pad=12)
+        ax.set_title("")
         ax.set_xlabel("生成模型", fontsize=12)
         ax.set_ylabel("评委模型", fontsize=12)
         _style_axes(ax, grid_axis=None)
@@ -1006,7 +1048,7 @@ def plot_judge_consistency(csv3: pd.DataFrame, out_dir: Path) -> None:
             if pd.notna(val):
                 std_rows.append({"dimension": dim, "std_rank": float(val)})
         corr = pivot.corr(method="pearson", min_periods=1)
-        plt.figure(figsize=(7.2, 6.0))
+        plt.figure(figsize=_COMPACT_HEATMAP_FIGSIZE)
         cmap = _HEATMAP_CMAP
         try:
             cmap = _HEATMAP_CMAP.copy()
@@ -1023,9 +1065,11 @@ def plot_judge_consistency(csv3: pd.DataFrame, out_dir: Path) -> None:
             cmap=cmap,
             vmin=0.5,
             vmax=0.9,
+            square=True,
+            annot_kws={"size": _COMPACT_HEATMAP_ANNOT_SIZE, "weight": "medium"},
             cbar_kws={"shrink": 0.82, "extend": "min", "pad": 0.02},
         )
-        ax.set_title(f"评委相关性热力图｜维度：{dim}", fontsize=14, pad=12)
+        ax.set_title("")
         ax.set_xlabel("评委模型", fontsize=12)
         ax.set_ylabel("评委模型", fontsize=12)
         _style_axes(ax, grid_axis=None)
@@ -1158,7 +1202,7 @@ def plot_judge_consistency_extended(csv3: pd.DataFrame, out_dir: Path) -> None:
             color="#A5A5A5",
             linewidth=1.0,
         )
-        ax.set_title("Spearman 两两相关分布", fontsize=14, pad=12)
+        ax.set_title("")
         ax.set_xlabel("维度", fontsize=12)
         ax.set_ylabel("相关系数", fontsize=12)
         _style_axes(ax)

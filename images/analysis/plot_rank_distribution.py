@@ -125,7 +125,7 @@ def _plot_stacked_bar(
     pivot.index = [_safe_label(k) for k in pivot.index]
     colors = _bw_palette(len(pivot.columns))
     ax = pivot.plot(kind="bar", stacked=True, figsize=(11.2, 4.8), color=colors, width=0.7)
-    ax.set_title(title, fontsize=13, pad=12)
+    ax.set_title("")
     ax.set_ylabel("比例", fontsize=11)
     ax.set_xlabel(xlabel, fontsize=11)
     ax.tick_params(axis="x", labelrotation=0)
@@ -139,7 +139,7 @@ def _plot_stacked_bar(
             spine.set_linewidth(0.8)
     leg = ax.get_legend()
     if leg is not None:
-        leg.set_title("排名")
+        leg.set_title("")
     plt.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(out_path, dpi=200)

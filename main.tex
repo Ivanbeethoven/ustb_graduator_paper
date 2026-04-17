@@ -10,7 +10,8 @@
 % % prevent undefined italic shapes. Adjust names if your system font names differ.
 % \setCJKmainfont[ItalicFont={SimSun},SlantedFont={SimSun},BoldFont={SimHei}]{SimSun}
 
-\usepackage[numbers,sort&compress]{natbib}
+\usepackage[super,square,numbers,sort&compress]{natbib}
+\setlength{\bibsep}{0pt}
 \usepackage{tabularx}
 \usepackage{amsmath}
 \usepackage{rotating}
@@ -129,7 +130,7 @@
 
 %% 参考文献（BibTeX + refs.bib）
 % 若需调整样式，可将 unsrtnat 改为其它 bst
-\bibliographystyle{unsrtnat}
+\bibliographystyle{gbt7714-numerical}
 \bibliography{refs}
 
 %% 附录

@@ -29,6 +29,12 @@ matplotlib.rcParams.update({
     "font.size": 10,
 })
 
+COMPACT_RADAR_FIGSIZE = (6.4, 6.4)
+COMPACT_RADAR_DIM_LABEL_SIZE = 13
+COMPACT_RADAR_RING_LABEL_SIZE = 10
+COMPACT_RADAR_TITLE_SIZE = 15
+COMPACT_RADAR_LEGEND_SIZE = 11
+
 _DIMENSION_ORDER = ["有效性", "无干扰性", "可部署性"]
 
 
@@ -106,17 +112,28 @@ def plot_radar_for_judge(csv3: pd.DataFrame, out_dir: Path, judge_key: str, labe
 
         palette = sns.color_palette("husl", n_colors=len(pivot.index))
 
-        fig = plt.figure(figsize=(7.6, 7.6))
+        fig = plt.figure(figsize=COMPACT_RADAR_FIGSIZE)
         ax = fig.add_subplot(111, polar=True)
         ax.set_theta_offset(np.pi / 2)
         ax.set_theta_direction(-1)
         theta_deg = np.degrees(angles[:-1])
-        ax.set_thetagrids(theta_deg, [""] * len(dims), fontsize=11)
+        ax.set_thetagrids(theta_deg, [""] * len(dims), fontsize=COMPACT_RADAR_DIM_LABEL_SIZE)
         for lbl, (x, y) in label_positions.items():
-            ax.text(x, y, lbl, transform=ax.transAxes, ha="center", va="center", fontsize=11)
+            ax.text(
+                x,
+                y,
+                lbl,
+                transform=ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=COMPACT_RADAR_DIM_LABEL_SIZE,
+            )
         ax.set_ylim(0, 1.0)
         ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
-        ax.set_yticklabels(["0.2", "0.4", "0.6", "0.8", "1.0"], fontsize=9)
+        ax.set_yticklabels(
+            ["0.2", "0.4", "0.6", "0.8", "1.0"],
+            fontsize=COMPACT_RADAR_RING_LABEL_SIZE,
+        )
         ax.grid(color="#D0D0D0", linestyle="--", linewidth=0.6, alpha=0.9)
 
         for (name, color) in zip(pivot.index.tolist(), palette):
@@ -128,12 +145,17 @@ def plot_radar_for_judge(csv3: pd.DataFrame, out_dir: Path, judge_key: str, labe
                 mean_val = 0.0
             values = np.nan_to_num(values, nan=mean_val).tolist()
             values += values[:1]
-            ax.plot(angles, values, color=color, linewidth=3, label=str(name))
+            ax.plot(angles, values, color=color, linewidth=2.8, label=str(name))
             ax.fill(angles, values, color=color, alpha=0.15)
 
-        ax.set_title(title, fontsize=14, pad=20, fontweight="bold")
-        ax.legend(loc="upper right", bbox_to_anchor=(1.28, 1.10), frameon=False, fontsize=11)
-        plt.tight_layout()
+            ax.set_title("")
+        ax.legend(
+            loc="upper right",
+            bbox_to_anchor=(1.24, 1.08),
+            frameon=False,
+            fontsize=COMPACT_RADAR_LEGEND_SIZE,
+        )
+        plt.tight_layout(pad=0.8)
         plt.savefig(plots_dir / filename, dpi=200, bbox_inches="tight")
         plt.close()
 

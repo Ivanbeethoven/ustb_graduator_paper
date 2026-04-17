@@ -20,13 +20,12 @@
 
 
 \subsection{容器集群系统Kubernetes}
-Kubernetes 是面向容器集群负载的分布式编排系统，简称 K8S。它源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面持续驱动集群向该状态收敛\cite{kubernetes2024}。
+Kubernetes 是面向容器集群负载的分布式编排系统，简称 K8S。它源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面持续驱动集群向该状态收敛\cite{kubernetes2024}。图\ref{fig:k8s-arch}展示了 Kubernetes 的基本体系结构。一个 Kubernetes 集群由\textbf{控制平面}和多个\textbf{工作节点}构成。控制平面负责集群控制、调度与状态协调，其中：\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态，使其向期望状态收敛。工作节点侧，\textbf{kubelet}负责与 API Server 通信并维护本节点工作负载运行，\textbf{容器运行时}负责镜像拉取、容器创建和生命周期管理，\textbf{kube-proxy}负责服务转发与网络规则实现。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/k8s.png}
     \bicaption{Kubernetes 体系结构示意}{Overview of Kubernetes architecture}\label{fig:k8s-arch}
 \end{figure}
-图\ref{fig:k8s-arch}展示了 Kubernetes 的基本体系结构。一个 Kubernetes 集群由\textbf{控制平面}和多个\textbf{工作节点}构成。控制平面负责集群控制、调度与状态协调，其中：\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态，使其向期望状态收敛。工作节点侧，\textbf{kubelet}负责与 API Server 通信并维护本节点工作负载运行，\textbf{容器运行时}负责镜像拉取、容器创建和生命周期管理，\textbf{kube-proxy}负责服务转发与网络规则实现。
 
 Kubernetes 通过一系列持久化\textbf{资源对象}描述集群中不同资源的编排与管理。例如，\textbf{Pod}是最小调度单元，包含一个或多个共享网络与存储的容器；Deployment、StatefulSet 与 DaemonSet 分别面向无状态、有状态和节点守护型工作负载提供副本控制与更新策略；Service 与 Endpoint/EndpointSlice 提供稳定的服务发现与负载均衡抽象；Ingress 面向南北向流量提供入口控制；ConfigMap 与 Secret 用于配置和敏感信息的声明式注入；Volume、PV 与 PVC 则提供存储生命周期与绑定关系的抽象。
 
@@ -74,7 +73,7 @@ Kubernetes 通过一系列持久化\textbf{资源对象}描述集群中不同资
 
 本节按照通用系统权限安全研究、Kubernetes 场景安全研究和课题组已有工作这一顺序展开。前两部分分别概括权限提升风险在一般系统与云原生环境中的研究脉络，最后结合课题组前期成果说明本文工作的承接关系与问题切入点。
 
-\subsection{系统权限安全}
+\subsection{系统权限安全研究现状}
 系统权限安全研究最初聚焦访问控制模型与最小授权原则，随后逐步扩展到对过度授权、运行时提权行为和信息流泄露的综合治理。在基础设计原则层面，Saltzer 与 Schroeder\cite{saltzer1975protection}于 1975 年指出，\textbf{最小权限原则}是实现特权隔离的重要基础。基于这一原则，Ferraiolo 等\cite{ferraiolo1995role}提出基于角色的访问控制模型（RBAC），通过角色组织多类权限并将其映射至不同主体，从而缓解规模化授权中的管理难题。然而，\textbf{过度授权}现象始终普遍存在，并显著扩大了系统攻击面\cite{o1995redundant}。为收敛这类风险，Molloy 等\cite{molloy2012generative}以及 Sanders 与 Yue\cite{sanders2018minimizing}分别提出基于日志与算法模型逆向生成应用最小权限集的策略，使权限治理从静态制度设计进一步走向结合实际使用行为的最小权限推断。
 
 随着系统组件化程度不断提高，权限提升风险不再局限于单一主体的越权访问，而更多表现为跨组件、跨应用乃至跨平台的调用链滥用。在典型移动操作系统 Android中，访问控制的粗粒度特性带来了更突出的权限提升与隐蔽滥用风险。Davi等人\cite{davi2010privilege}较早揭示了\textbf{混淆代理}攻击模型，即低权限应用可通过伪造合法请求，诱导高权限组件执行敏感操作。Hutchinson 等\cite{hutchinson2018survey}进一步将该模型概括为三个条件：请求敏感权限、开放导出组件以及存在通向敏感 API 的执行路径。随着攻防对抗持续升级，提权漏洞的利用方式也由单一组件劫持\cite{wu2016seccomp}，演变为多重调用链上的跨应用共谋\cite{elzawawy2025hidden}，甚至扩展到同一设备内由第三方 SDK 发起的共谋攻击\cite{taylor2017intralibrary}。
@@ -85,7 +84,7 @@ Kubernetes 通过一系列持久化\textbf{资源对象}描述集群中不同资
 
 上述思路随后被扩展到小程序等宿主内嵌生态的权限安全研究。Zhang 等\cite{zhang2023small}对多个主流小程序生态开展系统性研究，提取了通用的权限控制抽象模型，揭示了跨运行态环境下的多类典型越权漏洞并通过实际攻击加以验证；Wang 等\cite{wang2024minichecker}则聚焦小程序数据权限滥用问题，定义了多种违规权限申请模式，并设计静态分析工具 MiniChecker 开展规模化检测，指出现有平台权限机制在底层设计上仍存在固有缺陷。总体来看，通用系统中的相关研究为识别跨组件调用、越权传播和后果溯源提供了重要方法基础，但其分析对象和执行环境与 Kubernetes 仍存在明显差异。
 
-\subsection{Kubernetes 安全}
+\subsection{Kubernetes 安全研究现状}
 在云原生场景中，Kubernetes 将配置、控制平面、网络与运行时机制耦合在同一系统之中，权限风险往往沿部署模板、授权链路和组件交互同步扩散。因此，相关研究既继承了通用系统中的最小授权与行为检测思路，又形成了更强调配置语义和多层联动的分析路径。现有工作大体可分为配置风险识别、模板与 IaC 安全分析、架构与权限链风险挖掘以及网络与运行时防护四类。
 
 安全误配置是 Kubernetes 场景中最常见、也最早受到关注的风险来源。早期研究主要用于勾勒配置风险的整体图景：Islam Shamim 等\cite{Islam_Shamim_2020}系统总结了 Kubernetes 安全实践，Shamim\cite{Shamim_2021}进一步指出部署清单偏离最佳实践可能直接演化为可利用的提权路径，Curtis 与 Eisty\cite{Curtis_2025}基于 Stack Overflow 数据的实证分析也表明配置安全始终是开发侧的核心关切。在此基础上，Rahman 等\cite{k8smanifests2023}对开源清单中的典型安全误配置进行了大规模归纳与实证研究。然而，仅依赖静态扫描仍难以完整反映风险的真实可利用性。Shamim 等\cite{shamim2025prescription}评估了 CIS 推荐配置的合规现状，发现从业人员对安全基线的理解存在显著差异，现有 SAST 工具的检测覆盖也有明显不足；其后续工作\cite{shamim2025dastk8s}进一步结合工业界部署实践，论证了将 DAST 动态分析纳入配置核验流程的必要性。上述研究说明，Kubernetes 配置安全研究正由基线合规判断转向实际可利用风险评估。

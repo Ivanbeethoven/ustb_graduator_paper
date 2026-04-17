@@ -63,6 +63,12 @@ GENERATOR_MAP = {
     'grok4': 'Grok4'
 }
 
+COMPACT_RADAR_FIGSIZE = (6.4, 6.4)
+COMPACT_RADAR_DIM_LABEL_SIZE = 13
+COMPACT_RADAR_RING_LABEL_SIZE = 10
+COMPACT_RADAR_TITLE_SIZE = 15
+COMPACT_RADAR_LEGEND_SIZE = 13
+
 
 def load_data():
     """加载人工评审数据"""
@@ -182,7 +188,7 @@ def plot_method_comparison(agg_method_df):
                    f'{height:.3f}',
                    ha='center', va='bottom', fontsize=9)
         
-        ax.set_title(f'{dim_cn}维度', fontsize=12, fontweight='bold')
+        ax.set_title("")
         ax.set_ylabel('人工评审平均得分', fontsize=10)
         ax.set_ylim(0, 1.0)
         ax.grid(axis='y', alpha=0.3)
@@ -220,7 +226,7 @@ def plot_generator_comparison(agg_gen_df):
                    f'{height:.3f}',
                    ha='center', va='bottom', fontsize=9)
         
-        ax.set_title(f'{dim_cn}维度', fontsize=12, fontweight='bold')
+        ax.set_title("")
         ax.set_ylabel('人工评审平均得分', fontsize=10)
         ax.set_ylim(0, 1.0)
         ax.grid(axis='y', alpha=0.3)
@@ -262,7 +268,7 @@ def plot_dimension_radar(agg_gen_df):
         ax.set_xticks(angles[:-1])
         ax.set_xticklabels([DIMENSION_MAP[d] for d in dimensions], fontsize=10)
         ax.set_ylim(0, 0.7)
-        ax.set_title(GENERATOR_MAP[generator], fontsize=12, fontweight='bold', pad=20)
+        ax.set_title("")
         ax.grid(True)
     
     # 隐藏多余的子图
@@ -295,19 +301,30 @@ def plot_overall_radar(agg_gen_df, agg_method_df):
         angles = np.linspace(0, 2 * np.pi, len(dim_order_en), endpoint=False).tolist()
         angles += angles[:1]
 
-        plt.figure(figsize=(7.6, 7.6))
+        plt.figure(figsize=COMPACT_RADAR_FIGSIZE)
         ax = plt.subplot(111, polar=True)
         ax.set_theta_offset(np.pi / 2)
         ax.set_theta_direction(-1)
         theta_deg = np.degrees(angles[:-1])
-        ax.set_thetagrids(theta_deg, ["" for _ in dim_order_cn], fontsize=11)
+        ax.set_thetagrids(theta_deg, ["" for _ in dim_order_cn], fontsize=COMPACT_RADAR_DIM_LABEL_SIZE)
 
         for label, (x, y) in label_positions.items():
-            ax.text(x, y, label, transform=ax.transAxes, ha='center', va='center', fontsize=11)
+            ax.text(
+                x,
+                y,
+                label,
+                transform=ax.transAxes,
+                ha='center',
+                va='center',
+                fontsize=COMPACT_RADAR_DIM_LABEL_SIZE,
+            )
 
         ax.set_ylim(0, 0.7)
         ax.set_yticks([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7])
-        ax.set_yticklabels(["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7"], fontsize=9)
+        ax.set_yticklabels(
+            ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7"],
+            fontsize=COMPACT_RADAR_RING_LABEL_SIZE,
+        )
         ax.grid(color="#D0D0D0", linestyle="--", linewidth=0.6, alpha=0.9)
 
         palette = sns.color_palette("husl", n_colors=len(pivot.index))
@@ -320,12 +337,17 @@ def plot_overall_radar(agg_gen_df, agg_method_df):
                 mean_val = 0.0
             values = np.nan_to_num(values, nan=mean_val).tolist()
             values += values[:1]
-            ax.plot(angles, values, color=color, linewidth=3, label=label_map.get(name, name))
+            ax.plot(angles, values, color=color, linewidth=2.8, label=label_map.get(name, name))
             ax.fill(angles, values, color=color, alpha=0.15)
 
-        ax.set_title(title, fontsize=14, pad=20, fontweight='bold')
-        ax.legend(loc="upper right", bbox_to_anchor=(1.28, 1.10), frameon=False, fontsize=11)
-        plt.tight_layout()
+        ax.set_title("")
+        ax.legend(
+            loc="upper right",
+            bbox_to_anchor=(1.24, 1.08),
+            frameon=False,
+            fontsize=COMPACT_RADAR_LEGEND_SIZE,
+        )
+        plt.tight_layout(pad=0.8)
         plt.savefig(OUTPUT_DIR / filename, bbox_inches='tight', dpi=300)
         plt.close()
         print(f"✓ 生成雷达图: {OUTPUT_DIR / filename}")
@@ -430,7 +452,7 @@ def plot_score_distribution(agg_method_df, agg_gen_df):
             patch.set_facecolor('lightblue')
             patch.set_alpha(0.7)
         
-        ax.set_title(f'{dim_cn} - 方法配置', fontsize=11, fontweight='bold')
+        ax.set_title("")
         ax.set_ylabel('人工评审得分', fontsize=10)
         ax.grid(axis='y', alpha=0.3)
         ax.tick_params(axis='x', rotation=15)
@@ -449,7 +471,7 @@ def plot_score_distribution(agg_method_df, agg_gen_df):
             patch.set_facecolor('lightcoral')
             patch.set_alpha(0.7)
         
-        ax.set_title(f'{dim_cn} - 生成模型', fontsize=11, fontweight='bold')
+        ax.set_title("")
         ax.set_ylabel('人工评审得分', fontsize=10)
         ax.grid(axis='y', alpha=0.3)
         ax.tick_params(axis='x', rotation=15)

@@ -20,16 +20,35 @@ LLM_LEGEND = [
     ("qwen", "qwen3-max", "qwen.png"),
     ("deepseek", "deepseek-v3.1", "deepseek.png"),
     ("glm", "glm4.5", "glm.png"),
-    ("gpt", "gpt5", "gpt5.png"),
-    ("grok", "gork4", "gork.png"),
+    ("gpt", "gpt5", "gpt.png"),
+    ("grok", "grok4", "grok.png"),
 ]
+
+LLM_BADGES = {
+    "qwen": {"abbr": "Q", "color": "#E85D75"},
+    "deepseek": {"abbr": "DS", "color": "#6C8F2A"},
+    "glm": {"abbr": "GLM", "color": "#2FAE78"},
+    "gpt": {"abbr": "GPT", "color": "#2EA6C7"},
+    "grok": {"abbr": "G", "color": "#B06AF3"},
+}
 
 plt.rcParams.update(
     {
         "figure.dpi": 150,
         "savefig.dpi": 200,
         "axes.unicode_minus": False,
-        "font.size": 10,
+        "font.sans-serif": [
+            "WenQuanYi Micro Hei",
+            "WenQuanYi Zen Hei",
+            "Noto Sans CJK SC",
+            "Noto Sans CJK JP",
+            "Noto Sans CJK",
+            "Microsoft YaHei",
+            "SimHei",
+            "DejaVu Sans",
+        ],
+        "font.family": "sans-serif",
+        "font.size": 14,
         "axes.facecolor": "#FFFFFF",
         "figure.facecolor": "#FFFFFF",
         "axes.edgecolor": "#2A2A2A",
@@ -43,6 +62,18 @@ plt.rcParams.update(
     }
 )
 
+COMPACT_RANK_FIGSIZE = (8.6, 4.7)
+COMPACT_ICON_FIGSIZE = (9.0, 4.9)
+COMPACT_TITLE_SIZE = 17
+COMPACT_AXIS_LABEL_SIZE = 14
+COMPACT_TICK_SIZE = 13
+COMPACT_LEGEND_TITLE_SIZE = 12
+COMPACT_LEGEND_TEXT_SIZE = 11
+COMPACT_MARKER_SIZE = 210
+COMPACT_MARKER_LEGEND_SIZE = 6.5
+COMPACT_ICON_ZOOM = 0.17
+COMPACT_ICON_LEGEND_ZOOM = 0.08
+
 
 def _safe_label(name: str) -> str:
     if name is None:
@@ -51,6 +82,13 @@ def _safe_label(name: str) -> str:
     if s.startswith("no_"):
         return "w/o " + s[3:].replace("_", " ")
     return s.replace("_", " ")
+
+
+def _to_markdown_safe(df: pd.DataFrame) -> str:
+    try:
+        return df.to_markdown(index=False)
+    except ImportError:
+        return df.to_string(index=False)
 
 
 def _generate_report(method_ranks: pd.DataFrame, profile_ranks: pd.DataFrame, dims: List[str], out_dir: Path) -> None:
@@ -68,7 +106,7 @@ def _generate_report(method_ranks: pd.DataFrame, profile_ranks: pd.DataFrame, di
         cols = ['方法'] + dims
         method_table = method_ranks_display[cols]
         report_lines.append("### 排名表格（数值越小越好）\n")
-        report_lines.append(method_table.to_markdown(index=False))
+        report_lines.append(_to_markdown_safe(method_table))
         report_lines.append("\n")
         
         # 计算平均排名
@@ -76,7 +114,7 @@ def _generate_report(method_ranks: pd.DataFrame, profile_ranks: pd.DataFrame, di
         method_ranks_display = method_ranks_display.sort_values('平均排名')
         report_lines.append("### 综合平均排名\n")
         avg_table = method_ranks_display[['方法', '平均排名']]
-        report_lines.append(avg_table.to_markdown(index=False))
+        report_lines.append(_to_markdown_safe(avg_table))
         report_lines.append("\n")
         
         # LaTeX表格
@@ -105,7 +143,7 @@ def _generate_report(method_ranks: pd.DataFrame, profile_ranks: pd.DataFrame, di
         cols = ['模型'] + dims
         profile_table = profile_ranks_display[cols]
         report_lines.append("### 排名表格（数值越小越好）\n")
-        report_lines.append(profile_table.to_markdown(index=False))
+        report_lines.append(_to_markdown_safe(profile_table))
         report_lines.append("\n")
         
         # 计算平均排名
@@ -113,7 +151,7 @@ def _generate_report(method_ranks: pd.DataFrame, profile_ranks: pd.DataFrame, di
         profile_ranks_display = profile_ranks_display.sort_values('平均排名')
         report_lines.append("### 综合平均排名\n")
         avg_table = profile_ranks_display[['模型', '平均排名']]
-        report_lines.append(avg_table.to_markdown(index=False))
+        report_lines.append(_to_markdown_safe(avg_table))
         report_lines.append("\n")
         
         # LaTeX表格
@@ -193,7 +231,7 @@ def _method_markers(n: int) -> List[str]:
     return (base * repeats)[:n]
 
 
-def _y_map(dims: List[str], step: float = 0.75, base: float = 0.8) -> dict:
+def _y_map(dims: List[str], step: float = 0.68, base: float = 0.72) -> dict:
     return {d: base + i * step for i, d in enumerate(dims)}
 
 
@@ -207,12 +245,73 @@ def _llm_icon_path(name: str, llm_dir: Path) -> Path | None:
             cand = llm_dir / fname
             if cand.exists():
                 return cand
-    # Backward-compat typo match
-    if "gork" in s:
-        cand = llm_dir / "gork.png"
+    fallback_names = []
+    if "gpt" in s:
+        fallback_names.extend(["gpt.png", "gpt5.png"])
+    if "grok" in s or "gork" in s:
+        fallback_names.extend(["grok.png", "gork.png"])
+    for fname in fallback_names:
+        cand = llm_dir / fname
         if cand.exists():
             return cand
     return None
+
+
+def _load_square_icon(path: Path) -> np.ndarray:
+    img = plt.imread(path)
+    if img.ndim == 2:
+        img = np.stack([img, img, img], axis=-1)
+    if img.shape[-1] == 3:
+        alpha = np.ones((img.shape[0], img.shape[1], 1), dtype=img.dtype)
+        img = np.concatenate([img, alpha], axis=-1)
+    alpha_mask = img[..., 3] > 0.02
+    if np.any(alpha_mask):
+        ys, xs = np.where(alpha_mask)
+        y0, y1 = ys.min(), ys.max() + 1
+        x0, x1 = xs.min(), xs.max() + 1
+        img = img[y0:y1, x0:x1]
+    h, w = img.shape[:2]
+    side = max(h, w)
+    canvas = np.zeros((side, side, 4), dtype=img.dtype)
+    y0 = (side - h) // 2
+    x0 = (side - w) // 2
+    canvas[y0:y0 + h, x0:x0 + w] = img
+    return canvas
+
+
+def _llm_badge_spec(name: str) -> dict[str, str]:
+    s = str(name).lower()
+    for token, spec in LLM_BADGES.items():
+        if token in s or (token == "grok" and "gork" in s):
+            return spec
+    return {"abbr": str(name)[:2].upper(), "color": "#303030"}
+
+
+def _draw_badge(ax: plt.Axes, x: float, y: float, name: str, size: int = 230, *, transform=None) -> None:
+    spec = _llm_badge_spec(name)
+    text_size = 8 if len(spec["abbr"]) >= 3 else 10
+    ax.scatter(
+        [x],
+        [y],
+        s=size,
+        color=spec["color"],
+        edgecolors="#FFFFFF",
+        linewidths=1.6,
+        transform=transform,
+        zorder=4,
+    )
+    ax.text(
+        x,
+        y,
+        spec["abbr"],
+        color="#FFFFFF",
+        ha="center",
+        va="center",
+        fontsize=text_size,
+        fontweight="bold",
+        transform=transform,
+        zorder=5,
+    )
 
 
 def _add_llm_legend(fig: plt.Figure, ranks: pd.DataFrame, llm_dir: Path) -> None:
@@ -224,7 +323,7 @@ def _add_llm_legend(fig: plt.Figure, ranks: pd.DataFrame, llm_dir: Path) -> None
 
     # Create a dedicated legend area (right side)
     # Noticeably further right to improve overall balance
-    ax_leg = fig.add_axes([0.83, 0.18, 0.155, 0.64])
+    ax_leg = fig.add_axes([0.80, 0.16, 0.18, 0.68])
     ax_leg.set_axis_off()
 
     # Bordered legend panel (white background)
@@ -241,24 +340,15 @@ def _add_llm_legend(fig: plt.Figure, ranks: pd.DataFrame, llm_dir: Path) -> None
         )
     )
 
-    ax_leg.text(
-        0.06,
-        0.96,
-        "模型图例",
-        fontsize=12,
-        weight="bold",
-        va="top",
-        transform=ax_leg.transAxes,
-    )
 
     n = len(legend_items)
     ys = np.linspace(0.82, 0.12, n)
     for i, (_token, label, fname) in enumerate(legend_items):
         y = float(ys[i])
-        icon_path = llm_dir / fname
-        if icon_path.exists():
-            img = plt.imread(icon_path)
-            imagebox = OffsetImage(img, zoom=0.22)
+        icon_path = _llm_icon_path(label, llm_dir)
+        if icon_path and icon_path.exists():
+            img = _load_square_icon(icon_path)
+            imagebox = OffsetImage(img, zoom=COMPACT_ICON_LEGEND_ZOOM)
             ab = AnnotationBbox(
                 imagebox,
                 (0.20, y),
@@ -267,7 +357,7 @@ def _add_llm_legend(fig: plt.Figure, ranks: pd.DataFrame, llm_dir: Path) -> None
             )
             ax_leg.add_artist(ab)
         else:
-            ax_leg.scatter([0.20], [y], s=60, color="#202020", transform=ax_leg.transAxes)
+            _draw_badge(ax_leg, 0.20, y, label, size=250, transform=ax_leg.transAxes)
 
         ax_leg.text(
             0.32,
@@ -275,7 +365,7 @@ def _add_llm_legend(fig: plt.Figure, ranks: pd.DataFrame, llm_dir: Path) -> None
             label,
             va="center",
             ha="left",
-            fontsize=11,
+            fontsize=COMPACT_LEGEND_TEXT_SIZE,
             color="#1F1F1F",
             transform=ax_leg.transAxes,
         )
@@ -297,7 +387,7 @@ def _plot_rank_markers(
     ranks = ranks.copy()
     ranks["label"] = ranks["key"].astype(str).map(_safe_label)
 
-    fig, ax = plt.subplots(figsize=(10.4, 5.2))
+    fig, ax = plt.subplots(figsize=COMPACT_RANK_FIGSIZE)
     colors = ["#202020"] * len(ranks)
     markers = _method_markers(len(ranks))
 
@@ -306,9 +396,9 @@ def _plot_rank_markers(
         for d in dims:
             x = row[d]
             y = y_map[d]
-            ax.scatter(x, y, color=colors[i], s=240, marker=markers[i], zorder=3)
+            ax.scatter(x, y, color=colors[i], s=COMPACT_MARKER_SIZE, marker=markers[i], zorder=3)
 
-    ax.set_title(title, fontsize=16, pad=12)
+            ax.set_title("")
     ax.set_xlabel("排序（名次）", fontsize=14)
     ax.set_ylabel("维度", fontsize=14)
     ax.set_yticks(list(y_map.values()))
@@ -316,6 +406,12 @@ def _plot_rank_markers(
     ax.set_xticks(range(1, len(ranks) + 1))
     ax.tick_params(axis="x", labelsize=13)
     ax.tick_params(axis="y", labelsize=13)
+    ax.title.set_fontsize(COMPACT_TITLE_SIZE)
+    ax.title.set_y(1.01)
+    ax.xaxis.label.set_size(COMPACT_AXIS_LABEL_SIZE)
+    ax.yaxis.label.set_size(COMPACT_AXIS_LABEL_SIZE)
+    ax.tick_params(axis="x", labelsize=COMPACT_TICK_SIZE)
+    ax.tick_params(axis="y", labelsize=COMPACT_TICK_SIZE)
     ax.set_xlim(0.5, len(ranks) + 0.5)
     y_min = min(y_map.values()) - 0.35
     y_max = max(y_map.values()) + 0.35
@@ -331,7 +427,14 @@ def _plot_rank_markers(
             spine.set_linewidth(0.8)
 
     handles = [
-        plt.Line2D([0], [0], marker=markers[i], color=colors[i], linestyle="", markersize=7)
+        plt.Line2D(
+            [0],
+            [0],
+            marker=markers[i],
+            color=colors[i],
+            linestyle="",
+            markersize=COMPACT_MARKER_LEGEND_SIZE,
+        )
         for i in range(len(ranks))
     ]
     leg = ax.legend(
@@ -339,10 +442,11 @@ def _plot_rank_markers(
         ranks["label"].tolist(),
         loc="center left",
         bbox_to_anchor=(1.02, 0.5),
-        fontsize=11,
+        fontsize=COMPACT_LEGEND_TEXT_SIZE,
         title="方法",
     )
     if leg is not None:
+        leg.get_title().set_fontsize(COMPACT_LEGEND_TITLE_SIZE)
         leg.set_frame_on(True)
         frame = leg.get_frame()
         frame.set_edgecolor("#1F1F1F")
@@ -364,7 +468,7 @@ def _plot_rank_icons(
     ranks = ranks.copy()
     ranks["label"] = ranks["key"].astype(str).map(_safe_label)
 
-    fig, ax = plt.subplots(figsize=(10.4, 5.2))
+    fig, ax = plt.subplots(figsize=COMPACT_ICON_FIGSIZE)
     y_map = _y_map(dims)
 
     for _, row in ranks.iterrows():
@@ -373,15 +477,14 @@ def _plot_rank_icons(
             x = row[d]
             y = y_map[d]
             if icon_path and icon_path.exists():
-                img = plt.imread(icon_path)
-                imagebox = OffsetImage(img, zoom=0.5)
+                img = _load_square_icon(icon_path)
+                imagebox = OffsetImage(img, zoom=COMPACT_ICON_ZOOM)
                 ab = AnnotationBbox(imagebox, (x, y), frameon=False)
                 ax.add_artist(ab)
             else:
-                ax.scatter(x, y, color="#303030", s=55, marker="o", zorder=3)
-                ax.text(x, y + 0.14, row["label"], ha="center", va="bottom", fontsize=9, color="#1F1F1F")
+                _draw_badge(ax, x, y, row["key"], size=260)
 
-    ax.set_title(title, fontsize=16, pad=12)
+                ax.set_title("")
     ax.set_xlabel("排序（名次）", fontsize=14)
     ax.set_ylabel("维度", fontsize=14)
     ax.set_yticks(list(y_map.values()))
@@ -389,6 +492,12 @@ def _plot_rank_icons(
     ax.set_xticks(range(1, len(ranks) + 1))
     ax.tick_params(axis="x", labelsize=13)
     ax.tick_params(axis="y", labelsize=13)
+    ax.title.set_fontsize(COMPACT_TITLE_SIZE)
+    ax.title.set_y(1.01)
+    ax.xaxis.label.set_size(COMPACT_AXIS_LABEL_SIZE)
+    ax.yaxis.label.set_size(COMPACT_AXIS_LABEL_SIZE)
+    ax.tick_params(axis="x", labelsize=COMPACT_TICK_SIZE)
+    ax.tick_params(axis="y", labelsize=COMPACT_TICK_SIZE)
     ax.set_xlim(0.5, len(ranks) + 0.5)
     y_min = min(y_map.values()) - 0.35
     y_max = max(y_map.values()) + 0.35
@@ -409,7 +518,7 @@ def _plot_rank_icons(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     # Leave room on the right for the legend area
     # Leave more gap between plot and legend
-    fig.subplots_adjust(left=0.10, right=0.75, top=0.90, bottom=0.14)
+    fig.subplots_adjust(left=0.10, right=0.73, top=0.90, bottom=0.14)
     plt.savefig(out_path, dpi=200)
     plt.close()
 
@@ -431,7 +540,7 @@ def main() -> None:
     p.add_argument(
         "--llm-dir",
         type=Path,
-        default=Path.cwd() / "analysis" / "llm",
+        default=Path.cwd() / "images" / "llms",
         help="LLM 图标目录",
     )
     args = p.parse_args()
