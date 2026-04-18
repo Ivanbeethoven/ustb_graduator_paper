@@ -58,6 +58,9 @@
 % 统一链接为黑色（避免绿色引用）
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black}
 
+% 去除图表标题中的冒号
+\captionsetup{labelsep=space}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%封面信息%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -130,6 +133,9 @@
 
 %% 参考文献（BibTeX + refs.bib）
 % 若需调整样式，可将 unsrtnat 改为其它 bst
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{参考文献}
 \bibliographystyle{gbt7714-numerical}
 \bibliography{refs}
 

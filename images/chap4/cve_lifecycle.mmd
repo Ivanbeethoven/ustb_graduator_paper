@@ -1,7 +1,7 @@
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'fontSize': '14px',
+    'fontSize': '18px',
     'fontFamily': '"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif',
     'lineColor': '#6b7280',
     'primaryBorderColor': '#8b5cf6',
@@ -9,7 +9,7 @@
   }
 }}%%
 stateDiagram-v2
-    direction TB
+    direction LR
     %% UML 状态图 — CVE 漏洞处置生命周期（含候选策略生成与优化）
 
     [*] --> 未处理 : CVE 导入
@@ -23,12 +23,12 @@ stateDiagram-v2
     已部署 --> [*]
 
     note right of 策略生成与优化中
-        包含安全上下文构建、
-        结构化漏洞分析、
+        安全上下文构建
+        结构化漏洞分析
         候选策略生成与修订
     end note
 
     note right of 待评审
-        包含三维质量评审、
+        三维质量评审
         同类型候选排序与确认
     end note

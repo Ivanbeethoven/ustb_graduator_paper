@@ -36,3 +36,7 @@ Thumbs.db
 data
 ai_conversations
 .omx
+**/node_modules/**
+**/dist/**
+**/build/**
+**/coverage/**

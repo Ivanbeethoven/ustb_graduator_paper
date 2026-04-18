@@ -1,0 +1,24 @@
+{
+  "name": "latex",
+  "version": "1.0.0",
+  "description": "本仓库包含用于生成实验图表的脚本：`images/analysis/plot.py`。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ivanbeethoven/ustb_graduator_paper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ivanbeethoven/ustb_graduator_paper/issues"
+  },
+  "homepage": "https://github.com/Ivanbeethoven/ustb_graduator_paper#readme",
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}
