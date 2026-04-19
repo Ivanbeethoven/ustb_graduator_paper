@@ -9,66 +9,59 @@
 {\noindent\large\textbf{符号清单}\par}
 \vspace{0.2em}
 
-\noindent\textbf{基本对象与集合}
-
 \begingroup
 \small
-\centering
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.03}
-\begin{tabularx}{0.90\textwidth}{>{\centering\arraybackslash}p{2.9cm} >{\raggedright\arraybackslash}X}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.88}
+\begin{longtable}{>{\centering\arraybackslash}p{2.9cm} >{\raggedright\arraybackslash}p{10.5cm}}
 \toprule
 \textbf{符号} & \textbf{含义说明} \\
 \midrule
-$\mathcal{V}$ & 漏洞实例空间，表示全部待分析漏洞构成的集合。 \\
-$v=\langle \mathit{id},d,m \rangle$ & 单个漏洞实例，由编号、描述与元数据组成。 \\
-$\mathit{id}$ & 漏洞标识符，如 CVE 编号。 \\
-$d$ & 漏洞描述文本，用于刻画漏洞事实。 \\
-$m$ & 漏洞元数据，如严重性、受影响组件与版本范围等。 \\
-$\mathcal{C}$ & 安全上下文空间，表示与漏洞相关的证据集合空间。 \\
+\endfirsthead
+\multicolumn{2}{l}{\small（续表）} \\[0.3ex]
+\toprule
+\textbf{符号} & \textbf{含义说明} \\
+\midrule
+\endhead
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
+% ---- 基本对象与集合 ----
+$v$ & 单个漏洞实例，三元组形式 $\langle \mathit{id},d,m \rangle$，由编号、描述与元数据组成。 \\
 $c$ & 安全上下文，即带来源标识的有限证据集合。 \\
 $t_i$ & 第 $i$ 条证据内容，如代码片段、公告文本或文档片段。 \\
 $\mathit{src}_i$ & 第 $i$ 条证据来源，如文档路径、链接或代码位置。 \\
-$\Pi$ & 候选策略全集，表示所有候选监控策略与防护策略的总集合。 \\
-$\pi=\langle \mathit{type},\mathit{method},\mathit{action} \rangle$ & 单个安全策略，由策略类型、控制机理与执行表达组成。 \\
-$\mathit{type}$ & 策略类型，取值为监控型或防护型。 \\
-$\mathit{method}$ & 控制机理序列，用于表示策略采用的控制手段。 \\
-$\mathit{action}$ & 执行表达序列，对应可部署的规则、配置或命令。 \\
+$n_c$ & 安全上下文 $c$ 中的证据条数，即 $|c|$。 \\
+$\mathcal{K}_v$ & 针对漏洞 $v$ 构建的安全知识库，存放多源证据、向量索引与元数据。 \\
+$\Pi$ & 候选策略全集，表示所有候选监控策略与防护策略的总集合。$\Pi_{\mathrm{mon}},\Pi_{\mathrm{prot}}$ \\
+$\pi$ & 单个安全策略，三元组形式 $\langle \mathit{type},\mathit{method},\mathit{action} \rangle$，由策略类型、控制机理与执行表达组成。 \\
+$\mathit{type}$ & 策略类型，取值为 $\{\mathrm{mon},\mathrm{prot}\}$：$\mathrm{mon}$ 表示监控型（以观测告警为目标），$\mathrm{prot}$ 表示防护型（以阻断收敛为目标）。 \\
+$\mathit{method}$ & 控制机理序列，形如 $(m_1,\ldots,m_k)$，每个 $m_i$ 描述一项控制手段的作用路径与机理，如 Falco 规则告警、Kyverno 准入审计、节点权限位收敛等。 \\
+$\mathit{action}$ & 执行表达序列，形如 $(a_1,\ldots,a_k)$，$a_i$ 是 $m_i$ 对应的可部署表达，可为规则片段、配置声明或可执行命令等形式。 \\
+$m_i$ & 第 $i$ 项控制机理，与 $a_i$ 一一对应，共同构成一个防控措施单元。 \\
+$a_i$ & 第 $i$ 项执行表达，与 $m_i$ 一一对应，直接对应可部署的规则、配置或命令。 \\
 $\Pi_v$ & 漏洞 $v$ 的候选策略集合，由生成阶段针对漏洞 $v$ 产出。 \\
-$\mathcal{T}=\{\mathrm{mon},\mathrm{prot}\}$ & 策略类型集合，分别表示监控型与防护型。 \\
+$\mathcal{T}$ & 策略类型集合，取值为 $\{\mathrm{mon},\mathrm{prot}\}$，分别表示监控型与防护型。 \\
 $\tau$ & 类型变量，表示某一给定策略类型。 \\
-$\Pi_v^{\tau}$ & 同类型候选子集，表示漏洞 $v$ 在类型 $\tau$ 下的候选集合。 \\
-\bottomrule
-\end{tabularx}
-\endgroup
-
-\vspace{0.35em}
-
-\noindent\textbf{评价与聚合记号}
-
-\begingroup
-\small
-\centering
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.03}
-\begin{tabularx}{0.90\textwidth}{>{\centering\arraybackslash}p{2.9cm} >{\raggedright\arraybackslash}X}
-\toprule
-\textbf{符号} & \textbf{含义说明} \\
-\midrule
-$\Delta=\{E,I,D\}$ & 评价维度集合，分别对应有效性、无干扰性与可部署性。 \\
+$\Pi_v^{\tau}$ & 同类型候选子集，表示漏洞 $v$ 在类型 $\tau$ 下的候选集合，即 $\Pi_v\cap\Pi_{\tau}$。 \\[0.4ex]
+% ---- 评价与聚合记号 ----
+$\Delta$ & 评价维度集合，取值为 $\{E,I,D\}$，分别对应有效性、无干扰性与可部署性。 \\
 $q(\pi)$ & 三维质量向量，表示策略 $\pi$ 在三个维度上的质量。 \\
 $E(\pi)$ & 有效性，用于衡量对主要攻击路径与关键风险面的覆盖程度。 \\
 $I(\pi)$ & 无干扰性，衡量对正常业务的扰动程度及误报风险。 \\
 $D(\pi)$ & 可部署性，衡量策略在现有环境中的落地难度。 \\
 $\mathcal{H}$ & 评价主体集合，表示多个评审主体构成的集合。 \\
+$w_h$ & 评审主体 $h$ 在聚合时的权重，满足 $\sum_{h}w_h=1$。 \\
 $r_{\delta}^{(h)}$ & 秩函数，表示评价主体 $h$ 在维度 $\delta$ 上给出的排序位置。 \\
-$s_{\delta}^{(h)}(\pi)$ & 归一化秩得分，用于将排序位置归一化到 $[0,1]$ 区间。 \\
-$\hat S_{\delta}(\pi)$ & 共识得分，表示多个评价主体在维度 $\delta$ 上的聚合结果。 \\
-$U_{\delta}(\pi)$ & 分歧度量，用于刻画不同评审结果的一致性程度。 \\
+$\bar r_{\delta}(\pi)$ & 加权平均秩，即 $\sum_{h\in\mathcal{H}}w_h\cdot r_{\delta}^{(h)}(\pi)$，用于计算分歧度量。 \\
+$\hat S_{\delta}(\pi)$ & 共识得分，表示多个评价主体在维度 $\delta$ 上对策略 $\pi$ 的聚合质量分。 \\
+$\bar R_{\delta}$ & 维度 $\delta$ 上的共识排序，按 $\hat S_{\delta}$ 由高到低排列。 \\
+$U_{\delta}(\pi)$ & 分歧度量，用于刻画不同评审主体在维度 $\delta$ 上评分的一致性程度。 \\
 $Q(\pi)$ & 总体质量函数，表示综合三维共识得分后的最终质量。 \\
-$\alpha_E,\alpha_I,\alpha_D$ & 维度权重，分别对应有效性、无干扰性与可部署性的权重。 \\
-\bottomrule
-\end{tabularx}
+$\alpha_E,\alpha_I,\alpha_D$ & 维度权重，满足 $\alpha_E+\alpha_I+\alpha_D=1$，可按业务场景配置。 \\
+$\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排列得到。 \\
+\end{longtable}
 \endgroup
 
 \vspace{0.45em}
@@ -82,13 +75,22 @@ $\alpha_E,\alpha_I,\alpha_D$ & 维度权重，分别对应有效性、无干扰�
 
 \begingroup
 \small
-\centering
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.03}
-\begin{tabularx}{0.90\textwidth}{>{\centering\arraybackslash}p{1.8cm} >{\centering\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}X}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.88}
+\begin{longtable}{>{\centering\arraybackslash}p{1.8cm} >{\centering\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{7.8cm}}
 \toprule
 \textbf{术语} & \textbf{英文/缩写} & \textbf{说明} \\
 \midrule
+\endfirsthead
+\multicolumn{3}{l}{\small（续表）} \\[0.3ex]
+\toprule
+\textbf{术语} & \textbf{英文/缩写} & \textbf{说明} \\
+\midrule
+\endhead
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
 云原生 & Cloud-native & 本文研究对象所处的应用与基础设施环境。 \\
 Kubernetes & K8s & 本文默认指 Kubernetes 容器编排平台，K8s 为其常用缩写。 \\
 权限提升 & Privilege Escalation & 攻击者突破原有权限边界并获取更高权限的过程。 \\
@@ -103,8 +105,7 @@ Kubernetes & K8s & 本文默认指 Kubernetes 容器编排平台，K8s 为其常
 检索增强 & RAG & Retrieval-Augmented Generation \\
 思维链推理 & CoT & Chain-of-Thought，思维链。 \\
 反馈优化 & Feedback & 基于评审结果对候选策略进行修订与收敛的过程。 \\
-\bottomrule
-\end{tabularx}
+\end{longtable}
 \endgroup
 
 \vspace{0.35em}
@@ -113,13 +114,22 @@ Kubernetes & K8s & 本文默认指 Kubernetes 容器编排平台，K8s 为其常
 
 \begingroup
 \small
-\centering
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.03}
-\begin{tabularx}{0.90\textwidth}{>{\centering\arraybackslash}p{2cm} >{\raggedright\arraybackslash}p{4.9cm} >{\raggedright\arraybackslash}X}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.88}
+\begin{longtable}{>{\centering\arraybackslash}p{2cm} >{\raggedright\arraybackslash}p{5.5cm} >{\raggedright\arraybackslash}p{5.7cm}}
 \toprule
 \textbf{缩写} & \textbf{英文全称} & \textbf{中文说明} \\
 \midrule
+\endfirsthead
+\multicolumn{3}{l}{\small（续表）} \\[0.3ex]
+\toprule
+\textbf{缩写} & \textbf{英文全称} & \textbf{中文说明} \\
+\midrule
+\endhead
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
 CVE & Common Vulnerabilities and Exposures & 通用漏洞与暴露。 \\
 CWE & Common Weakness Enumeration & 通用弱点枚举。 \\
 CVSS & Common Vulnerability Scoring System & 通用漏洞评分系统。 \\
@@ -128,8 +138,7 @@ CNCF & Cloud Native Computing Foundation & 云原生计算基金会。 \\
 K8s & Kubernetes & Kubernetes 的常用缩写。 \\
 RBAC & Role-Based Access Control & 基于角色的访问控制。 \\
 LLM & Large Language Model & 大语言模型。 \\
-\bottomrule
-\end{tabularx}
+\end{longtable}
 \endgroup
 
 \endgroup
