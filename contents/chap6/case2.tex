@@ -45,7 +45,7 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 \textbf{攻击结果}：若在 \texttt{ClusterProvision} 的可读字段中发现明文凭据，则说明存在经由 CR 状态字段的敏感信息旁路泄露；该风险不依赖 \texttt{Secret} 读取权限，属于权限边界外泄。
 
 \subsection{策略部署}
-本节给出可落地的缓解策略。本案例侧重敏感信息泄露的多层次控制，即通过\textbf{防护策略}收敛读取权限面，通过\textbf{监控策略}缩短暴露时间。
+本案例侧重敏感信息泄露的多层次控制，通过\textbf{防护策略}收敛读取权限面，通过\textbf{监控策略}缩短暴露时间。
 
 \textbf{策略概述}：该方案从\textbf{防护策略}（身份与权限、准入检测）与\textbf{监控策略}（审计与告警、资源生命周期治理）四个层面分层实施。具体方法包括：
 \begin{itemize}
@@ -53,7 +53,7 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
     \item \textbf{监控策略}：启用读取行为审计并联动告警；在供应完成后对对象进行清理以缩短暴露窗口；在发现泄露风险后执行 vCenter 凭据轮换与强化。
 \end{itemize}
 
-\textbf{策略配置与部署步骤}：为避免正文过长，本案例的复现详细步骤、RBAC 清单、审计策略片段、自动化清理示例与 Gatekeeper/Kyverno 检测规则完整代码见附录\ref{app:cve-2025-2241}。
+\textbf{策略配置与部署步骤}：详见附录\ref{app:cve-2025-2241}，包含复现步骤、RBAC 清单、审计策略片段、自动化清理示例与准入检测规则。
 
 \subsection{三因素分析}
 
