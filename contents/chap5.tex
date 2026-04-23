@@ -1,4 +1,4 @@
-﻿
+
 \chapter{实验研究}\label{chap:experiment}
 
 本章围绕第三章的方法与第四章的系统实现开展实验验证，从消融实验、模型能力、评审可信度、静态工具对比和资源消耗五个方面展开分析。
@@ -8,11 +8,11 @@
 本章围绕以下问题展开实验：
 
 \begin{enumerate}
-\item[\textbf{(1)}] \textbf{三个核心模块在三维质量指标上的贡献如何？}需要验证检索增强、思维链推理与反馈优化分别对策略有效性、无干扰性与可部署性的影响，以及这种影响在不同模型下是否稳定。
+\item[\textbf{(1)}] \textbf{方法设计中三个核心部分在质量指标上的贡献如何？}需要通过消融实验验证检索增强、思维链推理与反馈优化分别对策略有效性、无干扰性与可部署性的影响，以及这种影响在不同模型下是否稳定。
 \item[\textbf{(2)}] \textbf{不同大语言模型在策略生成任务中的能力差异如何？}需要评估不同模型在三维质量指标和输出稳定性上的表现差异。
-\item[\textbf{(3)}] \textbf{基于大语言模型的自动化评审方法是否具备足够的可信度？}需要从评审模型间的一致性以及与人工评审的对照结果两个角度进行验证。
-\item[\textbf{(4)}] \textbf{相较于现有静态分析工具，本文方法能否提供更具针对性的处置方案？}需要通过与主流静态扫描工具的对比，验证本文方法在漏洞处置精度上的优势。
-\item[\textbf{(5)}] \textbf{不同模型与方法配置在资源消耗上呈现怎样的成本效益特征？}需要量化不同配置下的词元消耗、时间开销和经济成本，为实际部署中的选型提供依据。
+\item[\textbf{(3)}] \textbf{基于大语言模型的静态评估方法是否具备足够的可信度？}需要从评审模型间的一致性以及与人工评审的对照结果两个角度进行验证。
+\item[\textbf{(4)}] \textbf{相较于本文方法，现有静态分析方法的局限性如何？}需要通过与主流静态扫描工具的对比，验证本文方法在漏洞处置精度上的优势。
+\item[\textbf{(5)}] \textbf{本方法的时间与经济成本如何？}需要量化不同配置下的词元消耗、时间开销和经济成本，为实际部署中的选型提供依据。
 \end{enumerate}
 
 \section{实验对象}
@@ -24,7 +24,8 @@
 \begin{table}[htb]
 	\centering\bicaption{实验采用的大语言模型}{Large language models used in experiments}
 	\label{tab:llm-models-info}
-	\noindent\renewcommand{\arraystretch}{0.9}
+	\renewcommand{\arraystretch}{0.9}
+	\setlength{\tabcolsep}{6pt}
 	\begin{tabularx}{0.85\linewidth}{*{4}{>{\centering\arraybackslash}X}}
     \toprule
     \textbf{模型代号} & \textbf{开发机构}  & \textbf{发布日期} & \textbf{参数规模} \\
@@ -37,22 +38,10 @@
     \bottomrule
     \end{tabularx}
 \end{table}
-
 \section{实验设计}
-
 \subsection{度量指标}
 
-本文采用三维评价体系衡量生成策略的质量，对应第三章定义的质量向量 $q(\pi)=\bigl(E(\pi),I(\pi),D(\pi)\bigr)$。三个维度的含义如下：
-
-\begin{itemize}
-\item \textbf{有效性 $E(\pi)$}：衡量策略对漏洞攻击路径的封堵程度，包括是否覆盖关键利用前提、是否消除或限制权限提升的可行路径。得分越高，表示策略对漏洞的处置越充分。
-\item \textbf{无干扰性 $I(\pi)$}：衡量策略对现有业务功能的影响程度，包括是否引入不必要的访问限制、是否破坏正常服务间通信或资源调度。得分越高，表示策略对业务的副作用越小。
-\item \textbf{可部署性 $D(\pi)$}：衡量策略在目标环境中落地的难易程度，包括配置片段是否语法正确且可直接应用、是否依赖额外的组件安装或集群变更。得分越高，表示策略越容易部署。
-\end{itemize}
-
-由于大语言模型在绝对评分任务中难以维持稳定的内部尺度\cite{wu2024scoring}，本文采用\textbf{基于排序的相对评价}作为基础信号。具体而言，评审模型对同一批候选策略在每个维度上给出从优到劣的严格排序，而非直接赋予分值。随后依据第三章的多源排名聚合模型（定义~5--6），将各评审模型的排序通过秩函数 $r_\delta^{(h)}$ 映射为归一化得分 $s_\delta^{(h)}(\pi)$，再以等权方式计算共识得分 $\hat{S}_\delta(\pi)$，据此形成各维度的共识排序。
-
-此外，为衡量评审模型之间的排序一致性，本文引入 Kendall's $W$ 协调系数与 Spearman 等级相关系数作为辅助度量。为评估资源消耗，记录每次调用的输入与输出词元数以及运行时间，并按模型和方法配置分别聚合统计。
+策略质量评估采用第三章定义的三维质量向量 $q(\pi)=\bigl(E(\pi),I(\pi),D(\pi)\bigr)$（定义~\ref{def:quality-vector}），三维含义与排序共识聚合方法（定义~\ref{def:ranking}、定义~\ref{def:overall-quality}）见第三章 \ref{subsec:quality} 节，此处不再重复。此外，为衡量评审模型之间的排序一致性，引入 Kendall's $W$ 协调系数\cite{kendall1939problem}与 Spearman 等级相关系数\cite{spearman1961proof}作为辅助度量；资源消耗则记录每次调用的输入与输出词元数及运行时间，按模型和方法配置分别聚合统计。
 
 \subsection{基线方法}
 
@@ -60,8 +49,8 @@
 \begin{table}[htb]
 	\centering\bicaption{静态扫描工具}{Static scanning tools}
 	\label{tab:static-tools}
-	\setlength{\tabcolsep}{2pt}
-	\noindent\renewcommand{\arraystretch}{1.05}
+	\renewcommand{\arraystretch}{0.9}
+	\setlength{\tabcolsep}{4pt}
 	\begin{tabularx}{0.85\linewidth}{>{\ttfamily\raggedright\arraybackslash}p{0.18\linewidth} >{\raggedright\arraybackslash}X}
 	\toprule
 		\textbf{工具} & \textbf{来源} \\
@@ -75,11 +64,29 @@
 \end{table}
 
 \subsection{实验过程}
-实验围绕候选策略生成、自动评审和人工对照三个环节展开。首先，在统一的提示词模板、输入组织方式和输出结构约束下，分别使用五个大语言模型对 55 个漏洞实例生成候选策略集合 $\Pi_v$。为评估各关键模块的作用，设置三项消融配置：移除检索增强（\texttt{w/o rag}）、移除思维链推理（\texttt{w/o cot}）和移除反馈优化（\texttt{w/o feedback}），并与完整工作流（\texttt{all}）进行对比。除被移除模块外，其余实验条件均保持一致，包括提示词框架、输出格式约束及后处理规则，以保证不同配置之间的可比性。
+实验围绕候选策略生成、自动评审和人工对照三个环节展开。首先，在统一的提示词模板、输入组织方式和输出结构约束下，分别使用五个大语言模型对 55 个漏洞实例生成候选策略集合 $\Pi_v$（定义\ref{def:candidate-strategy-set}）。为评估各关键模块的作用，设置三项消融配置：移除检索增强（\texttt{w/o rag}）、移除思维链推理（\texttt{w/o cot}）和移除反馈优化（\texttt{w/o feedback}），并与完整工作流（\texttt{all}）进行对比。方法配置 $a$ 与底层模型 $h$ 的叉积共构成 20 种生成配置 $g=(a,h)$，如表~\ref{tab:generation-config} 所示。除被移除模块外，其余实验条件均保持一致，包括提示词框架、输出格式约束及后处理规则，以保证不同配置之间的可比性。
 
-在评审阶段，将上述五个模型同时作为评审模型，对每个漏洞实例对应的候选策略在三个评价维度上分别进行独立排序。为降低评审偏差，评审前对候选策略进行随机化与匿名化处理，打乱展示顺序并隐去来源信息，以减少顺序效应和模型偏好对结果的影响。随后，对各评审模型给出的排序结果进行等权聚合，得到该漏洞实例上的共识排序，作为自动评审的最终结果。
+\begin{table}[htb]
+	\centering\bicaption{生成配置 $g=(a,h)$ 的完整枚举（行为模型 $h$，列为方法配置 $a$）}{Complete enumeration of generation configurations $g=(a,h)$ (rows: model $h$; columns: method $a$)}
+	\label{tab:generation-config}
+	\renewcommand{\arraystretch}{0.9}
+	\setlength{\tabcolsep}{6pt}
+	\begin{tabularx}{0.92\linewidth}{>{\raggedright\arraybackslash}X *{4}{>{\centering\arraybackslash}X}}
+	\toprule
+	\textbf{模型 $h$} & \textbf{\texttt{all}} & \textbf{\texttt{w/o rag}} & \textbf{\texttt{w/o cot}} & \textbf{\texttt{w/o feedback}} \\
+	\midrule
+	Qwen3-Max   & $g_{1}$  & $g_{2}$  & $g_{3}$  & $g_{4}$  \\
+	DeepSeekV3.2    & $g_{5}$  & $g_{6}$  & $g_{7}$  & $g_{8}$  \\
+	GPT-5       & $g_{9}$  & $g_{10}$ & $g_{11}$ & $g_{12}$ \\
+	Grok~4      & $g_{13}$ & $g_{14}$ & $g_{15}$ & $g_{16}$ \\
+	GLM-4.5     & $g_{17}$ & $g_{18}$ & $g_{19}$ & $g_{20}$ \\
+	\bottomrule
+	\end{tabularx}
+\end{table}
 
-此外，随机抽取 20 个 CVE 样本进行人工独立评审，以检验自动评审结果与人工判断的一致性。人工评审与自动评审采用相同的评价维度、排序规则和候选展示方式，从而保证两者具有可比性。通过自动评审与人工对照相结合的方式，可以进一步验证评审结果的可靠性，并为分析自动评审方法的有效性提供依据。
+在评审阶段，将上述五个模型同时作为评审模型，对每个漏洞实例对应的候选策略在三个评价维度（有效性 $E$、无干扰性 $I$ 与可部署性 $D$，对应质量向量 $\mathbf{q}(\pi)=(E,I,D)$，详见定义\ref{def:quality-vector}）上分别进行独立排序。为降低评审偏差，评审前对候选策略进行随机化与匿名化处理，打乱展示顺序并隐去来源信息，以减少顺序效应和模型偏好对结果的影响。随后，对各评审模型给出的排序结果进行等权聚合，得到该漏洞实例上的共识排序 $\hat{S}_\delta(\pi)$（式\eqref{eq:consensus-score}），作为自动评审的最终结果。
+
+此外，针对所有CVE生成的候选安全策略集合进行人工独立评审，以检验自动评审结果与人工判断的一致性。人工评审与自动评审采用相同的评价维度、排序规则和候选展示方式，从而保证两者具有可比性。通过自动评审与人工对照相结合的方式，可以进一步验证评审结果的可靠性，并为分析自动评审方法的有效性提供依据。
 
 \section{结果分析与讨论}
 
@@ -100,8 +107,8 @@
 \begin{table}[htb]
 	\centering\bicaption{消融实验方法配置得分}{Average scores in ablation study}
 	\label{tab:ablation-scores}
-	\setlength{\tabcolsep}{10pt}
-	\noindent\renewcommand{\arraystretch}{0.9}
+	\renewcommand{\arraystretch}{0.9}
+	\setlength{\tabcolsep}{6pt}
 	\begin{tabularx}{0.75\linewidth}{>{\ttfamily\raggedright\arraybackslash}p{0.22\linewidth} *{3}{>{\centering\arraybackslash}X}}
 	\toprule
 	\textbf{方法配置} & \textbf{有效性($E$)} & \textbf{无干扰性($I$)} & \textbf{可部署性($D$)} \\
@@ -118,7 +125,7 @@
 
 检索增强主要提升策略与具体漏洞场景的贴合度。移除后有效性降至 0.476，降幅约 18\%，无干扰性和可部署性也分别下降约 14\% 与 20\%。这说明外部证据能够帮助模型围绕真实攻击面组织策略。思维链推理则呈现较强的权衡特征：移除后有效性下降至 0.234，但可部署性几乎不变（$D=0.398$ 对 $D=0.403$），说明分步推理在提升分析深度的同时，也可能增加部署复杂度。在资源受限的场景下，反馈优化和检索增强应优先保留。从单个生成模型看，结论方向保持一致，只是敏感性有所不同：GPT-5 与 GLM-4.5 在移除反馈后下降更明显，DeepSeek 与 Qwen3-Max 则更依赖检索增强。
 
-\FloatBarrier
+
 \subsection{生成模型能力评估}
 
 本节将讨论对象由工作流模块转向生成模型本身，分别从三维质量指标和输出稳定性两个方面展开。
@@ -140,8 +147,8 @@
 \begin{table}[htb]
 	\centering\bicaption{生成模型三维质量得分}{Quality scores of generation models}
 	\label{tab:generator-scores}
-	\setlength{\tabcolsep}{8pt}
-	\noindent\renewcommand{\arraystretch}{0.9}
+	\renewcommand{\arraystretch}{0.9}
+	\setlength{\tabcolsep}{6pt}
 	\begin{tabularx}{0.75\linewidth}{>{\ttfamily\raggedright\arraybackslash}p{0.24\linewidth} *{3}{>{\centering\arraybackslash}X}}
 	\toprule
 	\textbf{生成模型} & \textbf{有效性($E$)} & \textbf{无干扰性($I$)} & \textbf{可部署性($D$)} \\
@@ -160,8 +167,8 @@
 \begin{table}[htb]
 	\centering\bicaption{生成模型输出稳定性统计}{Output stability statistics of generation models}
 	\label{tab:model-retry-stats}
-	\setlength{\tabcolsep}{8pt}
-	\noindent\renewcommand{\arraystretch}{0.9}
+	\renewcommand{\arraystretch}{0.9}
+	\setlength{\tabcolsep}{6pt}
 	\small
 	\begin{tabularx}{0.95\linewidth}{>{\raggedright\arraybackslash}p{2.6cm} *{5}{>{\centering\arraybackslash}X}}
     \toprule
@@ -180,7 +187,7 @@
 
 综合三维得分与输出稳定性，五个模型大致呈现两类生成倾向。GPT-5 更偏向高有效性、高封堵强度，在有效性上优势明显且输出零失误，但可部署性和无干扰性较低；DeepSeek 更偏向低干扰、易部署，在无干扰性和可部署性上领先，适合对业务连续性要求较高的场景。Qwen3-Max、GLM-4.5 和 Grok 4 则处于两者之间，提供了不同程度的折中。
 
-\FloatBarrier
+
 \subsection{评审方法可信度评估}
 
 前两节分别讨论了工作流差异和模型差异，而这些比较都建立在评审结果足够可靠的前提之上。本节从内部一致性和人工对照两个角度验证这一前提。
@@ -190,8 +197,8 @@
 \begin{table}[htb]
 	\centering\bicaption{不同维度下大语言模型评审一致性统计}{Consistency statistics of large-language-model judges across dimensions}
 	\label{tab:judge-consistency-stats}
+	\renewcommand{\arraystretch}{0.9}
 	\setlength{\tabcolsep}{5pt}
-	\noindent\renewcommand{\arraystretch}{1.05}
 	\begin{tabularx}{0.90\linewidth}{>{\raggedright\arraybackslash}p{1.8cm} >{\centering\arraybackslash}p{2.0cm} *{4}{>{\centering\arraybackslash}X}}
 	\toprule
 	\textbf{维度} & \textbf{Kendall's $W$} & \multicolumn{4}{c}{\textbf{Spearman 相关系数}} \\[-0.4em]
@@ -207,7 +214,7 @@
 
 评审模型在有效性维度上的一致性最高，在可部署性维度上的分歧最大。表\ref{tab:judge-consistency-stats} 显示，有效性维度的 Kendall's $W$ 达 0.955，Spearman 均值为 0.944，说明不同评审模型对漏洞封堵充分性的判断标准较为接近。无干扰性居中（$W=0.846$），可部署性最低（$W=0.687$）。这说明可部署性需要同时权衡工程依赖、部署成本和运维复杂度，评审模型更容易在该维度上出现偏差。
 
-图\ref{fig:judge-agreement-summary}从 Kendall's $W$ 和两两 Spearman 分布两个角度汇总了一致性统计。从整体看，等权聚合后的排序在三个维度上均未出现明显失稳。
+图\ref{fig:judge-agreement-summary}从 Kendall's $W$ 和两两 Spearman 分布两个角度汇总了一致性统计。从整体看，等权聚合后的排序在三个维度上均未出现明显失稳。为进一步刻画候选级的一致性，本文在单条候选层面引入分歧度量 $U_{\delta}(\pi)$（定义见第~\pageref{def:ranking}~页），用于量化各评审主体对同一候选得分偏离共识的程度；该指标可辅助标记高分歧候选，供人工复核参考。
 
 \begin{figure}[htb]
 	\centering
@@ -219,25 +226,13 @@
 	\label{fig:judge-agreement-summary}
 \end{figure}
 
-跨维度对比进一步印证了可部署性是评审分歧的主要来源。图\ref{fig:single-dim-by-judge-3d}从评审模型角度展示了各维度的分歧分布：可部署性上的评审分歧最明显，有效性上排序接近一致，无干扰性介于两者之间。因此，多模型聚合策略在可部署性维度上的纠偏意义最大。
-
-\begin{figure}[htb]
-	\centering
-	{\setlength{\abovecaptionskip}{2pt}%
-	 \setlength{\belowcaptionskip}{0pt}%
-	 \subfloat[可部署性\label{fig:single-dim-deployability}]{\includegraphics[width=0.5\textwidth]{images/plots/可部署性/summary/single_dim_by_judge_可部署性.png}}\hfill
-	 \subfloat[无干扰性\label{fig:single-dim-interference}]{\includegraphics[width=0.5\textwidth]{images/plots/无干扰性/summary/single_dim_by_judge_无干扰性.png}}\hfill
-	 \subfloat[有效性\label{fig:single-dim-effectiveness}]{\includegraphics[width=1\textwidth]{images/plots/有效性/summary/single_dim_by_judge_有效性.png}}}
-	\bicaption{评审模型单维度评分对比}{Comparison of single-dimension scores among judge models}\label{fig:single-dim-by-judge-3d}
-\end{figure}
-
 人工对照实验进一步验证了自动评审与专家判断之间的总体一致性。本文随机抽取 20 个 CVE 样本，由安全专家进行独立评审，并通过拟合评审模型权重使自动评审的加权结果逼近人工评审分数，从而学习各评审模型在不同维度上的贡献权重。表\ref{tab:weight-distribution} 给出学习到的权重分布。
 
 \begin{table}[htb]
 \centering\bicaption{学习到的评审者权重分布}{Learned weight distribution of large-language-model judges}
 \label{tab:weight-distribution}
-\noindent\renewcommand{\arraystretch}{0.9}
-\setlength{\tabcolsep}{12pt}
+\renewcommand{\arraystretch}{0.9}
+\setlength{\tabcolsep}{6pt}
 \begin{tabular}{lccc}
 \toprule
 \textbf{评审者} & \textbf{有效性} & \textbf{无干扰性} & \textbf{可部署性} \\
@@ -267,19 +262,21 @@ Qwen3-Max 在有效性和无干扰性维度上与人工判断最为接近。由�
 	\label{fig:radar-comparison}
 \end{figure}
 
-多模型聚合评审方案在有效性和无干扰性维度上具有较高可信度，足以支撑前文的主要比较结论。局限主要体现在两点：其一，可部署性维度的评审一致性最低（$W=0.687$），拟合权重趋于均匀，与人工结果的对应关系也较弱；其二，本实验中生成模型与评审模型均来自同一组大语言模型，可能引入自偏好偏差（self-preference bias），即评审模型对自身生成风格的候选给予偏高排序\cite{wu2024scoring,wang2023fair}。本文通过匿名化与随机化处理缓解了这一效应，多模型等权聚合也进一步稀释了单一评审的偏差；但若要彻底消除这类影响，仍需引入与生成模型解耦的独立评审来源。当前人工对照仅覆盖 20 个样本，后续仍需扩大样本规模以提高验证精度。
+多模型聚合评审方案在有效性和无干扰性维度上具有较高可信度，足以支撑前文的主要比较结论。然而在可部署性维度上，评审一致性最低（$W=0.687$），拟合权重趋于均匀，与人工结果的对应关系也较弱。深入分析发现GPT5在可部署性上与其他模型分歧较大，且人工评审对部署难度的区分更敏感，这可能是导致该维度评审结果不稳定的主要原因。未来可以通过引入更多专门针对部署复杂度的评审模型，或者设计更细化的评价指标来提升该维度的评审质量。
 
-\FloatBarrier
+
 \subsection{静态扫描工具的处置价值}
 
 本节引入外部基线技术，考察传统静态扫描能否为临时漏洞处置提供有效支持。本文选取 \texttt{Kubescape}、\texttt{KubeSec}、\texttt{kube-linter} 和 \texttt{SLI-Kube} 作为对照工具，在相关 Kubernetes 部署清单上进行扫描，并将报告条目按统一风险类型归并统计，结果见表\ref{tab:risk-summary-four-tools}。四类工具的报告主要集中在配置基线与通用加固项，如资源配置缺失、身份与密钥暴露、网络隔离和非 Root 运行。这类结果对日常治理和合规检查仍有价值，但与本文收集的 55 个权限提升漏洞逐一对应时，能够直接指向漏洞触发前提的情况并不多。只有 CVE-2020-4062 与 CVE-2024-31989 在报告中出现了较明确的关联线索，而且都落在网络隔离项上，分别由 \texttt{Kubescape} 与 \texttt{SLI-Kube} 命中。其余样本的关键攻击路径通常依赖具体组件行为、权限边界或运行时条件，超出了静态规则直接覆盖的范围。就补丁窗口期的漏洞防控而言，静态扫描更适合作为背景性治理工具，而本文方法更适合提供面向具体漏洞场景的处置建议。
 
 \begin{table}[htb]
 \centering\bicaption{静态扫描工具检测结果}{Detection results of static scanning tools}
-	\noindent\renewcommand{\arraystretch}{1.1}
-\begin{tabularx}{0.95\linewidth}{l *{5}{>{\centering\arraybackslash}X}}
+\label{tab:risk-summary-four-tools}
+\renewcommand{\arraystretch}{0.9}
+\setlength{\tabcolsep}{6pt}
+\begin{tabularx}{0.95\linewidth}{l >{\raggedright\arraybackslash}X *{4}{>{\centering\arraybackslash}p{0.12\linewidth}}}
 \toprule
-风险类型 & 关联一级分类 & Kubescape & KubeSec & kube-linter & SLI-Kube\\
+风险类型 & 分类 & Kubescape & KubeSec & kube-linter & SLI-Kube\\
 \midrule
 资源配置缺失 & 配置缺陷 & 110 & 47 & 73 & 0 \\
 非 Root 运行 & 配置缺陷 & 54 & 53 & 51 & 0 \\
@@ -292,12 +289,11 @@ Qwen3-Max 在有效性和无干扰性维度上与人工判断最为接近。由�
 探针配置 & 配置缺陷 & 92 & 0 & 15 & 0 \\
 \bottomrule
 \end{tabularx}
-\label{tab:risk-summary-four-tools}
 \end{table}
 
 
 
-\FloatBarrier
+
 \subsection{资源消耗与效率评估}
 
 本节进一步考察生成式流程的资源代价。本文分别统计词元消耗与运行时间，因为前者直接对应调用成本，后者决定在漏洞响应窗口内能否及时完成一轮生成与评审。表\ref{tab:token_usage_wide} 给出了不同方法配置与生成模型下的平均词元消耗及对应成本：
@@ -305,9 +301,8 @@ Qwen3-Max 在有效性和无干扰性维度上与人工判断最为接近。由�
 \centering
 \bicaption{词元消耗与经济成本统计}{Token usage and economic cost statistics}
 \label{tab:token_usage_wide}
-% 设置行高与列间距（与其他表格统一）
-\noindent\renewcommand{\arraystretch}{0.9}
-\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{0.9}
+\setlength{\tabcolsep}{6pt}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{>{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{2.2cm} r r r r r >{\raggedleft\arraybackslash}p{1.55cm}}
 \toprule
@@ -349,8 +344,8 @@ Qwen3-Max 在有效性和无干扰性维度上与人工判断最为接近。由�
 \begin{table}[htb]
 \centering\bicaption{时间成本统计}{Time cost statistics}
 \label{tab:time_cost}
-\noindent\renewcommand{\arraystretch}{0.9}
-\setlength{\tabcolsep}{9pt}
+\renewcommand{\arraystretch}{0.9}
+\setlength{\tabcolsep}{6pt}
 \small
 \begin{tabular}{>{\raggedright\arraybackslash}p{2.45cm} >{\raggedright\arraybackslash}p{2.05cm} r r}
 \toprule
@@ -386,7 +381,5 @@ Qwen3-Max 在有效性和无干扰性维度上与人工判断最为接近。由�
 
 不同模型并不存在对所有场景都占优的统一选择，实际选型仍需结合响应窗口与预算约束权衡。若预算更敏感，Qwen3-Max 或 Grok 4 更合适，两者在完整工作流下的单次成本分别为 1.50 元和 9.45 元，耗时也均不超过 40 秒，能够在漏洞公开后的较短时间内完成一轮策略生成与评审。若更强调封堵效果，GPT-5 虽然代价最高，但在有效性上表现最强，适合高危漏洞的重点处置。DeepSeek 则以较高时间成本换取在可部署性和无干扰性上的优势，更适用于业务连续性要求较高的生产环境。若需进一步压缩成本，最直接的方式仍是去掉反馈模块，但也必须接受策略质量下降。
 
-\FloatBarrier
 \section{小结}
-
-本章实验表明，RAG、CoT 与 Feedback 三个模块均能提升策略质量，不同大语言模型在三维指标上也呈现出明显差异。多模型共识排序与人工评审保持了较好一致性；与静态扫描工具相比，本文方法在处置精度上更具优势；资源消耗分析则为不同预算与时限约束下的模型选型提供了参考。总体而言，该方法已经表现出较好的可行性，但其在具体漏洞场景中的阻断效果、业务影响与部署可行性，仍需结合真实案例继续验证。
+本章围绕本文提出的方法与系统实现开展实验验证，从消融实验、生成模型能力、评审方法可信度、静态工具对比和资源消耗五个方面进行了分析。实验结果验证了本文方法在策略生成与评审中的有效性，并展示了不同模型与配置在质量和成本上的差异。

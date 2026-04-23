@@ -1,4 +1,4 @@
-﻿% !TeX root = ../../main.tex
+% !TeX root = ../../main.tex
 \section{案例一：CVE-2022-24768内部权限问题}
 
 \subsection{漏洞详解与复现}
@@ -28,8 +28,6 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 
 本文复现包括以下关键环节：部署漏洞版本并创建宽松 AppProject；授予低权用户 \texttt{sync\allowbreak+\allowbreak override}；创建指向恶意仓库的 Application 并触发同步；最后验证权限变化。
 关键命令与清单见附录\ref{app:cve-2022-24768}。
-
-
         \textbf{攻击结果}：综合上述验证可观察到权限边界放大。低权用户 bob 原本仅具备对特定项目范围内应用的 \texttt{sync/override} 能力，但通过影响 Git 期望状态或同步动作，间接诱导控制平面在集群中创建高权限 RBAC 绑定，最终表现为在 \texttt{--as bob} 条件下 \texttt{kubectl auth can-i '*' '*'} 返回 \texttt{yes}。
 \begin{figure}[htb]
         \centering

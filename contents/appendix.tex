@@ -116,8 +116,6 @@
 
 \chapter{CVE\-2022\-24768 复现步骤与策略清单}\label{app:cve-2022-24768}
 
-本附录给出案例一的复现详细步骤与纵深防御策略代码清单，用于复核与工程复现。为降低对生产环境的风险，建议仅在隔离测试集群中执行。
-
 \section{漏洞复现详细步骤}\label{app:cve-2022-24768-repro}
 \textbf{步骤 1：部署漏洞版本 Argo CD（v2.3.1）}
 \begin{AppendixCode}
@@ -154,7 +152,6 @@ EOF
 \end{AppendixCode}
 
 \textbf{步骤 4：创建低权用户 bob，并授予其对目标 Application 的 \texttt{sync} 与 \texttt{override} 权限}
-在 \texttt{argocd-rbac-cm} 中添加如下策略（注意缩进）：
 \begin{AppendixCode}
 policy.default: role:readonly
 policy.csv: |
@@ -162,11 +159,9 @@ policy.csv: |
 	p, role:syncer, applications, override, demo-project/*, allow
 	g, bob, role:syncer
 \end{AppendixCode}
-并在 \texttt{argocd-cm} 中开启账户：
 \begin{AppendixCode}
 accounts.bob: apiKey, login
 \end{AppendixCode}
-随后重启 Argo CD Server 使配置生效：
 \begin{AppendixCode}
 kubectl rollout restart deployment/argocd-server -n argocd
 \end{AppendixCode}
@@ -195,22 +190,20 @@ spec:
 EOF
 \end{AppendixCode}
 
-\textbf{步骤 6：模拟 bob 触发同步（或依赖自动同步）}
+\textbf{步骤 6：模拟 bob 触发同步}
 \begin{AppendixCode}
 argocd login localhost:8080 --username bob --password <token-or-password>
 argocd app sync bob-app --force
 \end{AppendixCode}
 
-\textbf{步骤 7：验证是否权限提升成功}
+\textbf{步骤 7：验证权限提升}
 \begin{AppendixCode}
 kubectl auth can-i '*' '*' --as bob
 \end{AppendixCode}
-若输出为 \texttt{yes}，说明 bob 获得了集群范围的高权限（该结果用于说明风险，生产环境严禁在真实集群中进行）。
 
 \section{策略代码清单}\label{app:cve-2022-24768-policy}
 
 \subsection{Kubernetes RBAC：收敛 AppProject 的写权限}
-将 \texttt{appprojects.argoproj.io} 的创建/更新/删除限制在平台管理员组，租户仅可只读（示例中组名可按实际替换）：
 \begin{AppendixCode}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -258,7 +251,6 @@ subjects:
 \end{AppendixCode}
 
 \subsection{Argo CD RBAC：默认只读 + 高风险能力隔离}
-建议将 \texttt{argocd\allowbreak-\allowbreak rbac\allowbreak-\allowbreak cm} 纳入 Git 基线管理，并在修改后滚动重启 \texttt{argocd\allowbreak-\allowbreak server}：
 \begin{AppendixCode}
 apiVersion: v1
 kind: ConfigMap
@@ -287,15 +279,6 @@ data:
 \end{AppendixCode}
 
 \subsection{准入控制：Gatekeeper（推荐）}\label{app:cve-2022-24768-gatekeeper}
-目标：在 \texttt{AppProject} 创建/更新时，对 \texttt{spec.roles[].policies[]} 进行一致性校验。
-本策略覆盖三类约束：
-\begin{itemize}
-	\item 禁止出现 \texttt{*, *, allow} 的全局通配符放权；
-	\item 要求 policy subject 绑定到项目域（\texttt{proj:<project>:<role>} 前缀）；
-	\item 禁止在 project 内授予 \texttt{projects/repositories/clusters/exec} 等高危资源写权限。
-\end{itemize}
-
-\textbf{（1）ConstraintTemplate}
 \begin{AppendixCode}
 apiVersion: templates.gatekeeper.sh/v1beta1
 kind: ConstraintTemplate
@@ -384,7 +367,6 @@ spec:
 \end{AppendixCode}
 
 \subsection{准入控制：Kyverno（替代方案）}\label{app:cve-2022-24768-kyverno}
-若集群已使用 Kyverno，可用如下 \texttt{ClusterPolicy} 实现同类校验。建议先将 \texttt{validationFailureAction} 设为 \texttt{Audit}，稳定后再切换为 \texttt{Enforce}。
 \begin{AppendixCode}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -449,8 +431,6 @@ spec:
 
 \chapter{CVE-2025-2241 复现步骤与策略清单}\label{app:cve-2025-2241}
 
-本附录给出案例二（CVE-2025-2241）的\textbf{复现要点}与\textbf{缓解策略清单}，用于复核与工程落地。该漏洞属于\textbf{敏感信息泄露}：vCenter 凭据出现在 Hive 的 \texttt{ClusterProvision} 对象可读字段中，导致“无 \texttt{Secret} 权限也可读到凭据”的旁路风险。请仅在隔离测试环境中操作。
-
 \section{漏洞复现详细步骤}\label{app:cve-2025-2241-repro}
 
 \textbf{前提条件}
@@ -459,35 +439,8 @@ spec:
 		\item 至少存在一个“只读身份”。该身份\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions\allowbreak.\allowbreak hive\allowbreak.\allowbreak openshift\allowbreak.\allowbreak io} 的 \texttt{get/list/watch} 权限（该条件用于验证旁路泄露）。
 \end{itemize}
 
-\textbf{步骤 1：触发一次 vSphere 集群供应}
-通过 ACM 控制台或 YAML 创建 Hive 的 \texttt{ClusterDeployment}（示例仅展示关键字段，真实环境中密码应引用 \texttt{Secret}；本漏洞的问题在于后续对象中出现明文暴露）：
+\textbf{步骤 1：触发供应后，用低权身份读取 \texttt{ClusterProvision} 对象}
 \begin{AppendixCode}
-apiVersion: hive.openshift.io/v1
-kind: ClusterDeployment
-metadata:
-	name: vsphere-cluster
-	namespace: your-namespace
-spec:
-	baseDomain: example.com
-	platform:
-		vsphere:
-			vCenter: vc.example.com
-			username: administrator@vsphere.local
-			password: your-password
-	provisioning:
-		installConfigSecretRef:
-			name: your-install-config
-		imageSetRef:
-			name: img4.14.0
-\end{AppendixCode}
-
-\textbf{步骤 2：用“可读 \texttt{ClusterProvision} 但不可读 \texttt{Secret}”的身份读取对象}
-先确认权限面，再读取 \texttt{ClusterProvision}：
-\begin{AppendixCode}
-# 谁能读 clusterprovisions（OpenShift）
-oc adm policy who-can get clusterprovision
-oc adm policy who-can list clusterprovision
-
 # 低权用户自检（Kubernetes 通用）
 kubectl auth can-i get clusterprovision --as=<user> --all-namespaces
 kubectl auth can-i get secrets --as=<user> --all-namespaces
@@ -497,59 +450,16 @@ kubectl get clusterprovision -n your-namespace
 kubectl get clusterprovision <name> -n your-namespace -o yaml
 \end{AppendixCode}
 
-\textbf{步骤 3：定位敏感字段}
-在输出中查找类似结构（位置因版本实现而异，示例以 \texttt{status.vCenter.credentials} 为代表）：
-\begin{AppendixCode}
-status:
-	vCenter:
-		credentials:
-			username: ...
-			password: ...
-\end{AppendixCode}
-若凭据以明文形式出现，即满足漏洞复现判据。
-
 \section{策略代码清单}\label{app:cve-2025-2241-policy}
 
-本节策略以“\textbf{收敛读取面} + \textbf{缩短暴露窗口} + \textbf{审计发现与轮换止血}”为主线。由于敏感信息出现在控制器写入的 \texttt{status} 字段中，\textbf{准入控制更适合作为审计/检测手段}，不建议强制拦截控制器更新（否则可能影响供应流程）。
-
 \subsection{1）立刻收敛 \texttt{ClusterProvision} 的读取权限（RBAC）}
-
-\textbf{风险盘点命令（OCP）}
 \begin{AppendixCode}
 oc adm policy who-can get clusterprovision
 oc adm policy who-can list clusterprovision
 oc adm policy who-can watch clusterprovision
 \end{AppendixCode}
 
-\textbf{最小可读权限示例（仅绑定 Hive 控制器服务账号）}
-说明：Hive 控制器的具体 ServiceAccount/namespace 需按实际部署确认。
-\begin{AppendixCode}
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-	name: hive-clusterprovision-read-min
-rules:
-- apiGroups: ["hive.openshift.io"]
-	resources: ["clusterprovisions"]
-	verbs: ["get","list","watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-	name: hive-clusterprovision-read-min-binding
-subjects:
-- kind: ServiceAccount
-	name: hive-controllers
-	namespace: hive
-roleRef:
-	kind: ClusterRole
-	name: hive-clusterprovision-read-min
-	apiGroup: rbac.authorization.k8s.io
-\end{AppendixCode}
-
 \subsection{2）对读取行为启用审计并联动告警}
-
-Kubernetes 审计策略片段（加载方式依平台而定）：
 \begin{AppendixCode}
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -561,100 +471,15 @@ rules:
 		resources: ["clusterprovisions"]
 	omitStages: ["RequestReceived"]
 \end{AppendixCode}
-建议在 SIEM/日志平台中将 Hive 控制器主体加入白名单，仅对非白名单主体的读取行为告警。
-
 \subsection{3）缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
-
-\textbf{手动清理}
 \begin{AppendixCode}
 oc get clusterprovision -n <ns>
 oc delete clusterprovision -n <ns> <name>
 \end{AppendixCode}
 
-\textbf{自动化清理（示例 CronJob）}
-说明：删除条件建议通过标签或状态字段精确匹配，避免误删；示例以标签 \texttt{hive.openshift.io/retain=false} 为条件。
+\subsection{4）"敏感字段守护"检测（Gatekeeper/Kyverno，建议审计模式）}
 \begin{AppendixCode}
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-	name: cleanup-sa
-	namespace: hive
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-	name: cleanup-role
-	namespace: hive
-rules:
-- apiGroups: ["hive.openshift.io"]
-	resources: ["clusterprovisions"]
-	verbs: ["list","get","delete"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-	name: cleanup-rb
-	namespace: hive
-subjects:
-- kind: ServiceAccount
-	name: cleanup-sa
-roleRef:
-	kind: Role
-	name: cleanup-role
-	apiGroup: rbac.authorization.k8s.io
----
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-	name: cleanup-clusterprovision
-	namespace: hive
-spec:
-	schedule: "0 * * * *"
-	jobTemplate:
-		spec:
-			template:
-				spec:
-					serviceAccountName: cleanup-sa
-					containers:
-					- name: cleaner
-						image: registry.access.redhat.com/ubi9/ubi:latest
-						command: ["/bin/sh","-c"]
-						args:
-						- |
-							set -eu
-							oc delete clusterprovision -n hive -l hive.openshift.io/retain=false --ignore-not-found
-					restartPolicy: OnFailure
-\end{AppendixCode}
-
-\subsection{4）vCenter 凭据轮换与强化（止血）}
-
-建议在确认泄露后立即轮换 vCenter 凭据，并启用最小权限、MFA、来源 IP 允许列表等约束。轮换完成后更新 Hive 使用的 Secret（示例命令需按实际 Secret 名称/namespace 调整）：
-\begin{AppendixCode}
-oc -n hive create secret generic vcenter-credentials \
-	--from-literal=username=<new-user> \
-	--from-literal=password=<new-pass> \
-	--dry-run=client -o yaml | oc apply -f -
-\end{AppendixCode}
-
-\subsection{5）“敏感字段守护”检测（Gatekeeper/Kyverno，建议审计模式）}
-
-\textbf{Gatekeeper（dryrun）}：检测 \texttt{ClusterProvision} 中是否出现敏感键名（password/token/secret/credential）。
-\begin{AppendixCode}
-apiVersion: templates.gatekeeper.sh/v1beta1
-kind: ConstraintTemplate
-metadata:
-	name: k8sclustprovkeysensitive
-spec:
-	crd:
-		spec:
-			names:
-				kind: K8sClustProvKeySensitive
-	targets:
-	- target: admission.k8s.gatekeeper.sh
-		rego: |
-			package k8sclustprovkeysensitive
-
-			sensitive_key(k) {
+sensitive_key(k) {
 				lk := lower(k)
 				contains(lk, "password")
 			}
@@ -722,41 +547,8 @@ spec:
 \end{AppendixCode}
 
 
-\textbf{Kyverno（Audit）}：对对象文本进行检测，以提示可能存在的敏感键名。该策略更适用于告警与排查，不建议直接用于阻断控制器更新。
-\begin{AppendixCode}
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-	name: audit-clusterprovision-sensitive-keys
-spec:
-	validationFailureAction: Audit
-	background: true
-	rules:
-	- name: detect-secret-like-keys
-		match:
-			any:
-			- resources:
-					kinds:
-					- hive.openshift.io/v1/ClusterProvision
-		validate:
-			message: ClusterProvision 可能包含敏感字段 password token secret credential。
-			deny:
-				conditions:
-					any:
-					- key: "{{ to_string(request.object) }}"
-						operator: AnyIn
-						value:
-						- password
-						- token
-						- secret
-						- credential
-\end{AppendixCode}
-
 
 \chapter{CVE-2023-30512 复现步骤与策略清单}\label{app:cve-2023-30512}
-
-本附录给出案例三（CVE-2023-30512，CubeFS CSI 插件过度授权导致的集群权限提升风险）的\textbf{验证性复现}与\textbf{策略清单}。
-为避免提供可被滥用的细粒度利用操作，复现部分以“权限证据 + 受控权限验证”为主，重点证明 CSI ServiceAccount 被绑定了不必要的 \texttt{secrets} 读取能力；策略部分给出可落地的 RBAC 收敛、准入防回归与审计检测。
 
 \section{漏洞复现详细步骤}
 
@@ -789,7 +581,7 @@ kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-
 kubectl auth can-i watch secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
 \end{AppendixCode}
 
-\textbf{权限提升路径（文字图，便于复盘）}
+\textbf{权限提升路径}
 \begin{AppendixCode}
 CubeFS CSI 安装环境
 	|
@@ -811,13 +603,7 @@ ClusterRole: cfs-csi-cluster-role
 
 \section{策略代码清单}
 
-本节策略遵循“\textbf{最小权限} + \textbf{防回归} + \textbf{可观测}”主线：
-先移除 CSI 不必要的 \texttt{secrets} 读取权限；再用准入策略阻断未来再次引入过度授权；最后启用审计检测以便快速发现异常访问并触发止血流程。
-
 \subsection{1）RBAC 最小化：移除 ClusterRole 中的 \texttt{secrets} 权限}
-
-说明：CSI 需要的资源/动词与具体实现有关，建议在预生产以 PVC/PV 创建、挂载、扩容、attach/detach 等流程回归验证后再推广到生产。
-以下示例展示“覆盖式”更新 ClusterRole 的方式，明确不包含 \texttt{resources:["secrets"]}。
 
 \begin{AppendixCode}
 cat <<'EOF' | kubectl apply -f -
@@ -841,34 +627,9 @@ EOF
 kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
 \end{AppendixCode}
 
-\subsection{2）ServiceAccount 硬化（按需评估）}
-
-若 CSI 驱动\textbf{不需要}直接调用 Kubernetes API，可评估禁用自动挂载令牌以降低“被攻陷即可滥用身份”的风险：
+\subsection{2）准入防回归（OPA Gatekeeper）：禁止创建包含 secrets 读取动词的 ClusterRole}
 \begin{AppendixCode}
-# 将 automountServiceAccountToken 设为 false（需评估 CSI 功能是否依赖 token）
-kubectl -n $NAMESPACE patch serviceaccount $SA --type='merge' -p '{"automountServiceAccountToken":false}'
-\end{AppendixCode}
-
-\subsection{3）准入防回归（OPA Gatekeeper）：禁止创建包含 secrets 读取动词的 ClusterRole}
-
-说明：该策略用于\textbf{防止未来误配置再次引入过度授权}。建议先以 \texttt{dryrun} 运行观察影响，再逐步强制。
-\begin{AppendixCode}
-cat <<'EOF' | kubectl apply -f -
-apiVersion: templates.gatekeeper.sh/v1beta1
-kind: ConstraintTemplate
-metadata:
-	name: k8sdenysecretsrbac
-spec:
-	crd:
-		spec:
-			names:
-				kind: K8sDenySecretsRBAC
-	targets:
-	- target: admission.k8s.gatekeeper.sh
-		rego: |
-			package k8sdenysecretsrbac
-
-			has_secrets_rule(rule) {
+has_secrets_rule(rule) {
 				rule.resources[_] == "secrets"
 				rule.verbs[_] == "get"
 			}
@@ -904,9 +665,7 @@ spec:
 EOF
 \end{AppendixCode}
 
-\subsection{4）审计与检测：对 \texttt{secrets} 枚举行为进行可观测化}
-
-Kubernetes 审计策略片段（加载方式依平台而定）：
+\subsection{3）审计与检测：对 \texttt{secrets} 枚举行为进行可观测化}
 \begin{AppendixCode}
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -918,42 +677,8 @@ rules:
 		resources: ["secrets"]
 	omitStages: ["RequestReceived"]
 \end{AppendixCode}
-建议在 SIEM/日志平台中对来自 CSI ServiceAccount 的 \texttt{secrets} 枚举进行聚合告警，并结合阈值与白名单降低噪音。
-
-\subsection{5）网络收敛（可选）：限制 CSI Pod 出站访问面}
-
-说明：NetworkPolicy 能降低被攻陷工作负载的横向移动能力，但在不同 CNI 下支持情况不同；同时 API Server 可能位于外部 LB，需按实际环境调整。
-\begin{AppendixCode}
-cat <<'EOF' | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-	name: cfs-csi-egress-lockdown
-	namespace: $NAMESPACE
-spec:
-	podSelector:
-		matchLabels:
-			app: cfs-csi
-	policyTypes: ["Egress"]
-	egress:
-	- to:
-		- namespaceSelector:
-				matchLabels:
-					kubernetes.io/metadata.name: kube-system
-			podSelector:
-				matchLabels:
-					k8s-app: kube-dns
-		ports:
-		- protocol: UDP
-			port: 53
-EOF
-\end{AppendixCode}
-
 
 \chapter{CVE-2020-4062 复现步骤与策略清单}\label{app:cve-2020-4062}
-
-本附录给出案例四（CVE-2020-4062，Conjur OSS Helm Chart 旧版本缺失网络隔离导致 Postgres 在集群内可达）的\textbf{复现要点}与\textbf{缓解策略清单}。
-考虑到该问题涉及数据库直连带来的敏感数据风险，复现环节仅进行网络暴露面验证，用于确认 5432 端口在集群内的可达性以及网络策略的生效性，不展开数据库操作细节。
 
 \section{漏洞复现详细步骤}
 
@@ -965,10 +690,7 @@ EOF
 \end{itemize}
 
 \textbf{步骤 1：在隔离命名空间部署旧版 Chart，并进行必要的兼容性适配}
-旧版 Chart 可能使用过时 API，例如 \texttt{apps/v1beta2}。在较新 Kubernetes 版本上复现时，可在\textbf{保持网络策略缺失这一特性不变}的前提下，将 Deployment API 适配为 \texttt{apps/v1} 并补齐 \texttt{selector} 字段以完成安装。
 \begin{AppendixCode}
-NAMESPACE=conjur-vuln
-
 helm repo add cyberark https://cyberark.github.io/helm-charts
 helm repo update
 helm search repo cyberark/conjur-oss --versions
@@ -996,13 +718,9 @@ kubectl -n $NAMESPACE get svc | findstr /i "postgres 5432 conjur"
 \begin{AppendixCode}
 kubectl -n $NAMESPACE get networkpolicy
 \end{AppendixCode}
-若不存在任何约束 Postgres 入站的策略，且集群默认允许 Pod 间互通，则可判定数据库对集群内工作负载开放。
 
 \textbf{步骤 4：连通性验证}
-在不执行数据库操作的前提下，使用 TCP 连通性探测验证非 Conjur 组件工作负载是否能够与 Postgres 的 5432 端口建立连接，以此作为暴露面存在的验证依据。
 \begin{AppendixCode}
-POSTGRES_SVC=<postgres-service-name>
-
 kubectl -n $NAMESPACE run netcheck \
 	--image=busybox:1.36 \
 	--restart=Never \
@@ -1012,9 +730,6 @@ kubectl -n $NAMESPACE run netcheck \
 \section{策略代码清单}
 
 \subsection{1）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
-
-下述策略在命名空间内实现两点：其一，默认拒绝 Postgres Pod 的入站流量；其二，仅允许 Conjur Server 访问 Postgres 的 5432 端口。
-其中标签选择器需与实际部署对象一致，示例使用 \texttt{app\allowbreak=\allowbreak conjur\allowbreak-\allowbreak oss} 与 \texttt{app\allowbreak=\allowbreak conjur\allowbreak-\allowbreak oss\allowbreak-\allowbreak postgres}，可按实际标签调整。
 
 \begin{AppendixCode}
 cat <<'EOF' | kubectl apply -f -
@@ -1055,46 +770,9 @@ spec:
 EOF
 \end{AppendixCode}
 
-\textbf{策略验证}
-\begin{AppendixCode}
-kubectl -n conjur-vuln get networkpolicy
-
-# 复测：从非 Conjur 组件工作负载到 Postgres 5432 的连通性应失败
-# 从 Conjur Server 到 Postgres 5432 的连通性应成功
-\end{AppendixCode}
-
-\subsection{2）命名空间隔离与 RBAC 收敛}
-\begin{itemize}
-	\item 将 Conjur 部署在独立命名空间，并通过 NetworkPolicy 限制跨命名空间访问。
-	\item 收敛对数据库凭据相关 Secret 的读取权限，降低网络可达与凭据可读叠加带来的风险。
-\end{itemize}
-
-
 \chapter{CVE-2022-24877 复现步骤与策略清单}\label{app:cve-2022-24877}
 
-本附录给出案例五（CVE-2022-24877，Flux \texttt{kustomize\allowbreak-controller} 通过恶意 \texttt{kustomization\allowbreak.yaml} 触发路径穿越，导致控制器 Pod 文件系统敏感数据暴露，并在多租户部署中可能引发权限提升）的\textbf{验证性复现}与\textbf{缓解策略清单}。
-为避免提供可直接滥用的利用细节，复现部分以“路径越界行为证据与判据”为主，不提供可复用的攻击脚本。
-
 \section{漏洞复现详细步骤}
-
-\textbf{复现目标}
-验证控制器在构建过程中是否会因配置文件中的异常路径引用而产生目录边界越界读取风险。
-重点关注构建阶段的路径规范化与边界约束，并以日志行为与构建产物的异常特征作为证据判据。
-本案例涉及的控制器为 \texttt{kustomize-controller}，相关配置文件为 \texttt{kustomization.yaml}。
-
-\textbf{环境与前提}\\
-建议在隔离测试集群中进行，并使用受影响版本的 \texttt{kustomize-controller}。
-该类问题在多租户集群中可能放大隔离破坏风险，故不建议在生产环境进行实验。
-修复信息：该漏洞已在 \texttt{kustomize-controller} v0.24.0 修复。
-该版本随 \texttt{flux} v0.29.0 集成发布。
-
-\textbf{步骤要点}
-\begin{enumerate}
-	\item 在隔离仓库中准备最小化示例，包含 \texttt{kustomization.yaml} 及少量合法资源清单，用于建立可对比的基线构建产物。
-	\item 在受控条件下引入异常路径引用（例如包含父目录引用或绝对路径风格的条目），触发控制器重新拉取并执行构建。
-	\item 观察控制器日志与事件输出，记录与路径解析、文件读取失败或异常引用相关的报错/告警。
-	\item 对比构建产物与基线差异，检查是否出现“非预期文件内容进入产物”的迹象。该步骤应仅使用无敏感性的测试素材进行验证。
-\end{enumerate}
 
 \textbf{参考命令（用于采集受控证据）}
 \begin{AppendixCode}
@@ -1113,75 +791,9 @@ kubectl -n $FLUX_NS logs deploy/kustomize-controller --tail=200
 kubectl -n $APP_NS get events --sort-by=.lastTimestamp | findstr /i "Kustomization Reconciliation"
 \end{AppendixCode}
 
-\textbf{证据判据与逻辑解释}
-该类漏洞的关键证据在于“路径解析是否受目录边界约束”。
-若控制器在构建阶段对异常路径引用给出明确的拒绝与报错，并且构建产物未出现越界读取痕迹，可视为风险被抑制。
-若在严格受控的测试条件下观察到异常路径引用导致非预期内容进入构建产物，则可判定目录边界约束存在缺口，需立即升级组件并补齐流程治理措施。
-
-\section{策略代码清单（优先级方案）}
-
-本节选取对该类风险\textbf{最直接且工程可落地}的缓解措施：CI/CD 前置校验，并辅以多租户下的变更治理与运行时硬化。
-
-\subsection{1）工作区缓解：在 CI/CD 中校验 \texttt{kustomization\allowbreak.yaml} 路径策略}
-
-在补丁窗口期或多团队协作场景下，可在 CI/CD 流水线中加入配置校验门禁。
-校验对象为 \texttt{kustomization\allowbreak.yaml}，要求其资源路径满足安全策略，例如：禁止绝对路径风格、禁止父目录引用、限制引用的文件类型与目录范围。
-下述示例为 \texttt{conftest}（OPA）策略骨架，用于展示如何对 \texttt{kustomization\allowbreak.yaml} 的路径字段进行约束；可按组织规范扩展字段列表与白名单策略。
-\begin{AppendixCode}
-package kustomizepolicy
-deny[msg] {
-  some p
-  p := input.resources[_]
-  risky_path(p)
-  msg := sprintf("kustomization.yaml: resources contains risky path: %s", [p])
-}
-deny[msg] {
-  some i
-  p := input.patches[i].path
-  risky_path(p)
-  msg := sprintf("kustomization.yaml: patches[%d].path contains risky path: %s", [i, p])
-}
-risky_path(p) {
-  startswith(p, "/")
-}
-risky_path(p) {
-  contains(p, "..")
-}
-\end{AppendixCode}
-
-说明：为降低误报，可进一步将 \texttt{contains(p,"..") } 改为按路径分段匹配“父目录段”，并对允许的相对路径前缀建立白名单。
-
-\subsection{2）多租户变更治理与运行时硬化（纵深防御）}
-在多租户集群中，应严格控制谁可以向 Flux 同步源提交变更、谁可以修改 Flux 相关资源，并通过代码评审与分支保护降低恶意配置进入同步面的概率。
-同时可对控制器工作负载启用非特权运行、只读根文件系统、默认 seccomp 配置与能力集收敛，以降低异常路径下的后续风险。
-
-
 \chapter{CVE-2022-29171 复现步骤与策略清单}\label{app:cve-2022-29171}
 
-本附录给出案例六（CVE-2022-29171，Sourcegraph 在 Gitolite 与 Phabricator 联动集成中存在配置驱动的命令执行风险）的\textbf{验证性复现}与\textbf{缓解策略清单}。
-为避免提供可直接滥用的利用细节，复现部分以执行路径证据与回归判据为主，不给出可直接用于远程执行的命令载荷与请求模板。
-
 \section{漏洞复现详细步骤}
-
-\textbf{复现目标}
-验证在受影响版本中，特定集成配置项（\texttt{callsign\allowbreak Command}）是否会被 \texttt{gitserver} 在处理仓库元数据获取流程时执行。
-复现以日志、审计与可观测证据为主，并在禁用集成后复测，确认风险被消除。
-
-\textbf{环境与前提}
-仅在隔离测试环境开展。前置条件包括：
-（i）Sourcegraph 版本处于受影响范围；
-（ii）启用了 Gitolite code host 并与 Phabricator 元数据获取路径相关联；
-（iii）存在可编辑/新增 Gitolite code host 的管理权限；
-（iv）存在对内置 Grafana 的高权限访问，用于说明观测面可能降低内部寻址成本。
-
-\textbf{步骤要点}
-\begin{enumerate}
-	\item 部署受影响版本 Sourcegraph，并确认 \texttt{gitserver} 作为独立工作负载运行（记录其命名空间与标签信息）。
-	\item 在管理面将 Gitolite 与 Phabricator 集成配置为可用状态，保证仓库元数据获取流程可被触发。
-	\item 在严格受控条件下对 \texttt{callsignCommand} 进行\textbf{无害探针式}变更（例如仅返回固定标识、且不访问外部网络、不读取敏感文件）。
-	\item 触发一次与该集成相关的元数据获取/同步流程，并观察 \texttt{gitserver} 日志、任务记录或审计日志中是否出现外部命令执行的迹象。
-	\item 禁用 Gitolite code host 后重复触发流程，确认相同迹象不再出现。
-\end{enumerate}
 
 \textbf{参考命令（用于日志与工作负载证据采集）}
 \begin{AppendixCode}
@@ -1195,24 +807,9 @@ kubectl -n $NAMESPACE get events --sort-by=.lastTimestamp | findstr /i "gitserve
 kubectl -n $NAMESPACE logs deploy/gitserver --since=10m | findstr /i "gitolite phabricator callsign"
 \end{AppendixCode}
 
-\textbf{证据判据与逻辑解释}
-若在受影响版本中，\texttt{gitserver} 的运行日志或可观测数据中出现因集成配置而执行外部命令的明确迹象，可判定存在执行面风险。
-禁用相关集成后，该执行路径应被移除或被显式限制；若仍可观察到可疑执行迹象，则需进一步检查是否存在配置残留或旁路路径。
-
 \section{策略清单}
 
-本节仅选取 3 条对该类风险最直接且工程可落地的策略：功能禁用、网络隔离与权限分离/暴露面收敛。
-
-\subsection{1）快速缓解：禁用或移除 Gitolite code host（若业务允许）}
-若业务不依赖 Gitolite，可移除所有 Gitolite code host 配置并保持禁用状态，从输入面直接消除 \texttt{callsignCommand} 的风险来源。
-
-\subsection{2）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
-在 Kubernetes 部署中，建议对 \texttt{gitserver} 应用 NetworkPolicy：仅允许 Sourcegraph 内部必要组件访问其入站端口；出站仅放通 DNS 与必要的代码托管出口。
-该策略用于降低内部拓扑信息被获取后的横向触达能力，并为权限误授提供纵深缓冲。
-
-\textbf{策略示例}
-示例分别约束入站与出站。入站仅允许 Sourcegraph 内部调用方访问 \texttt{gitserver}；出站仅放通 DNS，并对代码托管出口按需单独放通。选择器与端口应按实际部署对象调整。
-
+\subsection{1）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
 \begin{AppendixCode}
 NAMESPACE=sourcegraph
 
@@ -1272,41 +869,10 @@ EOF
 kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 \end{AppendixCode}
 
-\textbf{验证要点}
-建议先在预生产灰度启用，并结合 \texttt{gitserver} 的错误日志与调用链路指标观察误拦截情况。对确需访问的代码托管出口，按最小集合逐项放通，并保留变更记录。
-
-\subsection{3）权限分离与暴露面收敛：限制管理面与观测面的高权限}
-严格限制可编辑外部服务配置（尤其是 Gitolite code host 配置）的主体数量，并启用变更审批与审计。
-同时收敛 Grafana 的暴露面，例如仅内网访问、受控 Ingress、强认证与最小管理员集合，并将 Grafana 管理员与 Sourcegraph 站点管理员职责分离，避免观测面权限放大攻击链的信息优势。
-
-\textbf{落地要点}
-在平台流程上，可将外部服务配置变更与观测面账号授权纳入同一类高风险变更，要求双人复核、强制留痕与定期回收。在技术控制上，可对管理入口启用强认证并限制来源网络，同时在日志平台中对关键配置项变更进行集中审计与告警。
-
 
 \chapter{CVE-2023-22482 复现步骤与策略清单}\label{app:cve-2023-22482}
 
-本附录给出案例七（CVE-2023-22482，Argo CD 在 OIDC 场景下未校验令牌受众 \texttt{aud}，导致跨受众令牌可能被接受）的\textbf{验证性复现}与\textbf{缓解策略清单}。
-为避免提供可直接复用的越权访问细节，复现部分以配置证据、令牌声明证据与接口返回判据为主，不展开可直接用于获取令牌与构造请求的具体命令。
-
 \section{漏洞复现详细步骤}
-
-\textbf{复现目标}
-验证在受影响版本中，Argo CD 是否会接受 \texttt{aud} 不匹配但签名与发行者合法的 OIDC 令牌，并据此返回受 RBAC 控制的资源响应。
-
-\textbf{环境与前提}
-仅在隔离测试环境开展。前置条件包括：
-（i）部署受影响版本的 Argo CD（例如 \texttt{2.5.4}），并启用 OIDC 登录；
-（ii）OIDC 提供方能够为至少两个不同受众签发令牌，且其中一个受众并非 Argo CD；
-（iii）Argo CD 已配置为信任该 OIDC 提供方，并启用 \texttt{groups} 相关声明用于 RBAC 映射；
-（iv）具备可观察的审计与日志渠道，用于对登录校验与资源访问结果进行证据采集。
-
-\textbf{步骤要点}
-\begin{enumerate}
-	\item 固化基线配置：记录 Argo CD 版本与 OIDC 配置要点（\texttt{issuer}、\texttt{clientID}、所请求的 scope），确认 Argo CD 能够正常使用 OIDC 完成会话建立。
-	\item 获取一枚由同一 OIDC 提供方签发、但 \texttt{aud} 指向其他受众的有效令牌。该令牌应满足验签可通过且包含可用于 RBAC 映射的 \texttt{groups} 声明。
-	\item 提取令牌声明证据：对该令牌解析其 payload，保留 \texttt{iss}、\texttt{aud}、\texttt{exp} 与 \texttt{groups} 等字段的记录，证明其受众并非 Argo CD。
-	\item 使用该令牌访问 Argo CD 的受保护接口，选择一个只读且便于判定的 API 作为验证点，记录响应结果与 Argo CD 侧日志。
-\end{enumerate}
 
 \textbf{参考命令（用于配置、令牌与响应证据采集）}
 \begin{AppendixCode}
@@ -1325,128 +891,9 @@ curl -k -H "Authorization: Bearer $TOKEN" "$ARGOCD_URL/api/v1/applications"
 kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc token aud"
 \end{AppendixCode}
 
-\textbf{证据判据与逻辑解释}
-若在受影响版本中，Argo CD 在验签通过的前提下接受 \texttt{aud} 不匹配的令牌，并返回受 RBAC 控制的资源响应，可判定存在受众校验缺失。
-
 \section{策略清单}
 
-本节仅选取 3 条对该类风险最直接且工程可落地的策略：身份提供方客户端隔离、前置受众校验与 RBAC 收敛。
-
-\subsection{1）身份提供方治理：独立客户端与唯一受众}
-为 Argo CD 配置独立 OIDC 客户端与唯一受众标识，避免与其他业务系统共享同一受众空间。
-同时对该客户端签发的 \texttt{groups} 声明进行裁剪，确保仅包含与 Argo CD 授权相关的组，并建立清晰的组命名规范，避免跨系统复用带来的权限含义漂移。
-
-\textbf{Argo CD OIDC 配置示例（唯一 \texttt{clientID}）}
-说明：以下示例展示 \texttt{argocd-cm} 中的关键配置项，重点在于为 Argo CD 使用独立客户端标识，并显式声明基于 \texttt{groups} 的 RBAC 映射来源。
-\begin{AppendixCode}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-	name: argocd-cm
-	namespace: argocd
-data:
-	url: https://argocd.example.com
-	oidc.config: |
-		name: CorporateOIDC
-		issuer: https://idp.example.com/realms/platform
-		clientID: argocd-prod
-		clientSecret: $oidc.corporate.clientSecret
-		requestedScopes: ["openid", "profile", "email", "groups"]
-		requestedIDTokenClaims:
-			groups:
-				essential: true
-		logoutURL: https://idp.example.com/realms/platform/protocol/openid-connect/logout
-\end{AppendixCode}
-
-\textbf{身份提供方客户端侧约束示意}
-说明：不同身份提供方的配置格式不同，以下仅示意“为 Argo CD 单独分配客户端与受众、限制组声明来源”的关键字段。
-\begin{AppendixCode}
-clientId: argocd-prod
-audience: argocd-prod
-redirectUris:
-	- https://argocd.example.com/auth/callback
-protocol: openid-connect
-defaultClientScopes:
-	- openid
-	- profile
-	- email
-	- groups
-groupClaimFilter:
-	prefix: argo:
-	allow:
-		- argo:platform-admin
-		- argo:project-readonly
-		- argo:project-deployer
-\end{AppendixCode}
-
-\subsection{2）入口补偿控制：前置强制校验 \texttt{aud}}
-在 Argo CD 前置入口（如 API 网关或反向代理）对令牌进行一致性校验，至少包含发行者、签名与受众校验。
-落地时应提供灰度与回滚机制，并覆盖 Web 与自动化访问路径。
-
-\textbf{前置网关示例：Envoy JWT 认证过滤器}
-说明：该示例展示如何在进入 Argo CD 前对 JWT 的 \texttt{issuer} 与 \texttt{audiences} 执行强制校验。若令牌的 \texttt{aud} 不包含 \texttt{argocd-prod}，请求将在到达 Argo CD 之前被拒绝。
-\begin{AppendixCode}
-static_resources:
-	listeners:
-	- name: argocd_listener
-		address:
-			socket_address:
-				address: 0.0.0.0
-				port_value: 8443
-		filter_chains:
-		- filters:
-			- name: envoy.filters.network.http_connection_manager
-				typed_config:
-					"@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-					stat_prefix: ingress_https
-					route_config:
-						virtual_hosts:
-						- name: argocd
-							domains: ["argocd.example.com"]
-							routes:
-							- match: { prefix: "/" }
-							  route:
-								cluster: argocd_server
-					http_filters:
-					- name: envoy.filters.http.jwt_authn
-						typed_config:
-							"@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
-							providers:
-								corporate_oidc:
-									issuer: https://idp.example.com/realms/platform
-									audiences:
-										- argocd-prod
-									remote_jwks:
-										http_uri:
-											uri: https://idp.example.com/realms/platform/protocol/openid-connect/certs
-											cluster: idp_jwks
-											timeout: 5s
-							rules:
-							- match: { prefix: "/api/" }
-							  requires:
-								provider_name: corporate_oidc
-					- name: envoy.filters.http.router
-	clusters:
-	- name: argocd_server
-		type: STRICT_DNS
-		load_assignment:
-			cluster_name: argocd_server
-			endpoints:
-			- lb_endpoints:
-				- endpoint:
-					address:
-						socket_address:
-							address: argocd-server.argocd.svc.cluster.local
-							port_value: 80
-\end{AppendixCode}
-
-\subsection{3）权限收敛：RBAC 最小化与项目边界约束}
-收敛 \texttt{argocd\allowbreak-rbac\allowbreak-cm} 中的角色授权，将高权限组限制在最小集合，并通过 AppProject 限定可部署的命名空间、资源类型与来源仓库。
-同时将关键接口的访问失败与异常登录事件纳入审计与告警，以便在令牌泄露或误用时快速发现与止血。
-
-\textbf{Argo CD RBAC 收敛示例}
-
-说明：以下示例将高权限组限制为 \texttt{argo:platform-admin}。普通项目用户仅保留只读与有限同步能力，从而降低跨受众令牌误用后的权限上限。
+\subsection{权限收敛：RBAC 最小化与项目边界约束}
 \begin{AppendixCode}
 apiVersion: v1
 kind: ConfigMap
@@ -1456,10 +903,6 @@ metadata:
 data:
 	policy.default: role:readonly
 	policy.csv: |
-		g, argo:platform-admin, role:admin
-		g, argo:project-readonly, role:readonly
-		g, argo:project-deployer, role:deployer
-
 		p, role:admin, applications, *, */*, allow
 		p, role:admin, projects, *, *, allow
 		p, role:admin, repositories, *, *, allow
@@ -1472,45 +915,6 @@ data:
 		p, role:deployer, applications, get, my-project/*, allow
 		p, role:deployer, applications, sync, my-project/*, allow
 		p, role:deployer, applications, action/*, my-project/*, deny
-\end{AppendixCode}
-
-\textbf{AppProject 边界约束示例}
-说明：通过限制目标命名空间、来源仓库与可管理资源范围，进一步压缩误用令牌在项目维度上的横向影响面。
-\begin{AppendixCode}
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-	name: my-project
-	namespace: argocd
-spec:
-	description: bounded project for tenant applications
-	sourceRepos:
-		- https://github.com/example-org/app-configs.git
-	destinations:
-		- namespace: tenant-a
-		  server: https://kubernetes.default.svc
-	clusterResourceWhitelist:
-		- group: ""
-		  kind: Namespace
-	namespaceResourceWhitelist:
-		- group: apps
-		  kind: Deployment
-		- group: ""
-		  kind: Service
-	roles:
-		- name: readonly
-		  description: read-only access for tenant reviewers
-		  policies:
-			- p, proj:my-project:readonly, applications, get, my-project/*, allow
-		  groups:
-			- argo:project-readonly
-		- name: deployer
-		  description: deployment access for approved operators
-		  policies:
-			- p, proj:my-project:deployer, applications, get, my-project/*, allow
-			- p, proj:my-project:deployer, applications, sync, my-project/*, allow
-		  groups:
-			- argo:project-deployer
 \end{AppendixCode}
 
 

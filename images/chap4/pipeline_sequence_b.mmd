@@ -1,22 +1,23 @@
 %%{init: {
   'theme': 'base',
   'themeVariables': {
-    'fontSize': '22px',
+    'fontSize': '36px',
     'fontFamily': '"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif',
     'lineColor': '#64748b',
     'primaryTextColor': '#1f2937'
   }
 }}%%
+
 sequenceDiagram
     autonumber
     actor User as 安全工程师
-    participant UI as 前端界面<br/>(Vue3 SPA)
-    participant API as 后端 API<br/>(Flask)
-    participant Agent as 智能体引擎<br/>(KPEAgent)
+    participant UI as 前端界面
+    participant API as 后端 API
+    participant Agent as 智能体引擎
     participant DB as 数据持久层
 
     rect rgb(255, 240, 240)
-        Note over User, DB: 阶段三：评审反馈驱动优化（可选迭代）
+        Note over User, DB: 阶段三：评审反馈驱动优化
         opt 用户提出修改意见
             User ->>+ UI: 输入修改建议
             UI ->>+ API: POST /api/pipeline/refine

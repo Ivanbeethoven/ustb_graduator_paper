@@ -6,30 +6,19 @@
 
 \section{研究动机}
 
-云原生权限提升漏洞的防控难点，集中体现在漏洞披露后、补丁尚未完成部署的补丁窗口期。本文对 2020 至 2025 年间 55 个云原生权限提升漏洞的修复分布如图\ref{fig:patch-window}，$30.4\%$ 的漏洞因补丁延迟而长期处于可利用状态。攻击者却可借助公开公告、修复提交或社区讨论快速还原利用条件。由于第三方组件升级存在兼容性审批和业务连续性等要求，补丁发布后往往无法立即清除。因此，在补丁窗口期内形成有效的临时防控措施，具有现实意义。
-
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/cve-pub.png}
-    \bicaption{云原生环境下权限提升漏洞的修复时间分布}{Distribution of remediation time for privilege escalation vulnerabilities in cloud-native environments}\label{fig:patch-window}
-\end{figure}
-
-临时防控策略并不能直接从 $\mathrm{CVE}$ 编号或简短公告中得到。权限提升漏洞往往同时涉及 $\mathrm{RBAC}$ 权限配置\cite{ferraiolo1995role}、控制平面交互、工作负载部署方式、运行时行为和网络可达关系等多个层面，并常与过度授权\cite{yang2023take}、风险组件劫持、敏感信息泄露\cite{kubeguard_icws2025}等问题交织出现。真正有用的处置依据，通常分散在漏洞公告、修复提交、Issue/PR 讨论、配置清单与相关代码之中。要在较短时间内形成有效策略，需要先重建漏洞语义，再识别关键控制点，并据此判断应采用准入控制、$\mathrm{RBAC}$ 收敛、运行时监控还是网络隔离等措施。换言之，这里面对的不是单一规则编写问题，而是面向具体漏洞的证据组织与控制路径选择问题。
-
-围绕云原生安全治理，现有工具已经覆盖了较完整的风险管控周期。静态层面，已有方法可对镜像依赖与 $\mathrm{Kubernetes}$ 清单进行扫描\cite{shamim2025prescription,k8smanifests2023}；动态层面，则包括基于 $\mathrm{eBPF}$ 的运行时观测与审计\cite{falco2025}、$\mathrm{OPA/Gatekeeper}$\cite{opa2025} 和 $\mathrm{Kyverno}$\cite{kyverno2025} 等准入控制机制，以及通过网络策略约束横向连通范围的防护手段\cite{Minna_2021,Budigiri_2021}。这些技术为集群安全提供了必要基础，但大多围绕通用基线核查和既有规则模式展开，更擅长识别普遍性风险；当目标转向某一具体漏洞时，它们往往缺少从多源证据出发、围绕利用条件组合控制措施的能力。实践中真正欠缺的，并不是新的单点工具，而是能够将已有工具与漏洞证据关联起来、面向补丁窗口期快速输出针对性临时策略的方法。
-
-大语言模型提供了新的防控思路。大语言模型不能直接替代安全准入控制器或运行时系统，但能\textbf{通过漏洞语义进行现有安全工具的领域特定代码生成，从而迅速生成临时性防控策略}。为使该思路切实可用，需进一步回答以下三个问题：
+云原生权限提升漏洞防控面临补丁窗口期暴露、专家依赖和工具有效性不足三方面挑战。大语言模型为此提供了新的思路：大语言模型不能直接替代安全准入控制器或运行时系统，但能\textbf{通过漏洞语义进行现有安全工具的领域特定代码生成，从而迅速生成临时性防控策略}。该思路落地须要进一步回答以下三个问题：
 
 \noindent\hangindent=1em\hangafter=1 (1) \textbf{如何构建面向具体漏洞的安全上下文}。权限提升漏洞的关键信息分散在代码仓库、漏洞公告、Issue/PR 讨论与修复提交等多类来源中，缺少统一的组织方式就很难准确把握漏洞成因、利用前提与影响边界。需建立可检索、可追溯的领域知识库，将分散证据转化为可供大模型使用的安全上下文。
 
-\noindent\hangindent=1em\hangafter=1 (2) \textbf{如何基于漏洞语义生成安全策略代码}。从漏洞理解到策略落地并非单一步骤，而是涉及成因分析、控制点选择、约束方式确定和策略表达生成等多个环节。如何在保证针对性的同时兼顾可执行性与工具适配性，将抽象的漏洞语义转化为面向实际控制面的具体措施，是临时防控策略生成中的关键问题。
+\noindent\hangindent=1em\hangafter=1 (2) \textbf{如何基于漏洞语义生成安全策略代码}。从漏洞理解到策略落地并非单一步骤，而是涉及成因分析、控制点选择、约束方式确定和策略表达生成等多个环节。如何在保证有效性的同时兼顾可执行性与工具适配性，将抽象的漏洞语义转化为面向实际控制面的具体措施，是临时防控策略生成中的关键问题。
 
-\noindent\hangindent=1em\hangafter=1 (3) \textbf{如何评估策略代码质量}。由于大模型幻觉，生成的策略代码可能防控覆盖不足或干扰正常业务，需对策略进行质量评价。然而策略代码由于异构性和人工评估成本，存在较大的测试语言问题\cite{oracleproblem2015survey}，需保证评估效率的同时提升评估结果的可靠性与一致性。
+\noindent\hangindent=1em\hangafter=1 (3) \textbf{如何评估策略代码质量}。由于大模型幻觉，生成的策略代码可能防控覆盖不足或干扰正常业务，需对策略进行质量评价。然而策略代码由于异构性和人工评估成本，存在较大的测试预言问题\cite{oracleproblem2015survey}，需保证评估效率的同时提升评估结果的可靠性与一致性。
 
-本文提出一种面向云原生权限提升漏洞的智能化防控技术，以安全知识库解决安全上下文构建问题,以多智能体协同方式组织策略代码生成工作流，并构建基于排序的多模型质量评价方法.
+本文提出一种面向云原生权限提升漏洞的智能化防控技术，以安全知识库解决安全上下文构建问题,以多智能体协同方式组织策略代码生成工作流，并构建基于排序的多模型质量评价方法。
+
 \section{方法框架}
 
-本文将补丁窗口期内的云原生权限提升漏洞防控问题建模为面向具体漏洞实例的临时防控策略自动生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，围绕多源证据的收集、组织与利用，形成从漏洞理解到策略生成与质量控制的整体方法链。如图~\ref{fig:overall-framework}所示，框架依次包含四个模块：安全知识库整合代码仓库、漏洞公告、Issue/PR 讨论与补丁提交等信息，为后续分析提供可追溯的证据支撑；多智能体策略生成结合检索增强、思维链推理与反馈优化机制，将漏洞语义转化为面向 Kubernetes 平台的监控与防护策略；质量评价通过多评审主体排序与聚合，输出可审计的交付结论。下文从基本概念定义（\ref{subsec:def} 节）、安全知识库构建（\ref{subsec:kb} 节）、多智能体策略生成与优化（\ref{subsec:agent} 节）以及质量评价（\ref{subsec:quality} 节）四个方面展开。
+本文云原生权限提升漏洞防控问题建模为面向具体漏洞临时防控策略生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，形成从漏洞理解到策略生成与质量评估的整体方法链。如图~\ref{fig:overall-framework}所示，方法由三个部分构成：云原生安全知识库部分从第三方开源应用的开源代码仓库中的多源信息中采集上下文特征，形成包含 CVE/CWE 统计、权限提升风险分类框架与向量化领域知识的安全知识库，为后续分析提供可检索的证据支撑；基于多智能体的策略生成与优化部分以权限提升 CVE 为输入，通过安全知识检索、代码生成、代码评估、代码优化等多智能体协同工作流生成安全策略候选集合；策略代码质量评估部分采用大模型排名式度量指标进行静态评估。此外动态评估通过案例分析对安全策略的有效性进行实证验证（见章节~\ref{chap:case}）。下文从基本概念定义（\ref{subsec:def} 节）、安全知识库构建（\ref{subsec:kb} 节）、多智能体策略生成与优化（\ref{subsec:agent} 节）以及策略代码质量评估（\ref{subsec:quality} 节）四个方面展开。
 
 \begin{figure}[htb]
     \centering
@@ -37,40 +26,62 @@
     \bicaption{基于多智能体的策略化漏洞防控研究总体框架}{Overall multi-agent framework for strategy-based vulnerability prevention and control based on large language models}\label{fig:overall-framework}
 \end{figure}
 
+\newcounter{flatdefinition}
+\newenvironment{flatdefinition}[1]{%
+    \refstepcounter{flatdefinition}%
+    \par\noindent\hspace{2em}\textbf{定义 \arabic{flatdefinition}（#1）}%
+}{\par\ignorespacesafterend}
+
 \subsection{基本概念定义}\label{subsec:def}
 
-为形式化描述面向漏洞的安全策略生成问题，本文将方法中的核心对象抽象为漏洞实例、安全上下文与安全策略三类实体。本文涉及的主要记号与核心术语已在前置部分的符号清单与术语表中汇总，这里仅给出与方法定义直接相关的形式化说明。记候选策略全集为 $\Pi$。
+本文将核心对象形式化为漏洞实例、安全上下文与安全策略三类实体；主要记号与术语见第~\pageref{chap:sym-list}~页。
 
-\textbf{定义 1（漏洞实例）}。设 $\mathcal{V}$ 为漏洞实例空间。任一漏洞实例表示为
+\begin{flatdefinition}{漏洞实例}\label{def:vuln-instance}
+设 $\mathcal{V}$ 为漏洞实例空间，任一漏洞实例表示为
 \begin{equation}
 v=\langle \mathit{id},\,d,\,m \rangle\in\mathcal{V}
 \end{equation}
-其中，$\mathit{id}$ 为漏洞标识符（如 CVE 编号），$d$ 为漏洞描述文本，$m$ 为与漏洞相关的元数据，用于刻画其严重性、受影响组件及版本范围等属性。
+其中 $\mathit{id}$ 为漏洞 CVE 编号，$d$ 为漏洞描述文本，$m$ 为元数据，记录严重性、受影响组件及版本范围等属性。
+\end{flatdefinition}
 
-\textbf{定义 2（安全上下文）}。给定漏洞实例 $v$，其安全上下文 $c\in\mathcal{C}$ 定义为带来源标识的有限证据集合：
+\begin{flatdefinition}{安全上下文}\label{def:security-context}
+给定漏洞实例 $v$，其安全上下文 $c$ 为带来源标识的有限证据集合：
 \begin{equation}
 c = \bigl\{\,\langle t_i,\,\mathit{src}_i \rangle \mid i\in[n_c] \,\bigr\}
 \end{equation}
-其中，$t_i$ 表示证据内容，$\mathit{src}_i$ 表示来源标识（如文档路径、公告链接或代码位置）。该定义强调上下文不仅提供与漏洞相关的背景事实，而且保留事实来源，以支撑后续策略生成与结果复核。
+其中 $t_i$ 为证据内容，$\mathit{src}_i$ 为来源标识（如文档路径、公告链接或代码位置），用于支撑策略生成中的证据追溯与复核，，$[n_c]$为检索到的证据数量。
+\end{flatdefinition}
 
-\textbf{定义 3（安全策略）}。针对给定漏洞实例 $v$ 的完整安全策略表示为三元组
+\begin{flatdefinition}{防控条目}\label{def:control-item}
+安全策略的基本组成单元为三元组
 \begin{equation}
-\pi = \langle \mathit{type},\;\mathit{method},\;\mathit{action} \rangle
+e = \langle \tau,\;m,\;\mathbf{a} \rangle
 \end{equation}
-其中，$\mathit{type}\in\{\mathrm{mon},\mathrm{prot}\}$ 表示策略属于监控型还是防护型；$\mathit{method}=(m_1,\ldots,m_k)$ 表示控制机理序列，$\mathit{action}=(a_1,\ldots,a_k)$ 表示与之对应的执行表达序列。二者满足一一对应关系，即每个 $m_i$ 均对应一个可部署的 $a_i$，共同构成完整的防控措施单元。
+其中 $\tau\in\{\mathrm{mon},\mathrm{prot}\}$ 为控制类型：$\mathrm{mon}$（监控型）持续观测运行时状态并触发异常告警；$\mathrm{prot}$（防护型）主动阻断权限滥用并收缩攻击面。$m$ 为控制机理，描述该措施的作用路径，如 Falco 规则告警、Kyverno 准入审计或 RBAC 权限收缩。$\mathbf{a}=(a_1,\ldots,a_k)$ 为 $m$ 对应的执行表达序列（规则片段、配置声明或可执行命令），每个 $a_i$ 对应 $m$ 的一个可部署表达。
+\end{flatdefinition}
 
-三元组的三个分量分别定义如下。
+\begin{flatdefinition}{安全策略}\label{def:security-strategy}
+针对漏洞实例 $v$ 的安全策略为防控条目的有限集合
+\begin{equation}
+\pi = \{e_1,\;e_2,\;\ldots,\;e_n\}
+\end{equation}
+其中每个 $e_i=\langle \tau_i,\;m_i,\;\mathbf{a}_i\rangle$ 为定义~\ref{def:control-item} 所述防控条目。多条目策略将防护型与监控型措施协同组织，弥补单一类型在阻断能力或持续观测方面的局限。
+\end{flatdefinition}
 
-\textbf{定义 3.1（策略类型）}。$\mathit{type}\in\{\mathrm{mon},\mathrm{prot}\}$ 将策略划分为两类：$\mathrm{mon}$（监控型）以持续观测和异常告警为核心目标，侧重在不中断业务的前提下获取运行时证据；$\mathrm{prot}$（防护型）以主动阻断和权限收敛为核心目标，侧重在资源准入或节点侧直接消除风险暴露面。例如，针对 \texttt{CVE-2024-33522} 的 Falco 规则属于 $\mathrm{mon}$ 型策略，而移除 SUID 位的 DaemonSet 修复动作则属于 $\mathrm{prot}$ 型策略。
+\begin{flatdefinition}{生成配置}\label{def:gen-config}
+设 $\mathcal{A}$ 为方法配置集合，$\mathcal{M}$ 为大语言模型集合，$g=(a,h)\in\mathcal{A}\times\mathcal{M}$ 为方法配置 $a$ 与底层模型 $h$ 的组合。
+\end{flatdefinition}
 
-\textbf{定义 3.2（控制机理序列）}。$\mathit{method}=(m_1,\ldots,m_k)$ 为有序序列，每个 $m_i$ 描述一项控制手段的作用路径与机理，例如：$m_i = \text{Falco 规则告警}$、$m_i = \text{Kyverno 准入审计}$、$m_i = \text{节点权限位收敛}$ 或 $m_i = \text{RBAC 权限收缩}$。不同控制机理可对应不同的作用层次（运行时、准入控制或节点侧），允许在一个策略对象中组合多类手段。
+\begin{flatdefinition}{候选策略集合}\label{def:candidate-strategy-set}
+围绕漏洞实例 $v$ 的候选策略集合记为
+\begin{equation}
+\Pi_v=\bigcup_{g\in\mathcal{G}_v}\Pi_v^{(g)}
+\end{equation}
+其中 $\mathcal{G}_v\subseteq\mathcal{A}\times\mathcal{M}$ 为 $v$ 采用的生成配置集合（定义~\ref{def:gen-config}），$\Pi_v^{(g)}\subseteq\Pi$ 为配置 $g$ 输出的候选子集，$\Pi=2^{\mathcal{E}}$ 为安全策略全集。$\mathcal{A}$ 与 $\mathcal{M}$ 的具体取值在第五章实验部分给出。
+\end{flatdefinition}
 
-\textbf{定义 3.3（执行表达序列）}。$\mathit{action}=(a_1,\ldots,a_k)$ 与 $\mathit{method}$ 等长，每个 $a_i$ 是 $m_i$ 对应的可部署表达，可以是规则片段、配置声明或可执行命令等具体形式。例如，当 $m_i = \text{Falco 规则告警}$ 时，$a_i$ 为可直接部署的 Falco YAML 规则；当 $m_i = \text{节点权限位收敛}$ 时，$a_i$ 为封装了 \texttt{chmod u-s} 命令的 DaemonSet 配置。
 
-
-对给定漏洞实例 $v$，生成阶段得到的候选策略集合记为 $\Pi_v\subseteq\Pi$。策略质量评价所涉及的维度与记号将在 \ref{subsec:quality} 节进一步给出。
-
-\subsection{云原生权限提升安全知识库}\label{subsec:kb}
+\subsection{安全知识库}\label{subsec:kb}
 
 如图~\ref{fig:cve-database}所示，本节围绕漏洞实例 $v$ 构建可追溯云原生权限提升安全知识库 $\mathcal{K}_v$，并通过检索形成安全上下文 $c$，为后续策略生成提供带来源标识的证据支撑。
 
@@ -81,43 +92,33 @@ c = \bigl\{\,\langle t_i,\,\mathit{src}_i \rangle \mid i\in[n_c] \,\bigr\}
 \end{figure}
 
 
-\subsubsection{数据采集}
+\subsubsection{1）数据采集}
 
-本文以 Kubernetes 及其生态开源应用为研究对象，首先从 CNCF Landscape 获取云原生应用清单，并对清单进行快照固化，以保证采集过程可复现。随后，将清单条目名称映射到其官方代码仓库，形成后续漏洞检索与证据收集的目标集合。
+本文以 Kubernetes 及其生态开源应用为研究对象，首先从 CNCF Landscape 获取云原生应用清单，将清单条目名称映射到其官方代码仓库，形成后续漏洞检索与证据收集的目标集合。使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台 GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}三个来源，围绕权限提升相关关键词对相关开源项目开展多源漏洞检索，获得初步 CVE 候选池。
 
-在此基础上，本文综合使用 NIST NVD\footnote{NIST NVD（National Vulnerability Database）：\url{https://nvd.nist.gov/}}、MITRE CVE 官方库\footnote{MITRE CVE：\url{https://cve.mitre.org/}}与安全公告平台 GitHub Security Advisory\footnote{GitHub Security Advisory：\url{https://github.com/advisories}}三个来源，围绕权限提升线索对 Kubernetes 及其生态应用开展多源漏洞检索，获得初步 CVE 候选池。
-
-\subsubsection{漏洞筛选}
-
+\subsubsection{2）漏洞筛选}
 为从 CVE 候选池中筛选出高质量样本，本文采用关键词约束、严重性阈值与人工复核相结合的三重过滤策略：
 \begin{itemize}
     \item \textbf{关键词约束}：在 CVE 描述与参考链接中匹配 Privilege Escalation、Authorization Bypass、Improper Access Control、RBAC、ServiceAccount、ClusterRole、Container Escape/Sandbox Escape/Breakout 等关键词；
     \item \textbf{严重性阈值}：采用 CVSS v3.x 评分，并以 $\geq 5.0$ 的中危及以上漏洞为主要对象；
     \item \textbf{人工复核}：对候选条目结合公告原文、厂商通告与社区讨论进行复核，剔除重复或与权限提升无关的记录，并补全攻击前提、影响面与可用缓解信息。
 \end{itemize}
-最终保留的结构化字段包括 CVE 编号、漏洞摘要、披露时间、受影响组件与版本范围、修复版本、CVSS 评分、参考链接，以及与修复相关的补丁提交记录等。上述字段与漏洞实例 $v=\langle \mathit{id},\,d,\,m \rangle$ 直接对应：CVE 编号即标识符 $\mathit{id}$，漏洞摘要构成描述 $d$，其余属性如严重性评分、受影响版本和参考链接等共同构成元数据 $m$。
 
-为保证数据构建过程可复现，本文对同一批次样本采用统一快照方式完成采集，并在构建配置中记录应用清单快照、检索时间窗口、纳入与剔除准则以及去重规则。对于来自不同数据源但指向同一漏洞事实的记录，以 CVE 编号为主键进行合并；对于无独立编号但经公告与补丁信息确认指向同一漏洞事件的记录，则视为重复项而不重复计数。
 
-\subsubsection{漏洞分类}
+\subsubsection{3）漏洞分类}
 
-漏洞样本的分类方式直接影响后续策略生成的针对性。为此，本文构建了面向策略生成场景的两级成因分类框架，旨在为模型提供稳定且可解释的风险语义线索，从而约束推理路径、辅助关键控制点与实施路径的选择，提升输出策略的可部署性、可验证性与副作用可控性。
+漏洞样本的分类方式直接影响后续策略生成的有效性。为此，本文构建了面向策略生成场景的两级成因分类框架，旨在为模型提供稳定且可解释的风险语义线索，同时可以提示安全工具类型的使用。
 
-首先，本文依据公开映射与公告信息提取每个 CVE 的 CWE（Common Weakness Enumeration）标签，并统计不同 CWE 的出现频次。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。
+为建立该分类框架，首先参考 CVE 的分类方式 CWE（Common Weakness Enumeration）标签。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对应多个弱点条目，不同条目在抽象层次上也可能彼此交叉。在本文收集的 55 个权限提升漏洞中，有 20 个样本同时关联两个及以上 CWE 标签，占比 36\%。为更客观地反映 CWE 分布，统计时令每个 CVE 的总权重为 1，多标签样本按标签数平均分配。结果表明，权限提升漏洞特征丰富，而CWE的分类方式并不能指出权限提升漏洞攻击的关键缺陷或攻击路径。
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=1\textwidth]{images/cwe_distribution_pie.png}
+    \includegraphics[width=0.9\textwidth]{images/cwe_distribution_pie.png}
     \bicaption{Kubernetes 权限提升 CVE 对应的 CWE 类型占比}{Distribution of CWE categories corresponding to Kubernetes privilege escalation CVEs}\label{fig:cwe-distribution-ch3}
 \end{figure}
 
-CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对应多个弱点条目，不同条目在抽象层次上也可能彼此交叉。在本文收集的 55 个权限提升漏洞中，有 20 个样本同时关联两个及以上 CWE 标签，占比 36\%。为更客观地反映 CWE 分布，统计时令每个 CVE 的总权重为 1，多标签样本按标签数平均分配。结果表明，授权不当、权限管理不当等访问控制类弱点常与输入验证不当等问题同时出现，这说明权限提升漏洞通常具有复合成因。仅依赖单一 CWE 标签，难以为后续防控策略提供稳定的语义约束，因此有必要进一步构建面向防控动作的成因分类框架。
 
-基于这一问题，本文进一步提出面向云原生权限提升漏洞的两级成因分类框架，并为每个漏洞确定一级类和二级类标签。一级分类用于概括高层风险来源，如安全逻辑缺陷、配置缺陷、代码注入和敏感信息泄露；二级分类则进一步细化到更贴近防控动作选择的类型，如授权验证不完善、默认不安全配置等。经过这样的整理，漏洞分析结果可以更自然地映射到 RBAC 最小权限、准入控制、网络隔离、运行时策略与审计等具体控制点。
-
-在策略生成阶段，分类结果作为提示词中的结构化约束，引导模型先识别漏洞的主要成因，再定位关键控制点，最后组织可执行的防控动作，从而减少泛化建议和无关信息，提高策略的针对性与可部署性。完整的一级、二级分类及其与 CWE 的对应关系见附录表~\ref{tab:vuln-cwe-mapping}。
-
-为降低多标签条件下的标注歧义，本文对每个样本只保留一个主导的一级类和二级类标签。判定时优先选择直接造成权限边界突破的成因；其余伴随弱点仍保留在 CWE 映射表中，作为补充语义信息。对于边界不清或存在多种解释路径的样本，再结合漏洞公告、修复补丁语义与攻击路径描述进行复核后裁决。
+基于这一问题，本文进一步提出面向云原生权限提升漏洞的两级成因分类框架。该框架基于漏洞的关键成因，其中一级分类用于概括高层风险来源，如安全逻辑缺陷、配置缺陷、代码注入和敏感信息泄露；二级分类则进一步细化到更贴近防控动作选择的类型，如授权验证不完善、默认不安全配置等。在策略生成阶段，分类结果作为提示词中的结构化约束，引导模型先识别漏洞的主要成因，再定位关键控制点，最后组织可执行的防控动作，从而无关信息以提高策略的有效性。完整的分类见表\ref{tab:cloud-native-vuln}，其与 CWE 的对应关系见附录表~\ref{tab:vuln-cwe-mapping}。
 
 \begin{table}[htb]
     \centering\bicaption{云原生权限提升漏洞分类框架（CWE 对应详见附录表~\ref{tab:vuln-cwe-mapping}）}{Classification framework for cloud-native privilege escalation vulnerabilities (see Appendix Table~\ref{tab:vuln-cwe-mapping} for the CWE mapping)}\label{tab:cloud-native-vuln}
@@ -149,13 +150,13 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
 
 以下对各一级分类分别展开说明。
 
-\textbf{配置缺陷}指应用或基础设施的配置不当导致的安全漏洞，主要包括两种情形：
+\textbf{1）配置缺陷}指应用或基础设施的配置不当导致的安全漏洞，主要包括两种情形：
 \begin{itemize}
     \item 过度权限配置：Kubernetes RBAC 配置不当、Role/ClusterRole 规则范围过宽或绑定关系不合理等，使低权限主体获得超出其职责的资源访问与高危操作能力。该类问题在第三方应用接入场景中尤为常见，并已被证明可被用于接管集群关键资源\cite{o1995redundant,yang2023take}。
     \item 网络隔离不足：容器、Pod或服务间缺乏网络隔离，导致攻击者可以横向移动获取其他权限。
 \end{itemize}
 
-\textbf{安全逻辑缺陷}指应用代码中的安全机制设计或实现不当，涵盖以下情形：
+\textbf{2）安全逻辑缺陷}指应用代码中的安全机制设计或实现不当，涵盖以下情形：
 \begin{itemize}
     \item 访问控制缺陷：应用的权限检查不完全或存在逻辑漏洞，允许绕过权限验证；
     \item 身份验证绕过：认证机制设计缺陷，攻击者可以冒充他人身份或跳过认证步骤；
@@ -163,36 +164,33 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
     \item 授权验证不完善：权限检查在某些操作路径或边界条件下缺失。
 \end{itemize}
 
-\textbf{敏感信息泄露}指重要的身份、密钥或权限信息意外暴露，常见形式包括：
+\textbf{3）敏感信息泄露}指重要的身份、密钥或权限信息意外暴露，常见形式包括：
 \begin{itemize}
     \item API 端口暴露：管理接口、内部 API 或调试端口未受保护暴露在网络上；
     \item 日志泄露：错误泄露的日志文件中包含密钥、命令历史等敏感信息；
     \item 配置文件泄露：配置文件包含硬编码的凭证或密钥。
 \end{itemize}
 
-\textbf{代码注入}指应用对用户输入的处理不当，使攻击者得以注入恶意代码，典型子类包括：
+\textbf{4）代码注入}指应用对用户输入的处理不当，使攻击者得以注入恶意代码，典型子类包括：
 \begin{itemize}
     \item 命令注入：应用直接执行用户提供或可控的命令，攻击者可以执行任意系统命令；
     \item 路径遍历：应用文件访问检查不完整，攻击者可以访问系统其他部分的文件。
 \end{itemize}
 
-\subsubsection{知识库构建}
+\subsubsection{4）知识库构建}
 
 知识库构建阶段的目标是将与漏洞 $v$ 相关的多源材料组织为带来源标注的证据集合，并建立支持按需取证的检索能力。围绕 $v$ 构建知识库 $\mathcal{K}_v$ 后，策略生成阶段即可通过语义检索提取相关证据片段，并按需组装为安全上下文 $c$，为后续分析提供可追溯的事实依据。
 
-具体而言，本文首先针对每个漏洞关联的开源应用仓库收集代码、配置与文档等可读文本，同时纳入与漏洞相关的安全公告、议题（Issue）/合并请求（Pull Request）讨论以及修复提交信息。随后，对文本进行最小化规范，并过滤超长或二进制内容，以降低噪声与资源开销。
 
-在完成材料收集后，为兼顾证据粒度与可复核性，本文对不同材料采用差异化分块策略：对代码和配置按行切分，并尽量对齐函数或语义边界；对文档则按段落与窗口切分，并保留适当重叠，以减少跨块语义断裂。
+安全知识库基于开源仓库内多源信息构建分层向量数据库。首先自动化抓取每个漏洞关联的开源应用仓库收集代码、文档基于与漏洞相关的安全公告、议题（Issue）/合并请求（Pull Request）讨论以及修复提交信息。在完成材料收集后，本文对不同材料采用差异化分块策略以兼顾证据粒度与可复核性：对代码和配置按行切分，同时对文档则按段落与窗口切分，并保留适当重叠以减少跨块语义断裂。为实现语义层面的证据召回，本文为每个文本块构造向量表示，并建立近邻检索索引。具体采用 \texttt{sentence-transformers} 框架中的 MPNet 句子编码器 \texttt{all-mpnet-base-v2} 完成文本表示\cite{reimers2019sentencebert,song2020mpnet}，并基于 FAISS\cite{douze2024faiss} 构建相似度索引。为保证可追溯性与可复现性，索引与元数据同步持久化，内容包括向量索引文件、块级元数据以及构建配置。
 
-在此基础上，为实现语义层面的证据召回，本文为每个文本块构造向量表示，并建立近邻检索索引。实验实现中，采用 \texttt{sentence-transformers} 框架中的 MPNet 句子编码器 \texttt{all-mpnet-base-v2} 完成文本表示\cite{reimers2019sentencebert,song2020mpnet}，并基于 FAISS\cite{douze2024faiss} 构建相似度索引。为保证可追溯性与可复现性，索引与元数据同步持久化，内容包括向量索引文件、块级元数据以及构建配置。块级元数据记录来源路径或链接、块 ID、块类型与范围等信息；构建配置记录分块参数与检索阈值等关键设置。
-
-上述流程得到的向量知识库为后续策略生成提供了可追溯的证据支撑：模型推导控制措施时可检索相关事实与上下文片段，并通过来源标识完成定位与复核。
+上述流程得到的向量知识库为后续策略生成提供了可追溯的证据支撑：模型分析漏洞和对应防控手段时可检索相关事实与上下文片段，并通过来源标识完成定位与复核。
 
 
 \subsection{基于多智能体的策略生成与优化}\label{subsec:agent}
 
 
-策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，产出候选策略集合 $\Pi_v\subseteq\Pi$。每个候选 $\pi\in\Pi_v$ 表示为三元组 $\pi=\langle \mathit{type},\mathit{method},\mathit{action}\rangle$，并按类型划分为 $\Pi_v^{\mathrm{mon}}$（监控类）与 $\Pi_v^{\mathrm{prot}}$（防护类）两个子集。整个流程结合检索增强、思维链推理与反馈优化三类机制，由安全知识、漏洞分析、策略生成、策略评审与策略优化五类智能体分工完成。
+策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，在不同生成配置 $g=(a,h)$ 下开展多次独立生成，并将各配置输出的安全策略子集按定义~\ref{def:candidate-strategy-set} 汇合为候选策略集合 $\Pi_v$。如图\ref{fig:method}所示，整个工作流分为安全上下文构建、基于漏洞分析思维链的策略生成、基于评审反馈的策略优化三个步骤，分别简写为 $\text{RAG}$, $\text{COT}$ 和 $\text{Feedback}$。
 
 \begin{figure}[htb]
     \centering
@@ -201,14 +199,12 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
 \end{figure}
 
 
-\subsubsection{安全上下文构建}
+\subsubsection{1）安全上下文构建}
 
-安全上下文构建的核心在于证据可追溯。按定义 2，$c=\{\,\langle t_i,\mathit{src}_i\rangle\mid i\in[n_c] \,\}$。知识库阶段为每个片段记录来源元数据（路径、URL、版本与位置）；生成阶段再检索候选证据，由\textbf{安全知识智能体}完成去重与提炼，输出触发条件、受影响组件、权限边界与可控点，并保留对应的 $\mathit{src}_i$ 供复核。
-
-各智能体的指令约束统一见表~\ref{tab:agent-instruction-schema}。安全知识智能体的职责是将离散证据整理为带来源标识的结构化摘要，不直接输出策略建议。
-
+安全上下文构建中需要基于可追溯证据构建面向漏洞分析的精准上下文，以提高检测的准确性。为此构建安全知识智能体，其职责是将离散证据整理为带来源标识的结构化摘要，不直接输出策略建议。具体提示词范例见图~\ref{fig:prompt-security-knowledge}。
 
 \begin{figure}[htb]
+    
     \centering
     \setlength{\abovecaptionskip}{3pt}
     \setlength{\belowcaptionskip}{0pt}
@@ -216,25 +212,24 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
     \begin{BVerbatim}[fontsize=\small,baselinestretch=0.8]
 你是云原生安全知识整理助手。
 ## 输入
-漏洞实例 v 与候选证据集合 c
+漏洞实例 v 与通过RAG工具检索到的候选证据片段
 
 ## 任务
 提炼受影响组件、触发条件、权限边界、攻击前提与缓解线索，
-保留每条结论对应的来源标识。
+按定义组织安全上下文 c。
 
 ## 输出
-《安全上下文 JSON 格式》：包含结构化摘要与每条结论的来源字段；
-不直接生成防控策略。
+<<安全上下文 c JSON 格式>>,含结构化摘要；
+不直接生成安全策略 π。
     \end{BVerbatim}
     \end{tcolorbox}
     \bicaption{安全知识智能体提示词简化示例}{Simplified prompt template for the security knowledge agent}\label{fig:prompt-security-knowledge}
+    \label{fig:sec_agent}
 \end{figure}
 
-\subsubsection{基于漏洞分析思维链的策略生成}
+\subsubsection{2）基于漏洞分析思维链的策略生成}
 
-本节将漏洞分析、技术选型与策略生成纳入统一的结构化约束，要求各环节输出可复核的中间结论。与仅给出自然语言建议相比，这种做法能够减少信息缺失与表述歧义。
-
-漏洞分析智能体基于漏洞摘要与安全上下文 $c$ 形成结构化分析结果，覆盖漏洞类型、攻击路径、影响范围与成因分类。成因分类直接引用第 \ref{subsec:kb} 节的两级框架（表~\ref{tab:cloud-native-vuln}），其作用在于提示后续防控工具的选择：一级类确定风险来源，二级类进一步锁定对应的控制手段——例如配置缺陷类漏洞优先考虑 RBAC 最小权限与准入控制，代码注入类漏洞优先考虑运行时策略与输入过滤——从而将泛化建议约束为与漏洞语义一致的具体措施。策略生成智能体在上述分析约束下确定实施路径，并将其映射为策略对象；证据不足时显式保留待补充信息与必要假设。各智能体的指令约束统一列于表~\ref{tab:agent-instruction-schema}。
+漏洞分析智能体基于漏洞摘要与安全上下文 $c$ 形成结构化分析结果，覆盖漏洞类型、攻击路径、影响范围与成因分类。成因分类直接引用第 \ref{subsec:kb} 节的两级框架，其作用在于提示后续防控工具的选择：一级类确定风险来源，二级类进一步锁定对应的控制手段从而将泛化建议约束为与漏洞语义一致的具体措施，例如配置缺陷类漏洞优先考虑 RBAC 最小权限与准入控制，代码注入类漏洞优先考虑运行时策略与输入过滤。策略生成智能体在上述分析约束下确定实施路径，并将其映射为策略对象；证据不足时显式保留待补充信息与必要假设。具体智能体的提示词见图~\ref{fig:prompt-vuln-analysis} 和图~\ref{fig:prompt-strategy-gen}。
 
 \begin{figure}[htb]
     \centering
@@ -251,8 +246,8 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
 并指出导致权限提升的关键环节。
 
 ## 输出
-《漏洞分析 JSON 格式》：包含结构化分析结果；
-证据不足处显式标注 assumptions。
+<<漏洞分析 JSON 格式>>：包含结构化分析结果
+不直接输出安全策略。
     \end{BVerbatim}
     \end{tcolorbox}
     \bicaption{漏洞分析智能体提示词简化示例}{Simplified prompt template for the vulnerability analysis agent}\label{fig:prompt-vuln-analysis}
@@ -265,29 +260,38 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
     \setlength{\belowcaptionskip}{0pt}
     \begin{tcolorbox}[enhanced,colback=gray!3,colframe=gray!55,boxrule=0.4pt,arc=1mm,left=2mm,right=2mm,top=0.5mm,bottom=0.5mm,title={\small \textbf{策略生成智能体提示词简化示例}},fonttitle=\bfseries,coltitle=black]
     \begin{BVerbatim}[fontsize=\small,baselinestretch=0.8]
-你是云原生安全策略生成助手。
+你是云原生安全策略生成助手，精通Kubernetes权限管理操作和
+常用云原生安全工具，如Falco、OPA Gatekeeper、NetworkPolicy、Kyverno.
 ## 输入
-中间分析结论、可用控制手段与安全上下文 c
+漏洞实例 v、漏洞分析结果、安全上下文 c 与生成目标
 
 ## 任务
-围绕监控或防护目标生成策略，对应 type/method/action 三字段，
+围绕监控或防护目标生成候选安全策略 π，满足
+π={e_1, e_2, ...}，其中 e_i=<τ, m, a> 为防控条目，
 优先给出可部署、可验证、可回滚的措施。
 
+## 工具
+生成代码后须调用相应工具进行校验：
+- YAML/JSON 格式校验：yamllint、jq --validate
+- DSL 编译校验：Falco 规则使用 falco -L 验证语法；
+ Kyverno 策略使用 kubectl kyverno validate；
+ OPA Rego 使用 opa check；
+ Kubernetes 资源使用 kubectl --dry-run=server 验证。
+校验通过方可输出。
+
 ## 输出
-《策略三元组 JSON 格式》：包含 type、method、action 字段；
-若信息不足，显式说明前置假设。
+<<候选策略 JSON 格式>>：输出一个或多个候选 π，
+合并后构成当前生成配置下的候选子集；若信息不足，显式说明 assumptions。
     \end{BVerbatim}
     \end{tcolorbox}
     \bicaption{策略生成智能体提示词简化示例}{Simplified prompt template for the strategy generation agent}\label{fig:prompt-strategy-gen}
 \end{figure}
 
-策略对象统一采用 \texttt{type}、\texttt{method} 与 \texttt{action} 三字段模式：\texttt{type} 区分监控型与防护型，\texttt{method} 描述控制机理，\texttt{action} 承载对应的可执行表达（规则片段、配置约束或执行命令）；包含多条控制措施时，两字段均表示为等长序列并按位置一一对应。候选策略至少需覆盖明确的防控目标、包含可验证的实施步骤，并对潜在副作用与回滚边界作出说明。
+策略对象为防控条目的集合，每个条目采用 $\tau$（控制类型）、$m$（控制机理）与 $\mathbf{a}$（执行表达序列）三字段模式。策略可包含多条不同类型的控制措施，覆盖监控与防护等多重目标。候选策略至少需覆盖明确的防控目标、包含可验证的实施步骤，并对潜在副作用与回滚边界作出说明。候选策略进入评估前须经规范化整理：统一字段格式、补齐必要步骤、清理冗余信息，并在证据不足处显式标记假设条件与前置依赖。
 
-候选策略进入评估前须经规范化整理：统一字段格式、补齐必要步骤、清理冗余信息，并在证据不足处显式标记假设条件与前置依赖。
+\subsubsection{3）基于评审反馈的策略优化}
 
-\subsubsection{基于评审反馈的策略优化}
-
-在候选生成之后，流程进入评审与迭代优化环节。\textbf{策略评审智能体}从有效性、无干扰性与可部署性三个维度对 $\Pi_v$ 中的候选给出结构化评审，包括有效点、风险、验证要点与缺失信息；\textbf{策略优化智能体}据此合并可行措施、剔除不可行建议，并补齐前置条件与回滚方案。优化阶段的关键在于前序评审信息的吸收边界与修订依据是否得到显式保留，而非提示词的表述本身。各智能体指令约束见表~\ref{tab:agent-instruction-schema}，简化提示词示例如下。
+在候选策略生成之后，流程进入评审与迭代优化环节。\textbf{策略评审智能体}从有效性、无干扰性与可部署性三个维度对 $\Pi_v$ 中的候选给出结构化评审，包括有效点、风险、验证要点与缺失信息；\textbf{策略优化智能体}据此合并可行措施、剔除不可行建议，并补齐前置条件与回滚方案。优化阶段的关键在于前序评审信息的吸收边界与修订依据是否得到显式保留，而非提示词的表述本身。具体提示词范例见图~\ref{fig:prompt-strategy-review} 和图~\ref{fig:prompt-strategy-optimize}。
 
 
 \begin{figure}[htb]
@@ -298,14 +302,14 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
     \begin{BVerbatim}[fontsize=\small,baselinestretch=0.8]
 你是云原生安全策略评审助手。
 ## 输入
-漏洞实例 v、候选策略集合及补充约束
+漏洞实例 v、候选策略集合 Π_v 及补充约束
 
 ## 任务
-从有效性、无干扰性与验证需求三个方面比较候选，
-指出优势、风险与缺失信息。
+从有效性、无干扰性与可部署性三个方面比较候选，
+指出优势、风险、验证要点与缺失信息。
 
 ## 输出
-《评审结论 JSON 格式》：包含总体结论与逐策略点评；
+<<评审结论 JSON 格式>>：包含总体结论、逐策略点评与排序建议；
 显式标注待补充信息。
     \end{BVerbatim}
     \end{tcolorbox}
@@ -325,11 +329,11 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
 
 ## 任务
 保留有效控制，删除高噪声或不可行措施，
-补齐前置条件、验证步骤与回滚边界。
+补齐前置条件、验证步骤与回滚边界，形成优化后候选。
 
 ## 输出
-《优化后策略三元组 JSON 格式》：说明保留、删除与修订原因；
-保留可内嵌的 type、method、action 字段。
+<<优化后候选策略 JSON 格式>>：说明保留、删除与修订原因；
+策略为防控条目集合 {e_1, e_2, ...}，每个 e_i = <t, m, a>。
     \end{BVerbatim}
     \end{tcolorbox}
     \bicaption{策略优化智能体提示词简化示例}{Simplified prompt template for the strategy optimization agent}\label{fig:prompt-strategy-optimize}
@@ -337,83 +341,75 @@ CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对�
 
 \subsection{策略代码质量评估}\label{subsec:quality}
 
-候选策略集合 $\Pi_v^{\tau}$ 由多种生成配置共同构成：针对同一漏洞实例，系统以不同提示词配置（偏重有效性或可部署性）及不同底层大语言模型分别运行生成流程，结果汇合为同类型候选池。多源生成覆盖更多控制思路，但候选质量参差不齐，需在交付前进行系统化评价与排序。
+策略代码质量评估有两方面意义：一方面可在候选策略集合内识别质量差异，从中选出最优策略；另一方面，构建了一种评估基准，用于比较不同大模型与智能体工作流的生成质量，以期为生产环境提供有效参考。大语言模型在绝对评分任务中难以形成跨样本一致的内部尺度函数，易受文本长度、表达风格与候选顺序等非语义因素影响，产生系统性偏置~\cite{wu2024scoring,wang2023fair,hwang2025persuasion}；排序任务将评价约化为局部比较，有利于降低尺度漂移与偏置累积，结果与人类评审的一致性通常更高~\cite{velez2025writing,liu2023geval,wang2025trustjudge}。为此，本文提出三维质量评价体系：以有效性、无干扰性、可部署性三个维度刻画策略质量，通过多评审主体排序共识填充三维得分，再加权聚合为总体质量，定义如下。
 
-\textbf{定义 4（三维质量向量）}。策略质量由映射 $q\colon\Pi\to[0,1]^3$ 给出：
-\[
+\begin{flatdefinition}{三维质量向量}\label{def:quality-vector}
+策略质量由映射 $q\colon\Pi\to[0,1]^3$ 给出：
+\begin{equation}\label{eq:quality-vec}
 q(\pi) = \bigl(E(\pi),\;I(\pi),\;D(\pi)\bigr)
-\]
-其中，$E$ 衡量策略对主要攻击路径与关键风险面的覆盖程度，$I$ 衡量策略对正常业务的扰动程度及误报风险，$D$ 衡量策略在现有环境中的落地难度与执行清晰度。
-
-本文采用基于排序而非绝对评分的评价方式。大语言模型在绝对评分任务中难以形成跨样本一致的内部尺度函数，易受文本长度、表达风格与候选顺序等非语义因素影响，产生系统性偏置~\cite{wu2024scoring,wang2023fair,hwang2025persuasion}；排序任务将评价约化为局部比较，有利于降低尺度漂移与偏置累积，结果与人类评审的一致性通常更高~\cite{velez2025writing,liu2023geval,wang2025trustjudge}。
-
-为降低单一模型偏差，本文引入多个评审主体 $\mathcal{H}=\{h_1,\ldots,h_m\}$（来自不同大语言模型配置），对同一候选集合独立评审。评价前对候选进行随机化与匿名化处理：打乱顺序以消除位置效应，移除生成来源元信息，并为每条候选分配匿名编号（S1、S2 等）；系统同时记录匿名编号与原始候选的映射表供审计使用。各评审主体采用等权 $w_h=\frac{1}{m}$。
-
-在每个维度 $\delta\in\Delta=\{E,I,D\}$ 上，评审主体 $h$ 对 $\Pi_v^{\tau}$（$|\Pi_v^{\tau}|=n_v$）给出严格排序，秩函数定义为：
-\[
-r_{\delta}^{(h)}(\pi)=1+\big|\{\pi'\in\Pi_v^{\tau}\mid \pi'\succ_{\delta}^{(h)}\pi\}\big|
-\]
-其中 $\pi'\succ_{\delta}^{(h)}\pi$ 表示 $\pi'$ 在维度 $\delta$ 上严格优于 $\pi$，最优候选获秩 $1$，最劣候选获秩 $n_v$。候选 $\pi$ 的归一化秩得分与共识得分分别为：
-\[
-s_{\delta}^{(h)}(\pi)=\frac{n_v-r_{\delta}^{(h)}(\pi)}{n_v-1}\in[0,1],
-\qquad
-\hat S_{\delta}(\pi)=\sum_{h\in\mathcal{H}} w_h\cdot s_{\delta}^{(h)}(\pi)\in[0,1]
-\]
-
-按 $\hat S_{\delta}(\pi)$ 降序排列即得维度 $\delta$ 的\textbf{共识排序} $\bar R_{\delta}$；数值相等时依次比较各评审主体原始排名，以匿名编号作最终判别。
-
-为刻画评审一致性与不确定性，可进一步定义分歧度量，例如秩的加权方差：
-\begin{equation}
-U_{\delta}(\pi)=\sum_{h\in\mathcal{H}} w_h\cdot\big(r_{\delta}^{(h)}(\pi)-\bar r_{\delta}(\pi)\big)^2,
-\quad \bar r_{\delta}(\pi)=\sum_{h\in\mathcal{H}} w_h\cdot r_{\delta}^{(h)}(\pi)
 \end{equation}
-当 $U_{\delta}(\pi)$ 较大时，表示该策略在该维度上存在明显分歧，需在后续决策中优先人工复核。
+其中，$E$ 衡量策略对主要攻击路径与关键风险面的覆盖程度，$I$ 衡量策略对正常业务的扰动程度及误报风险，$D$ 衡量策略在现有环境中的落地难度与执行清晰度。三个分量的具体取值由排序评价（定义~\ref{def:ranking}）给出。
+\end{flatdefinition}
 
-在获得三维共识质量后，进一步给出总体质量函数 $Q: \Pi_v^{\tau}\to[0,1]$：
-\begin{equation}
+\begin{flatdefinition}{排序评价}\label{def:ranking}
+设 $\mathcal{H}$ 为评审主体集合，$h\in\mathcal{H}$ 为参与独立评审的大语言模型配置。在维度 $\delta\in\{E,I,D\}$ 上，评审主体 $h$ 对候选集 $\Pi_v$ 给出严格全序，记 $r_{\delta}^{(h)}(\pi)$ 为 $\pi$ 在该排序中的秩（最优获秩 $1$，最劣获秩 $n_v=|\Pi_v|$）。将秩归一化为排序得分
+\begin{equation}\label{eq:rank-score}
+s_{\delta}^{(h)}(\pi)=\frac{n_v-r_{\delta}^{(h)}(\pi)}{n_v-1}\in[0,1]
+\end{equation}
+对所有评审主体取均值，得维度 $\delta$ 的共识得分
+\begin{equation}\label{eq:consensus-score}
+\hat S_{\delta}(\pi)=\frac{1}{|\mathcal{H}|}\sum_{h\in\mathcal{H}}s_{\delta}^{(h)}(\pi)
+\end{equation}
+三维质量向量各分量由对应维度的共识得分给出，即 $E(\pi)=\hat S_E(\pi)$，$I(\pi)=\hat S_I(\pi)$，$D(\pi)=\hat S_D(\pi)$。按 $\hat S_{\delta}$ 降序排列即得维度 $\delta$ 的共识排序 $\bar R_{\delta}$。
+\end{flatdefinition}
+
+\begin{flatdefinition}{总体质量函数}\label{def:overall-quality}
+将三维共识得分加权聚合，得总体质量函数 $Q\colon\Pi_v\to[0,1]$：
+\begin{equation}\label{eq:quality-func}
 Q(\pi)=\alpha_E\hat S_E(\pi)+\alpha_I\hat S_I(\pi)+\alpha_D\hat S_D(\pi),\quad \alpha_E+\alpha_I+\alpha_D=1
 \end{equation}
-其中 $\alpha_E,\alpha_I,\alpha_D$ 是三个维度的权重，可按业务场景配置：应急场景下可提高 $\alpha_E,\alpha_D$，生产稳定性优先时可提高 $\alpha_I$。安全防控场景下默认按有效性优先，即 $\alpha_E>\alpha_I>\alpha_D$，可取 $\alpha_E=0.5,\alpha_I=0.3,\alpha_D=0.2$ 作为基线。实验中可对 $\alpha$ 做简单敏感性分析，扱动 $\alpha$ 后总排名不稳定的样本优先交专家复核。对任一固定类型 $\tau$，最终总排名 $\bar R^{\tau}$ 由 $Q(\pi)$ 降序排列得到；数値相等时按 $(\hat S_E,\hat S_I,\hat S_D)$ 的词典序细化，仍无法区分时以匿名编号作为最终判别。系统由此分别得到监控型与防护型候选的可审计交付结论。
+其中 $\alpha_E,\alpha_I,\alpha_D$ 为维度权重，可按业务场景配置：应急响应场景可提高 $\alpha_E$，生产稳定性优先场景可提高 $\alpha_I$，默认取 $\alpha_E=0.5,\alpha_I=0.3,\alpha_D=0.2$。按 $Q(\pi)$ 降序排列得总排名 $\bar R^{\tau}$；得分相等时按 $(\hat S_E,\hat S_I,\hat S_D)$ 词典序细化。
+\end{flatdefinition}
 
 \section{方法示例}
 
-下面结合 \mbox{CVE{-}2024{-}33522} 给出一个完整示例，说明方法如何从漏洞证据出发生成可部署的临时防控策略。按照定义 1，可将该漏洞表示为
-\begin{equation}
-v=\langle \mathit{id},d,m \rangle
-=\langle \texttt{CVE{-}2024{-}33522},d,m \rangle
-\end{equation}
-其中，$d$ 对应漏洞描述文本，$m$ 则包含受影响组件、版本范围、修复版本与参考资料等元数据。该漏洞属于典型的节点侧权限提升问题，其风险主要不体现在控制平面授权关系，而体现在节点文件系统中存在可被滥用的高权限执行路径，因此适合用来展示本章方法从证据归并到策略交付的全过程。
+以 \mbox{CVE{-}2024{-}33522}（Calico CNI SUID 位权限提升，CVSS 7.8）为例，完整走一遍 \ref{subsec:kb}～\ref{subsec:quality} 节所述方法链。
 
-\noindent\textbf{步骤 1：构建安全上下文 $c$}
+\noindent\textbf{步骤 1（对应 \ref{subsec:kb} 节）：构建安全知识库与安全上下文}
 
-按照定义 2，系统首先围绕漏洞实例 $v$ 从漏洞公告、版本修复说明、Calico 组件部署配置、CNI 安装路径说明以及节点加固建议等材料中检索证据，并组织为带来源标识的安全上下文
-\begin{equation}
-c=\{\langle t_i,\mathit{src}_i\rangle \mid i\in[n_c]\}.
-\end{equation}
-对该案例而言，安全知识智能体归并后的关键证据主要包括：
-\begin{itemize}
-        \item \textbf{利用前提}：攻击者已经获得节点本地访问能力，或能够借助宿主机挂载、容器逃逸等方式接触节点文件系统；
-        \item \textbf{关键控制点}：Calico CNI 安装二进制文件的权限位、\texttt{/opt/cni/bin} 等节点侧敏感路径的写入面，以及由此延伸出的高权限执行链；
-        \item \textbf{缓解线索}：升级到修复版本、移除危险权限位、限制高风险宿主机目录挂载，并对异常写入与执行行为进行持续监控。
-\end{itemize}
-由此，分散证据被收敛为可直接进入后续推理的安全上下文 $c$，并将该漏洞转化为三个明确的处置目标：消除当前可利用条件、限制节点侧高风险暴露面，以及补足对异常行为的持续观测。
+以漏洞实例 $v$ 为输入，安全知识库智能体从代码仓库、Issue、修复提交与加固文档中检索证据，构建安全上下文 $c$。代表性片段如图~\ref{fig:chap3-v-context}所示：来源 \texttt{t1} 定位到安装脚本遗留 SUID 位的根因，\texttt{t2} 给出官方修复的具体提交，\texttt{t3} 提供节点侧加固的参考做法，为后续生成提供可追溯的证据支撑。
 
-\noindent\textbf{步骤 2：由 $v$ 和 $c$ 生成候选策略集合 $\Pi_v$}
+\begin{figure}[htb]
+    \centering
+    \setlength{\abovecaptionskip}{3pt}
+    \setlength{\belowcaptionskip}{0pt}
+    \begin{tcolorbox}[enhanced,colback=gray!3,colframe=gray!55,boxrule=0.4pt,arc=1mm,left=2mm,right=2mm,top=0.5mm,bottom=0.5mm,title={\small \textbf{漏洞实例 $v$ 与安全上下文 $c$（CVE-2024-33522）}},fonttitle=\bfseries,coltitle=black]
+    \begin{BVerbatim}[fontsize=\small,baselinestretch=0.8]
+# 漏洞实例 v
+id:      CVE-2024-33522
+d:       Calico CNI 安装路径存在 SUID 位，允许本地权限提升……
+m:
+  component: calico/cni <= v3.27.2  fixed_in: v3.27.3
+  cvss:      7.8 (High)
+  refs:      GitHub Security Advisory, fix commit
 
-在此基础上，漏洞分析智能体基于 $v$ 与 $c$ 识别出该漏洞的核心问题是节点侧高权限执行链可被滥用，而非控制平面 RBAC 越权。因此，策略生成智能体围绕“权限收敛、路径约束、运行时观测”三类控制思路生成候选策略集合 $\Pi_v\subseteq\Pi$，并进一步划分为防护型子集 $\Pi_v^{\mathrm{prot}}$ 与监控型子集 $\Pi_v^{\mathrm{mon}}$。
+# 安全上下文 c（代表性片段）
+t1: "install-cni 脚本安装时保留 /opt/cni/bin/calico 的 SUID 位"
+    src: github.com/projectcalico/calico/issues/8299
+t2: "CVE-2024-33522 patch: remove chmod +s from install script"
+    src: github.com/projectcalico/calico/commit/a3f1c2d
+t3: "节点加固：find /opt/cni/bin -perm -4000 定期检查 SUID 文件"
+    src: Calico_Security_Guide.md
+    \end{BVerbatim}
+    \end{tcolorbox}
+    \bicaption{漏洞实例 $v$ 与安全上下文 $c$ 示例}{Example of vulnerability instance $v$ and security context $c$}\label{fig:chap3-v-context}
+\end{figure}
 
-例如，可首先得到一个初始防护候选 $\pi_1\in\Pi_v^{\mathrm{prot}}$：
-\begin{equation}
-\pi_1=\langle \mathrm{prot},\mathit{method}_1,\mathit{action}_1 \rangle
-\end{equation}
-其中，$\mathit{method}_1$ 对应“节点权限收敛”，$\mathit{action}_1$ 对应具体的临时 DaemonSet 修复动作。其实现重点包括以下几个方面：
-\begin{itemize}
-        \item 扫描节点上的受影响目录，并移除残留的 SUID 位；
-        \item 在执行修复动作后输出当前文件权限状态，保留可复核的处置证据；
-        \item 将升级到修复版本作为后续正式修复动作，而在补丁窗口期内优先通过权限收敛降低风险暴露面。
-\end{itemize}
+\noindent\textbf{步骤 2（对应 \ref{subsec:agent} 节）：多智能体生成候选策略集合 $\Pi_v$}
 
-对应的策略片段可写为图~\ref{fig:chap3-daemonset-remediate}所示。
+漏洞分析智能体结合 $c$ 识别三条攻击路径：直接根因是SUID 位权限滥用、横向攻击是针对CNI 目录可疑写入、持久风险影响为高风险宿主机路径暴露。策略代码生成智能体针对各路径分别输出候选：$\pi_1$ 含防护型条目 $e_1=\langle\mathrm{prot},\;\text{节点权限收敛},\;\mathbf{a}_1\rangle$，$\mathbf{a}_1$ 为通过 DaemonSet 批量移除 SUID 位的配置（图~\ref{fig:chap3-daemonset-remediate}）；$\pi_2$ 含监控型条目，覆盖 \texttt{/opt/cni/bin} 异常写入与可疑执行；$\pi_3$ 含防护型条目，限制普通工作负载挂载高风险宿主机目录。
+
+策略评审智能体从三个维度考察 $\Pi_v$：$\pi_1$ 的有效性较高但缺乏持续观测，$\pi_2$ 的无干扰性最佳但覆盖面不足，$\pi_3$ 可补齐路径约束但需配合其他措施。据此，策略优化智能体合并三者有效条目，将 Falco 监控规则、Kyverno 审计策略与 DaemonSet 修复动作组合为优化候选（图~\ref{fig:chap3-falco-kyverno}）。
 
 \begin{figure}[htb]
     \centering
@@ -454,21 +450,6 @@ spec:
     \bicaption{基于 DaemonSet 的节点侧 SUID 位修复策略配置示例}{Example DaemonSet configuration for node-side SUID bit remediation}\label{fig:chap3-daemonset-remediate}
 \end{figure}
 
-除 $\pi_1$ 外，系统还可生成监控型候选 $\pi_2\in\Pi_v^{\mathrm{mon}}$，用于发现 \texttt{/opt/cni/bin} 下的异常写入、权限变更与可疑执行；以及额外的防护型候选 $\pi_3\in\Pi_v^{\mathrm{prot}}$，用于限制普通工作负载直接挂载高风险宿主机目录。这样，候选集合 $\Pi_v$ 不再是单一方案，而是覆盖“止血、约束、观测”三类控制目标的多候选集合。
-
-\noindent\textbf{步骤 3：基于评审反馈优化 $\Pi_v$}
-
-初始候选生成后，策略评审智能体按照有效性、无干扰性与可部署性三个维度对 $\Pi_v$ 进行审查。对于 $\pi_1$，评审意见指出其能够快速消除当前节点上的危险权限位，因此具有较高的有效性 $E(\pi_1)$；但它主要处理“当前是否仍保留危险权限位”，缺乏对后续权限漂移的持续观测，且无法限制高风险宿主机路径再次暴露。基于这一反馈，策略优化智能体进一步吸收 $\pi_2$ 与 $\pi_3$ 中有效的控制措施，形成更完整的组合式候选。
-
-\noindent\textbf{评审后补入的关键措施}
-\begin{itemize}
-        \item 在运行时监控侧，补入针对 CNI 目录异常写入、权限变更和可疑执行行为的 Falco 规则；
-        \item 在准入控制侧，补入针对高风险宿主机目录挂载的 Kyverno 审计策略，限制普通工作负载直接挂载 \texttt{/opt/cni/bin} 与 \texttt{/var/lib/calico}；
-        \item 在优化结果中保留节点权限收敛动作，并补齐验证步骤与后续升级路径。
-\end{itemize}
-
-相应的补充配置示例见图~\ref{fig:chap3-falco-kyverno}所示。
-
 \begin{figure}[htb]
     \centering
     \setlength{\abovecaptionskip}{3pt}
@@ -502,38 +483,9 @@ spec:
     \bicaption{补充的运行时监控规则（Falco）与准入控制策略（Kyverno）示例}{Supplementary Falco monitoring rule and Kyverno admission control policy example}\label{fig:chap3-falco-kyverno}
 \end{figure}
 
-经过优化后，可得到防护型最终候选 $\pi_{\mathrm{prot}}^{\star}$ 与监控型最终候选 $\pi_{\mathrm{mon}}^{\star}$。例如，前者可形式化写为
-\begin{equation}
-\pi_{\mathrm{prot}}^{\star}
-=\langle
-\mathrm{prot},
-(\text{权限收敛},\text{路径约束}),
-(\text{DaemonSet 修复动作},\text{Kyverno 审计策略})
-\rangle
-\end{equation}
-而后者则可表示为
-\begin{equation}
-\pi_{\mathrm{mon}}^{\star}
-=\langle
-\mathrm{mon},
-(\text{运行时观测}),
-(\text{Falco 检测规则})
-\rangle.
-\end{equation}
+\noindent\textbf{步骤 3（对应 \ref{subsec:quality} 节）：三维共识排序与最终选择}
 
-\noindent\textbf{步骤 4：基于三维质量向量完成最终选择}
-
-在最终聚合阶段，系统分别在 $\Pi_v^{\mathrm{prot}}$ 与 $\Pi_v^{\mathrm{mon}}$ 内，对保留下来的候选对象计算三维质量向量
-\begin{equation}
-q(\pi)=\bigl(E(\pi),I(\pi),D(\pi)\bigr),
-\end{equation}
-并基于共识排序得到各维度排序 $\bar R_E,\bar R_I,\bar R_D$，再通过总体质量函数
-\begin{equation}
-Q(\pi)=\alpha_E\hat S_E(\pi)+\alpha_I\hat S_I(\pi)+\alpha_D\hat S_D(\pi)
-\end{equation}
-完成同类型候选的最终比较。在本文默认的有效性优先设置下，$\pi_{\mathrm{prot}}^{\star}$ 往往优于仅包含单次权限修复的 $\pi_1$，因为它在保持较高有效性的同时，通过路径约束补足了暴露面控制；而 $\pi_{\mathrm{mon}}^{\star}$ 则作为与防护型策略互补的监控结果，保留对节点侧异常行为的持续观测能力。
-
-因此，对 \mbox{CVE{-}2024{-}33522} 的最终交付结果并不是一句泛化的“尽快升级版本”，也不是单一的临时修补动作，而是围绕漏洞实例 $v$、由安全上下文 $c$ 支撑、经由候选生成 $\Pi_v$、评审优化与质量聚合后得到的一组可复核、可部署且便于运维执行的策略对象。
+多个评审模型在有效性 $E$、无干扰性 $I$、可部署性 $D$ 三维上对 $\Pi_v$ 独立排序，按式~\eqref{eq:consensus-score} 聚合得各策略的三维质量向量 $q(\pi)$，再按式~\eqref{eq:quality-func} 以默认权重（$\alpha_E=0.5,\alpha_I=0.3,\alpha_D=0.2$）计算 $Q(\pi)$。组合式优化候选因同时覆盖暴露面约束（$E$ 最高）与持续观测（$I$ 较高），综合排名优于单一防护的 $\pi_1$，被选为最终交付策略 $\pi^{\star}$。
 
 \section{小结}
-本章给出了面向补丁窗口期的云原生权限提升漏洞防控方法，涵盖形式化定义、安全知识库构建、多智能体策略生成与优化、以及基于排序的质量评价四个模块。安全知识库通过多源证据采集与向量检索解决证据组织问题，多智能体协同通过分步推理与结构化约束完成漏洞语义到策略三元组的映射，评审反馈与多维质量评价则通过共识排序与分歧度量控制生成结果的不确定性，三者分别回应了研究动机中的三个关键问题。上述设计为下一章的系统实现与实验验证奠定了方法基础。
+本章提出了一种面向云原生权限提升漏洞的智能化防控方法。通过构建多源证据驱动的安全知识库，将分散信息组织为可检索的安全上下文；基于多智能体协同机制，实现从漏洞语义到防控策略的自动化生成与优化；并通过基于排序的质量评价方法，对候选策略进行有效筛选和评估。

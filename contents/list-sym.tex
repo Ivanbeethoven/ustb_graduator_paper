@@ -2,7 +2,7 @@
 \begingroup
 \setlength{\parskip}{0.2em}
 
-\chapter*{符号清单与术语表}\addcontentsline{toc}{chapter}{符号清单与术语表}
+\chapter*{符号清单与术语表}\addcontentsline{toc}{chapter}{符号清单与术语表}\label{chap:sym-list}
 
 本文中频繁使用的主要符号、核心术语与常用缩写汇总如下。为避免与正文重复，本页重点列出第三章方法定义与后续评价分析中反复出现的记号与表述。
 
@@ -34,17 +34,22 @@ $t_i$ & 第 $i$ 条证据内容，如代码片段、公告文本或文档片段�
 $\mathit{src}_i$ & 第 $i$ 条证据来源，如文档路径、链接或代码位置。 \\
 $n_c$ & 安全上下文 $c$ 中的证据条数，即 $|c|$。 \\
 $\mathcal{K}_v$ & 针对漏洞 $v$ 构建的安全知识库，存放多源证据、向量索引与元数据。 \\
-$\Pi$ & 候选策略全集，表示所有候选监控策略与防护策略的总集合。$\Pi_{\mathrm{mon}},\Pi_{\mathrm{prot}}$ \\
+$\Pi$ & 候选策略全集，表示所有候选监控策略与防护策略的总集合。 \\
 $\pi$ & 单个安全策略，三元组形式 $\langle \mathit{type},\mathit{method},\mathit{action} \rangle$，由策略类型、控制机理与执行表达组成。 \\
 $\mathit{type}$ & 策略类型，取值为 $\{\mathrm{mon},\mathrm{prot}\}$：$\mathrm{mon}$ 表示监控型（以观测告警为目标），$\mathrm{prot}$ 表示防护型（以阻断收敛为目标）。 \\
 $\mathit{method}$ & 控制机理序列，形如 $(m_1,\ldots,m_k)$，每个 $m_i$ 描述一项控制手段的作用路径与机理，如 Falco 规则告警、Kyverno 准入审计、节点权限位收敛等。 \\
 $\mathit{action}$ & 执行表达序列，形如 $(a_1,\ldots,a_k)$，$a_i$ 是 $m_i$ 对应的可部署表达，可为规则片段、配置声明或可执行命令等形式。 \\
 $m_i$ & 第 $i$ 项控制机理，与 $a_i$ 一一对应，共同构成一个防控措施单元。 \\
 $a_i$ & 第 $i$ 项执行表达，与 $m_i$ 一一对应，直接对应可部署的规则、配置或命令。 \\
-$\Pi_v$ & 漏洞 $v$ 的候选策略集合，由生成阶段针对漏洞 $v$ 产出。 \\
-$\mathcal{T}$ & 策略类型集合，取值为 $\{\mathrm{mon},\mathrm{prot}\}$，分别表示监控型与防护型。 \\
+$\mathcal{A}$ & 生成方法配置集合，用于刻画提示词组织、目标侧重或工作流设定等差异。 \\
+$\mathcal{M}$ & 底层大语言模型集合，表示参与候选策略生成的模型类型。 \\
+$\mathcal{G}_v$ & 漏洞 $v$ 的生成配置集合，满足 $\mathcal{G}_v\subseteq\mathcal{A}\times\mathcal{M}$。 \\
+$g=(a,h)$ & 生成配置，表示方法配置 $a$ 与底层大语言模型 $h$ 的组合（定义~\ref{def:gen-config}）。 \\
+$\Pi_v^{(g)}$ & 漏洞 $v$ 在生成配置 $g$ 下输出的候选安全策略子集。 \\
+$\Pi_v$ & 漏洞 $v$ 的候选策略集合，由不同生成配置输出的候选安全策略子集汇合而成。 \\
 $\tau$ & 类型变量，表示某一给定策略类型。 \\
-$\Pi_v^{\tau}$ & 同类型候选子集，表示漏洞 $v$ 在类型 $\tau$ 下的候选集合，即 $\Pi_v\cap\Pi_{\tau}$。 \\[0.4ex]
+$\Pi_v^{\tau}$ & 同类型候选子集，表示漏洞 $v$ 在类型 $\tau$ 下的候选安全策略集合。 \\
+$\Pi_v^{\mathrm{mon}},\Pi_v^{\mathrm{prot}}$ & 漏洞 $v$ 的监控型与防护型候选子集，是 $\Pi_v^{\tau}$ 的两种具体情形。 \\[0.4ex]
 % ---- 评价与聚合记号 ----
 $\Delta$ & 评价维度集合，取值为 $\{E,I,D\}$，分别对应有效性、无干扰性与可部署性。 \\
 $q(\pi)$ & 三维质量向量，表示策略 $\pi$ 在三个维度上的质量。 \\
@@ -53,11 +58,11 @@ $I(\pi)$ & 无干扰性，衡量对正常业务的扰动程度及误报风险。
 $D(\pi)$ & 可部署性，衡量策略在现有环境中的落地难度。 \\
 $\mathcal{H}$ & 评价主体集合，表示多个评审主体构成的集合。 \\
 $w_h$ & 评审主体 $h$ 在聚合时的权重，满足 $\sum_{h}w_h=1$。 \\
+$n_{\tau}$ & 同类型候选集合 $\Pi_v^{\tau}$ 的规模，即 $|\Pi_v^{\tau}|$。 \\
 $r_{\delta}^{(h)}$ & 秩函数，表示评价主体 $h$ 在维度 $\delta$ 上给出的排序位置。 \\
-$\bar r_{\delta}(\pi)$ & 加权平均秩，即 $\sum_{h\in\mathcal{H}}w_h\cdot r_{\delta}^{(h)}(\pi)$，用于计算分歧度量。 \\
 $\hat S_{\delta}(\pi)$ & 共识得分，表示多个评价主体在维度 $\delta$ 上对策略 $\pi$ 的聚合质量分。 \\
 $\bar R_{\delta}$ & 维度 $\delta$ 上的共识排序，按 $\hat S_{\delta}$ 由高到低排列。 \\
-$U_{\delta}(\pi)$ & 分歧度量，用于刻画不同评审主体在维度 $\delta$ 上评分的一致性程度。 \\
+$U_{\delta}(\pi)$ & 分歧度量，用于刻画各评审主体归一化得分相对共识得分的离散程度。 \\
 $Q(\pi)$ & 总体质量函数，表示综合三维共识得分后的最终质量。 \\
 $\alpha_E,\alpha_I,\alpha_D$ & 维度权重，满足 $\alpha_E+\alpha_I+\alpha_D=1$，可按业务场景配置。 \\
 $\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排列得到。 \\
@@ -89,9 +94,9 @@ $\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排�
 \bottomrule
 \endlastfoot
 云原生 & Cloud-native & 本文研究对象所处的应用与基础设施环境。 \\
-Kubernetes & K8s & 本文默认指 Kubernetes 容器编排平台，K8s 为其常用缩写。 \\
-权限提升 & Privilege Escalation & 攻击者突破原有权限边界并获取更高权限的过程。 \\
-补丁窗口期 & Patch-gap window & 漏洞披露至补丁可用或补丁完成部署之间的时间段。 \\
+Kubernetes & K8s & Google开源器编排平台 \\
+权限提升 & Privilege Escalation & 攻击者突破原有权限边界并获取更高权限。 \\
+补丁窗口期 & Patch-gap window & 漏洞披露至补丁可用或补丁完成部署的时间段。 \\
 临时防控 & Interim mitigation & 在补丁窗口期内用于降低风险的临时控制措施。 \\
 安全策略 & Security strategy & 监控策略与防护策略的上位概念。 \\
 监控策略 & Monitoring strategy & 面向异常行为感知、告警与取证的策略。 \\
@@ -101,7 +106,7 @@ Kubernetes & K8s & 本文默认指 Kubernetes 容器编排平台，K8s 为其常
 多智能体协同 & Multi-agent collaboration & 由多个功能角色协同完成分析、生成与评审的工作方式。 \\
 检索增强 & RAG & Retrieval-Augmented Generation \\
 思维链推理 & CoT & Chain-of-Thought，思维链。 \\
-反馈优化 & Feedback & 基于评审结果对候选策略进行修订与收敛的过程。 \\
+反馈优化 & Feedback & 基于评审结果对候选策略进行优化。 \\
 \end{longtable}
 \endgroup
 

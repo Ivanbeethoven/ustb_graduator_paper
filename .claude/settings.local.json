@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"\\(Get-Content pipeline_sequence_a.svg\\) -replace 'font-size: 16px', 'font-size: 26px' -replace 'font-size:16px', 'font-size:26px' | Set-Content pipeline_sequence_a_large.svg -Encoding UTF8\")",
+      "Bash(powershell -Command \"\\(Get-Content pipeline_sequence_b.svg\\) -replace 'font-size: 16px', 'font-size: 26px' -replace 'font-size:16px', 'font-size:26px' | Set-Content pipeline_sequence_b_large.svg -Encoding UTF8\")"
+    ]
+  }
+}

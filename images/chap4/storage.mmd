@@ -1,0 +1,52 @@
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '22px'}}}%%
+classDiagram
+direction LR
+
+class CVE {
+  -String cve_id
+  -String summary
+  -String description
+  -Float cvss_score
+  -String severity
+  -Date published_date
+  -Enum status
+  +String getSeverityLevel()
+  +List toFeatureVector()
+}
+
+class Session {
+  -String session_id
+  -String model_name
+  -String prompt_template
+  -DateTime created_at
+  -Enum status
+  +void initWorkspace()
+  +Strategy getLatestStrategy()
+}
+
+class Strategy {
+  -String strategy_id
+  -String content
+  -String reasoning_chain
+  -List~String~ rag_snippets
+  -Int version
+  -DateTime generated_at
+  +Strategy refine()
+  +String diff(other)
+}
+
+class Ranking {
+  -String ranking_id
+  -String user_id
+  -DateTime created_at
+  -List~String~ order
+  -Map~String, Float~ dimension_scores
+  -String comment
+  +Boolean validate()
+  +Pair toPreferencePair()
+}
+
+CVE "1" --> "0..*" Session : 发起分析
+Session "1" --> "1..*" Strategy : 生成
+Ranking "0..*" --> "1" Strategy : 排序对象
+Strategy "1" --> "0..*" Ranking : 收集评价

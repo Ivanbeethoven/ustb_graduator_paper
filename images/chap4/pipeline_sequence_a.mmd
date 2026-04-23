@@ -1,18 +1,19 @@
 %%{init: {
   'theme': 'base',
-  'themeVariables': {
-    'fontSize': '22px',
-    'fontFamily': '"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif',
-    'lineColor': '#64748b',
-    'primaryTextColor': '#1f2937'
-  }
+  'themeCSS': '
+    text { font-size: 32px !important; }
+    .messageText { font-size: 32px !important; }
+    .actor { font-size: 36px !important; }
+    .noteText { font-size: 30px !important; }
+  '
 }}%%
+
 sequenceDiagram
     autonumber
     actor User as 安全工程师
-    participant UI as 前端界面<br/>(Vue3 SPA)
-    participant API as 后端 API<br/>(Flask)
-    participant Agent as 智能体引擎<br/>(KPEAgent)
+    participant UI as 前端界面
+    participant API as 后端 API
+    participant Agent as 智能体引擎
     participant DB as 数据持久层
 
     rect rgb(255, 249, 230)
