@@ -1,5 +1,5 @@
 Method,有效性,无干扰性,可部署性
-All,0.674,0.599,0.656
-W/O CoT,0.476,0.426,0.420
-W/O Feedback,0.397,0.375,0.381
-W/O RAG,0.453,0.600,0.542
+KPEDefense,0.674,0.599,0.656
+KPEDefense w/o COT,0.476,0.426,0.420
+KPEDefense w/o Feedback,0.397,0.375,0.381
+KPEDefense w/o RAG,0.453,0.600,0.542

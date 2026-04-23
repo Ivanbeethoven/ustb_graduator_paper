@@ -693,7 +693,7 @@ def plot_radar_overall(csv3: pd.DataFrame, out_dir: Path) -> None:
     angles = np.linspace(0, 2 * np.pi, len(dims), endpoint=False).tolist()
     angles += angles[:1]
 
-    def _plot(entity_col: str, title: str, filename: str, label_positions: dict[str, tuple[float, float]]) -> None:
+    def _plot(entity_col: str, title: str, filename: str, label_positions: dict[str, tuple[float, float]], label_map: dict[str, str] | None = None, right_margin: float | None = None) -> None:
         data = weighted_avg_df(csv3, [entity_col, "dimension"])
         if data.empty:
             return
@@ -743,17 +743,25 @@ def plot_radar_overall(csv3: pd.DataFrame, out_dir: Path) -> None:
                 mean_val = 0.0
             values = np.nan_to_num(values, nan=mean_val).tolist()
             values += values[:1]
-            ax.plot(angles, values, color=color, linewidth=2.8, label=_display_label(str(name)))
+            ax.plot(angles, values, color=color, linewidth=2.8, label=(label_map or {}).get(str(name), _display_label(str(name))))
             ax.fill(angles, values, color=color, alpha=0.15)
 
             ax.set_title("")
-        ax.legend(
-            loc="upper right",
-            bbox_to_anchor=(1.24, 1.08),
-            frameon=False,
-            fontsize=_COMPACT_RADAR_LEGEND_SIZE,
-        )
-        plt.tight_layout(pad=0.8)
+        if right_margin is not None:
+            ax.legend(
+                loc="upper right",
+                bbox_to_anchor=(1.45, 1.08),
+                frameon=False,
+                fontsize=_COMPACT_RADAR_LEGEND_SIZE,
+            )
+        else:
+            ax.legend(
+                loc="upper right",
+                bbox_to_anchor=(1.24, 1.08),
+                frameon=False,
+                fontsize=_COMPACT_RADAR_LEGEND_SIZE,
+            )
+            plt.tight_layout(pad=0.8)
         plt.savefig(plots_dir / filename, dpi=200, bbox_inches="tight")
         plt.close()
 
@@ -768,7 +776,7 @@ def plot_radar_overall(csv3: pd.DataFrame, out_dir: Path) -> None:
         "可部署性": (0, 0.22),
     }
     _plot("generator", "生成模型三维度雷达图", "radar_generator_overall.png", generator_label_positions)
-    _plot("method", "方法配置三维度雷达图", "radar_method_overall.png", method_label_positions)
+    _plot("method", "方法配置三维度雷达图", "radar_method_overall.png", method_label_positions, right_margin=0.60)
 
 
 def plot_radar_for_judge(csv3: pd.DataFrame, out_dir: Path, judge_key: str, label: str) -> None:

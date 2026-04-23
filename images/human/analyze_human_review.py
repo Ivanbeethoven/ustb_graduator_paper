@@ -48,10 +48,10 @@ DIMENSION_MAP = {
 
 # 方法映射
 METHOD_MAP = {
-    'all': 'All',
-    'no_cot': 'W/O CoT',
-    'no_feedback': 'W/O Feedback',
-    'no_rag': 'W/O RAG'
+    'all': 'KPEDefense',
+    'no_cot': 'KPEDefense w/o COT',
+    'no_feedback': 'KPEDefense w/o Feedback',
+    'no_rag': 'KPEDefense w/o RAG'
 }
 
 # 生成模型映射
@@ -67,7 +67,7 @@ COMPACT_RADAR_FIGSIZE = (6.4, 6.4)
 COMPACT_RADAR_DIM_LABEL_SIZE = 13
 COMPACT_RADAR_RING_LABEL_SIZE = 10
 COMPACT_RADAR_TITLE_SIZE = 15
-COMPACT_RADAR_LEGEND_SIZE = 13
+COMPACT_RADAR_LEGEND_SIZE = 11
 
 
 def load_data():
@@ -289,7 +289,7 @@ def plot_overall_radar(agg_gen_df, agg_method_df):
     dim_order_en = list(DIMENSION_MAP.keys())
     dim_order_cn = [DIMENSION_MAP[d] for d in dim_order_en]
 
-    def _plot(df, entity_col, label_map, title, filename, label_positions):
+    def _plot(df, entity_col, label_map, title, filename, label_positions, legend_anchor=(1.24, 1.08), right_margin=None):
         if df.empty:
             return
         pivot = df.pivot_table(index=entity_col, columns='dimension', values='avg_score', aggfunc='mean')
@@ -341,13 +341,21 @@ def plot_overall_radar(agg_gen_df, agg_method_df):
             ax.fill(angles, values, color=color, alpha=0.15)
 
         ax.set_title("")
-        ax.legend(
-            loc="upper right",
-            bbox_to_anchor=(1.24, 1.08),
-            frameon=False,
-            fontsize=COMPACT_RADAR_LEGEND_SIZE,
-        )
-        plt.tight_layout(pad=0.8)
+        if right_margin is not None:
+            ax.legend(
+                loc="upper right",
+                bbox_to_anchor=(1.45, 1.08),
+                frameon=False,
+                fontsize=COMPACT_RADAR_LEGEND_SIZE,
+            )
+        else:
+            ax.legend(
+                loc="upper right",
+                bbox_to_anchor=legend_anchor,
+                frameon=False,
+                fontsize=COMPACT_RADAR_LEGEND_SIZE,
+            )
+            plt.tight_layout(pad=0.8)
         plt.savefig(OUTPUT_DIR / filename, bbox_inches='tight', dpi=300)
         plt.close()
         print(f"✓ 生成雷达图: {OUTPUT_DIR / filename}")
@@ -370,6 +378,7 @@ def plot_overall_radar(agg_gen_df, agg_method_df):
         '生成模型三维度雷达图',
         'human_generator_radar_overall.png',
         generator_label_positions,
+        legend_anchor=(1.24, 1.08),
     )
     _plot(
         agg_method_df,
@@ -378,6 +387,8 @@ def plot_overall_radar(agg_gen_df, agg_method_df):
         '方法配置三维度雷达图',
         'human_method_radar_overall.png',
         method_label_positions,
+        legend_anchor=(1.02, 1.0),
+        right_margin=0.60,
     )
 
 

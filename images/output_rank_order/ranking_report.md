@@ -1,19 +1,19 @@
 # 策略生成综合评估报告
-生成时间: 2026-04-17 22:12:46
+生成时间: 2026-04-23 21:31:08
 ---
 ## 1. 方法对比排名
 ### 排名表格（数值越小越好）
-          方法  有效性  无干扰性  可部署性
-         all  1.0   1.0   1.0
-     w/o cot  3.0   3.0   2.0
-w/o feedback  4.0   4.0   4.0
-     w/o RAG  2.0   2.0   3.0
+                     方法  有效性  无干扰性  可部署性
+             KPEDefense  1.0   1.0   1.0
+     KPEDefense w/o COT  3.0   3.0   2.0
+KPEDefense w/o Feedback  4.0   4.0   4.0
+     KPEDefense w/o RAG  2.0   2.0   3.0
 ### 综合平均排名
-          方法     平均排名
-         all 1.000000
-     w/o RAG 2.333333
-     w/o cot 2.666667
-w/o feedback 4.000000
+                     方法     平均排名
+             KPEDefense 1.000000
+     KPEDefense w/o RAG 2.333333
+     KPEDefense w/o COT 2.666667
+KPEDefense w/o Feedback 4.000000
 ### LaTeX表格代码
 ```latex
 \begin{table}[htbp]
@@ -23,10 +23,10 @@ w/o feedback 4.000000
 \hline
 方法 & 有效性 & 无干扰性 & 可部署性 & 平均排名 \\
 \hline
-all & 1.0 & 1.0 & 1.0 & 1.00 \\
-w/o RAG & 2.0 & 2.0 & 3.0 & 2.33 \\
-w/o cot & 3.0 & 3.0 & 2.0 & 2.67 \\
-w/o feedback & 4.0 & 4.0 & 4.0 & 4.00 \\
+KPEDefense & 1.0 & 1.0 & 1.0 & 1.00 \\
+KPEDefense w/o RAG & 2.0 & 2.0 & 3.0 & 2.33 \\
+KPEDefense w/o COT & 3.0 & 3.0 & 2.0 & 2.67 \\
+KPEDefense w/o Feedback & 4.0 & 4.0 & 4.0 & 4.00 \\
 \hline
 \end{tabular}
 \end{table}
@@ -67,10 +67,10 @@ grok4 & 5.0 & 3.0 & 3.0 & 3.67 \\
 ```
 
 ## 3. 关键发现
-- **最佳方法**: all (平均排名: 1.00)
-- **有效性最佳**: all (排名: 1.0)
-- **无干扰性最佳**: all (排名: 1.0)
-- **可部署性最佳**: all (排名: 1.0)
+- **最佳方法**: KPEDefense (平均排名: 1.00)
+- **有效性最佳**: KPEDefense (排名: 1.0)
+- **无干扰性最佳**: KPEDefense (排名: 1.0)
+- **可部署性最佳**: KPEDefense (排名: 1.0)
 
 - **最佳生成模型**: deepseek (平均排名: 1.67)
 - **有效性最佳模型**: gpt5 (排名: 1.0)

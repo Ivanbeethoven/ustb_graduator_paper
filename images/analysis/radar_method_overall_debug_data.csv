@@ -1,0 +1,13 @@
+﻿method,method_label,dimension,avg_rank
+all,KPEDefense,可部署性,0.5165077721086992
+all,KPEDefense,无干扰性,0.5390501416326381
+all,KPEDefense,有效性,0.6605570789435705
+no_cot,KPEDefense w/o COT,可部署性,0.5121036669423766
+no_cot,KPEDefense w/o COT,无干扰性,0.46550727096632805
+no_cot,KPEDefense w/o COT,有效性,0.37913339323963086
+no_feedback,KPEDefense w/o Feedback,可部署性,0.4231073218666271
+no_feedback,KPEDefense w/o Feedback,无干扰性,0.40750920800548596
+no_feedback,KPEDefense w/o Feedback,有效性,0.28739581345040405
+no_rag,KPEDefense w/o RAG,可部署性,0.4500675135910868
+no_rag,KPEDefense w/o RAG,无干扰性,0.4897358133090143
+no_rag,KPEDefense w/o RAG,有效性,0.5751020858624877

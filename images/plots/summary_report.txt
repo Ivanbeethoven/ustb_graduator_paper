@@ -4,10 +4,10 @@ Kubernetes 安全评测图表数值报告
 维度：可部署性
 -
 方法汇总（平均得分，Top 5）
-- all: 0.403
-- w/o cot: 0.398
-- w/o RAG: 0.321
-- w/o feedback: 0.288
+- KPEDefense: 0.403
+- KPEDefense w/o COT: 0.398
+- KPEDefense w/o RAG: 0.321
+- KPEDefense w/o Feedback: 0.288
 
 生成模型汇总（平均得分，Top 5）
 - deepseek: 0.605
@@ -24,32 +24,32 @@ Kubernetes 安全评测图表数值报告
 - gpt5: 0.475
 
 生成模型最佳方法（Top 1）
-- ali-qwen: all (0.656)
-- deepseek: w/o cot (0.749)
-- glm4.5: all (0.504)
-- gpt5: w/o cot (0.256)
-- grok4: all (0.597)
+- ali-qwen: KPEDefense (0.656)
+- deepseek: KPEDefense w/o COT (0.749)
+- glm4.5: KPEDefense (0.504)
+- gpt5: KPEDefense w/o COT (0.256)
+- grok4: KPEDefense (0.597)
 
 方法最佳生成模型（Top 1）
-- all: deepseek (0.678)
-- w/o cot: deepseek (0.749)
-- w/o feedback: deepseek (0.611)
-- w/o RAG: deepseek (0.682)
+- KPEDefense: deepseek (0.678)
+- KPEDefense w/o COT: deepseek (0.749)
+- KPEDefense w/o Feedback: deepseek (0.611)
+- KPEDefense w/o RAG: deepseek (0.682)
 
 评委模型最佳方法（Top 1）
-- ali-qwen: all (0.612)
-- deepseek: w/o cot (0.575)
-- glm4.5: w/o cot (0.531)
-- gpt5: all (0.540)
-- grok4: w/o cot (0.523)
+- ali-qwen: KPEDefense (0.612)
+- deepseek: KPEDefense w/o COT (0.575)
+- glm4.5: KPEDefense w/o COT (0.531)
+- gpt5: KPEDefense (0.540)
+- grok4: KPEDefense w/o COT (0.523)
 
 维度：无干扰性
 -
 方法汇总（平均得分，Top 5）
-- all: 0.431
-- w/o RAG: 0.370
-- w/o cot: 0.340
-- w/o feedback: 0.269
+- KPEDefense: 0.431
+- KPEDefense w/o RAG: 0.370
+- KPEDefense w/o COT: 0.340
+- KPEDefense w/o Feedback: 0.269
 
 生成模型汇总（平均得分，Top 5）
 - deepseek: 0.497
@@ -66,32 +66,32 @@ Kubernetes 安全评测图表数值报告
 - deepseek: 0.475
 
 生成模型最佳方法（Top 1）
-- ali-qwen: all (0.629)
-- deepseek: w/o RAG (0.634)
-- glm4.5: all (0.522)
-- gpt5: w/o cot (0.369)
-- grok4: all (0.589)
+- ali-qwen: KPEDefense (0.629)
+- deepseek: KPEDefense w/o RAG (0.634)
+- glm4.5: KPEDefense (0.522)
+- gpt5: KPEDefense w/o COT (0.369)
+- grok4: KPEDefense (0.589)
 
 方法最佳生成模型（Top 1）
-- all: deepseek (0.633)
-- w/o cot: deepseek (0.588)
-- w/o feedback: deepseek (0.514)
-- w/o RAG: deepseek (0.634)
+- KPEDefense: deepseek (0.633)
+- KPEDefense w/o COT: deepseek (0.588)
+- KPEDefense w/o Feedback: deepseek (0.514)
+- KPEDefense w/o RAG: deepseek (0.634)
 
 评委模型最佳方法（Top 1）
-- ali-qwen: all (0.583)
-- deepseek: all (0.542)
-- glm4.5: all (0.561)
-- gpt5: all (0.490)
-- grok4: all (0.519)
+- ali-qwen: KPEDefense (0.583)
+- deepseek: KPEDefense (0.542)
+- glm4.5: KPEDefense (0.561)
+- gpt5: KPEDefense (0.490)
+- grok4: KPEDefense (0.519)
 
 维度：有效性
 -
 方法汇总（平均得分，Top 5）
-- all: 0.581
-- w/o RAG: 0.476
-- w/o cot: 0.234
-- w/o feedback: 0.121
+- KPEDefense: 0.581
+- KPEDefense w/o RAG: 0.476
+- KPEDefense w/o COT: 0.234
+- KPEDefense w/o Feedback: 0.121
 
 生成模型汇总（平均得分，Top 5）
 - gpt5: 0.814
@@ -108,21 +108,21 @@ Kubernetes 安全评测图表数值报告
 - ali-qwen: 0.475
 
 生成模型最佳方法（Top 1）
-- ali-qwen: all (0.609)
-- deepseek: all (0.647)
-- glm4.5: all (0.670)
-- gpt5: all (0.945)
-- grok4: all (0.434)
+- ali-qwen: KPEDefense (0.609)
+- deepseek: KPEDefense (0.647)
+- glm4.5: KPEDefense (0.670)
+- gpt5: KPEDefense (0.945)
+- grok4: KPEDefense (0.434)
 
 方法最佳生成模型（Top 1）
-- all: gpt5 (0.945)
-- w/o cot: gpt5 (0.840)
-- w/o feedback: gpt5 (0.723)
-- w/o RAG: gpt5 (0.888)
+- KPEDefense: gpt5 (0.945)
+- KPEDefense w/o COT: gpt5 (0.840)
+- KPEDefense w/o Feedback: gpt5 (0.723)
+- KPEDefense w/o RAG: gpt5 (0.888)
 
 评委模型最佳方法（Top 1）
-- ali-qwen: all (0.612)
-- deepseek: all (0.680)
-- glm4.5: all (0.702)
-- gpt5: all (0.650)
-- grok4: all (0.659)
+- ali-qwen: KPEDefense (0.612)
+- deepseek: KPEDefense (0.680)
+- glm4.5: KPEDefense (0.702)
+- gpt5: KPEDefense (0.650)
+- grok4: KPEDefense (0.659)
