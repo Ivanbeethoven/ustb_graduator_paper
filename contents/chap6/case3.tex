@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例三：CVE-2023-30512（CubeFS CSI 过度权限配置）}
 
 \subsection{漏洞详解与复现}
@@ -7,7 +7,7 @@
 
 CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Container Storage Interface）插件与 Kubernetes 集成。在 Kubernetes 中，CSI 节点插件通常以 DaemonSet 形式在每个节点上运行（例如 \texttt{cfs-csi-node}），控制器组件以 Deployment 形式运行（例如 \texttt{cfs-csi-controller}）。这类组件需要与 Kubernetes API 交互，但其权限应遵循最小权限原则。
 
-\textbf{CVE 描述}：CVE-2023-30512 的核心问题是 CubeFS CSI 插件的服务账号（如 \texttt{cfs-csi-service-account}）被绑定到了包含\textbf{过度权限}的集群级角色（\texttt{ClusterRole}），从而具备对集群范围 \texttt{Secret} 的读取能力（如 \texttt{get/list}）。一旦攻击者在某节点获得对 CSI 节点插件 Pod 的控制，例如通过节点被入侵、容器逃逸或对系统命名空间特权工作负载的执行能力，便可能滥用该服务账号的身份边界，读取全局敏感信息并进一步演化为集群级权限提升。
+\textbf{CVE 描述}：CVE-2023-30512 的核心问题是 CubeFS CSI 插件的服务账号（如 \texttt{cfs-csi-service-account}）被绑定到了包含\textbf{过度权限}的集群级角色（\texttt{ClusterRole}），从而具备对集群范围 \texttt{Secret} 的读取能力（如 \texttt{get/list}）。一旦攻击者在某节点获得对 CSI 节点插件 Pod 的控制，例如通过节点被入侵、容器逃逸或对系统命名空间特权工作负载的执行能力，便可能滥用该服务账号的权限边界，读取全局敏感信息并进一步演化为集群级权限提升。
 
 \textbf{主要成因分类}：配置缺陷 / 过度授权（Over-privileged RBAC）。
 
@@ -74,5 +74,6 @@ RBAC 收敛可能影响 CSI 的部分诊断与自愈路径，因此应在预生�
 \noindent\textbf{可部署性：}
 RBAC 与审计属于平台原生能力，适合在多集群场景中模板化推广。准入策略与网络收敛则属于长期基线治理内容，可通过 GitOps 与策略即代码持续交付。工程落地时建议提供回滚与分批推进路径，先在测试与预生产验证后再逐步推广至生产。
 
-就 CVE-2023-30512 而言，本文方法生成的策略通过 RBAC 最小化直接移除了 CSI ServiceAccount 不应具备的 \texttt{secrets} 读取能力，并以准入策略阻止过度授权再次引入。复测显示 \texttt{kubectl auth can-i} 的结果由 \texttt{yes} 变为 \texttt{no}。部署时仍需验证 CSI 的 PVC/PV 生命周期与相关功能不受影响。
+就 CVE-2023-30512 而言，KPEDefense 生成的策略通过 RBAC 最小化直接移除了 CSI ServiceAccount 不应具备的 \texttt{secrets} 读取能力，并以准入策略阻止过度授权再次引入。复测显示 \texttt{kubectl auth can-i} 的结果由 \texttt{yes} 变为 \texttt{no}。部署时仍需验证 CSI 的 PVC/PV 生命周期与相关功能不受影响。
+
 

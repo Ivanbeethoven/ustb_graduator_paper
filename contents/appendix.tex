@@ -1,6 +1,86 @@
 ﻿
 \appendix
 
+
+\chapter{云原生权限提升漏洞数据集统计}\label{app:cve-dataset}
+
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.9}
+\begin{longtable}{>{\centering\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{6.8cm} >{\centering\arraybackslash}p{2.8cm}}
+\bicaption{云原生权限提升漏洞数据集}{Dataset of cloud-native privilege escalation vulnerabilities}\label{tab:cve-dataset}\\
+\toprule
+\textbf{CVE 编号} & \textbf{所属平台/组件} & \textbf{主要成因} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{l}{\small（续表）} \\[0.3ex]
+\toprule
+\textbf{CVE 编号} & \textbf{所属平台/组件} & \textbf{主要成因} \\
+\midrule
+\endhead
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
+CVE-2018-0268     & Cisco DNA Center                              & 网络隔离         \\
+CVE-2018-1000400  & Kubernetes / CRI-O                            & 内部权限失控      \\
+CVE-2018-5256     & CoreOS Tectonic                               & 内部权限失控     \\
+CVE-2019-10165    & OpenShift                                     & 敏感信息泄露     \\
+CVE-2019-11247    & Kubernetes                                    & 过度权限配置     \\
+CVE-2019-3869     & Ansible Tower                                 & 内部权限失控     \\
+CVE-2020-15257    & containerd                                    & 容器运行时漏洞   \\
+CVE-2020-1742     & nmstate/kubernetes-nmstate-handler            & 代码注入         \\
+CVE-2020-4062     & Conjur OSS                                    & 网络隔离         \\
+CVE-2020-8559     & Kubernetes                                    & 敏感信息泄露     \\
+CVE-2021-41254    & kustomize-controller (Flux2)                  & 代码注入         \\
+CVE-2021-43858    & MinIO                                         & 内部权限失控     \\
+CVE-2022-1902     & Red Hat Advanced Cluster Security             & 敏感信息泄露     \\
+CVE-2022-21701    & Istio                                         & 内部权限失控     \\
+CVE-2022-23652    & capsule-proxy                                 & 内部权限失控     \\
+CVE-2022-24730    & Argo CD                                       & 敏感信息泄露     \\
+CVE-2022-24768    & Argo CD                                       & 内部权限失控     \\
+CVE-2022-24817    & Flux2 / helm-controller                       & 代码注入         \\
+CVE-2022-24877    & Flux / kustomize-controller                   & 代码注入         \\
+CVE-2022-29165    & Argo CD                                       & 内部权限失控     \\
+CVE-2022-29171    & Sourcegraph                                   & 代码注入         \\
+CVE-2022-29179    & Cilium                                        & 过度权限配置     \\
+CVE-2022-31102    & Argo CD                                       & 代码注入         \\
+CVE-2022-37968    & Azure Arc-enabled Kubernetes                  & 内部权限失控     \\
+CVE-2022-46167    & Capsule                                       & 过度权限配置     \\
+CVE-2023-22482    & Argo CD                                       & 内部权限失控     \\
+CVE-2023-22645    & SUSE kubewarden                               & 过度权限配置     \\
+CVE-2023-22651    & SUSE Rancher                                  & 内部权限失控     \\
+CVE-2023-23947    & Argo CD                                       & 代码注入         \\
+CVE-2023-2250     & Open Cluster Management                       & 过度权限配置     \\
+CVE-2023-26484    & KubeVirt                                      & 过度权限配置     \\
+CVE-2023-29018    & OpenFeature Operator                          & 过度权限配置     \\
+CVE-2023-30512    & CubeFS                                        & 过度权限配置     \\
+CVE-2023-30617    & Kruise                                        & 过度权限配置     \\
+CVE-2023-30622    & Clusternet                                    & 内部权限失控     \\
+CVE-2023-30840    & Fluid                                         & 过度权限配置     \\
+CVE-2023-3676     & Kubernetes (Windows)                          & 内部权限失控        \\
+CVE-2023-3893     & Kubernetes / kubernetes-csi-proxy             & 内部权限失控        \\
+CVE-2023-3955     & Kubernetes (Windows)                          & 内部权限失控        \\
+CVE-2023-46254    & capsule-proxy                                 & 内部权限失控     \\
+CVE-2023-48312    & capsule-proxy                                 & 内部权限失控     \\
+CVE-2023-50726    & Argo CD                                       & 内部权限失控     \\
+CVE-2023-5408     & OpenShift                                     & 内部权限失控     \\
+CVE-2023-5528     & Kubernetes (Windows)                          & 内部权限失控        \\
+CVE-2024-31989    & Argo CD                                       & 网络隔离         \\
+CVE-2024-33522    & Calico                                        & 代码注入         \\
+CVE-2024-40628    & JumpServer                                    & 内部权限失控     \\
+CVE-2024-40629    & JumpServer                                    & 内部权限失控     \\
+CVE-2024-43403    & Kanister                                      & 过度权限配置     \\
+CVE-2024-43803    & Bare Metal Operator                           & 过度权限配置     \\
+CVE-2024-48921    & Kyverno                                       & 内部权限失控     \\
+CVE-2024-56513    & Karmada                                       & 过度权限配置     \\
+CVE-2025-2241     & Hive (ACM/MCE)                                & 敏感信息泄露     \\
+CVE-2025-24784    & kubewarden-controller                         & 内部权限失控     \\
+CVE-2025-32445    & Argo Events                                   & 内部权限失控     \\
+\end{longtable}
+\endgroup
+
 \chapter{云原生权限提升漏洞分类与 CWE 对应关系}\label{app:vuln-cwe-mapping}
 
 \begin{table}[htb]
@@ -77,7 +157,7 @@
 
 \section{KubeGuard 权限提升检测规则汇总}\label{app:pe-detection-rules}
 
-为便于正文聚焦方法主线，本节补充给出 KubeGuard 在四类权限提升场景下采用的代表性检测规则汇总。
+本节补充给出前期工作 KubeGuard 在四类权限提升场景下采用的代表性检测规则汇总。
 
 \begin{table}[htb]
 	\centering\bicaption{多种权限提升类型及其检测规则}{Types of privilege escalation and their detection rules}\label{tab:PEDetectionRules}

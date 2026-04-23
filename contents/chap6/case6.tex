@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例六：CVE-2022-29171（Sourcegraph \texttt{gitserver} 远程代码执行）}
 
 \subsection{漏洞详解与复现}
@@ -33,4 +33,5 @@ Sourcegraph 是面向大规模代码仓库的搜索与导航平台，其典型�
 
 \textbf{可部署性：}功能禁用在多数部署中可通过标准化配置管理实现。NetworkPolicy 等网络隔离能力依赖集群 CNI 支持，但在 Kubernetes 环境中易于模板化推广。权限分离与 Grafana 暴露面治理属于组织流程与平台基线配置，适合纳入 GitOps 基线与审计机制持续管理。
 
-就 CVE-2022-29171 而言，本文方法生成的策略通过禁用 Gitolite 集成切断了 \texttt{callsignCommand} 对应的命令执行入口，并以网络隔离和权限分离限制误授权限后的可达范围与影响半径。由于该攻击链同时依赖站点管理员与 Grafana 管理员权限，防护效果与权限治理的严格程度直接相关，最终仍建议升级至修复版本。
+就 CVE-2022-29171 而言，KPEDefense 生成的策略通过禁用 Gitolite 集成切断了 \texttt{callsignCommand} 对应的命令执行入口，并以网络隔离和权限分离限制误授权限后的可达范围与影响半径。由于该攻击链同时依赖站点管理员与 Grafana 管理员权限，防护效果与权限治理的严格程度直接相关，最终仍建议升级至修复版本。
+

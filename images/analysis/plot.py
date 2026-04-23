@@ -68,22 +68,28 @@ _apply_origin_style()
 
 
 def _display_label(name: str) -> str:
-    """Return a human-friendly display label (e.g. map 'no_rag' -> 'w/o rag')."""
+    """Return a human-friendly display label (e.g. map 'no_rag' -> 'KPEDefense w/o RAG')."""
     if name is None:
         return ""
     s = str(name)
-    # general rule: 'no_xxx' -> 'w/o xxx'
+    # 'all' -> 'KPEDefense' (complete method)
+    if s == "all":
+        return "KPEDefense"
+    # 'no_rag' -> 'KPEDefense w/o RAG', 'no_cot' -> 'KPEDefense w/o COT', etc.
     if s.startswith("no_"):
-        return "w/o " + s[3:].replace("_", " ")
-    # fallback: replace known token
-    return s.replace("no_rag", "w/o rag").replace("_", " ")
+        suffix = s[3:].replace("_", " ")
+        # short abbreviations (≤4 chars) in uppercase, longer words capitalized
+        display_suffix = suffix.upper() if len(suffix) <= 4 else suffix.capitalize()
+        return "KPEDefense w/o " + display_suffix
+    # fallback
+    return s.replace("_", " ")
 
 
 def _safe_name(name: str) -> str:
     """Return a filesystem-safe name derived from the display label.
 
     Replaces path-separators and spaces with underscores so labels like
-    'w/o rag' won't be interpreted as directories when used in file paths.
+    'w/o RAG' won't be interpreted as directories when used in file paths.
     """
     disp = _display_label(name)
     # replace slashes and spaces with underscore

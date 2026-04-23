@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例四：CVE-2020-4062 Conjur OSS 缺乏网络隔离策略}
 
 \subsection{漏洞详解与复现}
@@ -13,7 +13,7 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
 
 \textbf{主要成因分类}：配置缺陷 / 网络访问控制缺失 Missing NetworkPolicy。
 
-\textbf{攻击链条描述}：该漏洞可抽象为集群内横向移动与直连数据库绕过应用层安全的链条：
+\textbf{攻击链条描述}：该漏洞可抽象为集群内横向移动与直连数据库绕过应用层安全控制的攻击链：
 \begin{enumerate}
     \item \textbf{初始立足点}：攻击者控制集群内任意 Pod，例如通过业务漏洞或错误授权获得容器执行能力；
     \item \textbf{侦察发现}：在目标命名空间中发现 Postgres Service 与 5432 端口；
@@ -58,4 +58,5 @@ NetworkPolicy 的引入可能影响 Conjur 组件间通信与运维排障，因�
 \noindent\textbf{可部署性：}
 NetworkPolicy 属于 Kubernetes 原生资源，便于纳入 GitOps 流程并在多集群环境中复制推广。由于数据库服务与端口相对稳定，规则维护成本较低。为避免遗漏与回归，可将 NetworkPolicy 纳入 Helm values 或部署流水线的强制检查项，并与基线检测配合使用。
 
-就 CVE-2020-4062 而言，本文方法生成的策略以 NetworkPolicy 建立默认拒绝，将数据库访问面从集群内任意 Pod 可达收敛为仅 Conjur Server 可达。复现实验表明，策略部署后非授权 Pod 无法连通 Postgres 5432 端口。该方案依赖集群 CNI 对 NetworkPolicy 的支持，不支持时需采用命名空间隔离等替代手段。
+就 CVE-2020-4062 而言，KPEDefense 生成的策略以 NetworkPolicy 建立默认拒绝，将数据库访问面从集群内任意 Pod 可达收敛为仅 Conjur Server 可达。复现实验表明，策略部署后非授权 Pod 无法连通 Postgres 5432 端口。该方案依赖集群 CNI 对 NetworkPolicy 的支持，不支持时需采用命名空间隔离等替代手段。
+

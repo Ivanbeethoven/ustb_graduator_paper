@@ -1,74 +1,67 @@
 
 \chapter{面向云原生权限提升漏洞的智能化防控系统设计与实现}\label{chap:system}
 
-本章讨论第三章提出的方法支持系统的设计与实现，形成覆盖漏洞知识管理、会话驱动生成、专家评审和策略交付的完全系统。下文从需求分析、总体设计和详细设计三个层面展开说明。
+本章讨论 KPEDefense 系统的设计与实现，从需求分析、总体设计和详细设计三个层面展开说明。
 
 \section{需求分析}
 
-
-
-系统围绕\textbf{安全工程师}与\textbf{专家评审员}两类角色组织核心用例，见图~\ref{fig:role_use_case}。安全工程师负责选择漏洞实例、发起分析会话、查看证据与候选策略，并完成部署与验证；专家评审员负责对同类型候选策略进行三维质量评审、排序确认与反馈修订。
-
+KPEDefense 系统围绕\textbf{安全工程师}与\textbf{专家评审员}两类角色组织核心用例，见图~\ref{fig:role_use_case}。安全工程师负责选择漏洞实例、发起分析会话、查看证据与候选策略，并完成部署与验证；专家评审员负责对同类型候选策略进行三维质量评审、排序确认与反馈修订。结合用例图中角色的职责以及第三章的方法链条，系统需要具备以下四项核心能力：
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/chap4/role_use_case}
-    \bicaption{系统用户角色与核心用例}{System user roles and core .use cases}
+    \bicaption{系统用户角色与核心用例}{System user roles and core use cases}
     \label{fig:role_use_case}
 \end{figure}
-结合用例图中角色的职责以及第三章的方法链条，系统需要具备以下五项核心能力：
 
-\noindent\hangindent=2em\hangafter=1 (1) \textbf{知识库管理}：支持导入、检索与维护权限提升相关CVE条目及其关联证据，并自动化抓取相关开源仓库信息并构建向量化数据库，为后续构建安全上下文 $c$ 提供可追溯数据。
+\noindent\hangindent=2em\hangafter=1 (1) \textbf{知识库管理}：支持自动化抓取相关开源仓库信息，可导入、检索与维护权限提升相关CVE条目及其关联证据。并进一步构建向量化数据库，为后续构建安全上下文 $c$ 提供可追溯数据。
 
-\noindent\hangindent=2em\hangafter=1 (2) \textbf{智能体调度}：围绕漏洞实例，通过构建不同智能体进行相关安全知识上下文构建、漏洞分析、安全策略相关代码生成。针对生成的相关代码进行策略性评价并进行迭代优化，最终输出同类型候选策略集合。
+\noindent\hangindent=2em\hangafter=1 (2) \textbf{智能体调度}：围绕漏洞实例，通过构建不同智能体进行相关安全知识上下文构建、漏洞分析等进行候选安全策略集合生成。此外可以交由策略管理模块，对生成的策略进行聚合评估与相关策略部署。
 
-\noindent\hangindent=2em\hangafter=1 (3) \textbf{三维质量评审与排序确认}：接收专家评审意见，以降低噪声并提升可部署性。围绕有效性、无干扰性和可部署性对同类型候选进行排序比较，并形成可审计的确认结果。
+\noindent\hangindent=2em\hangafter=1 (3) \textbf{质量评审}：对专家人工评审意见进行统计，围绕有效性、无干扰性和可部署性对同类型候选进行排序比较，并形成可审计的确认结果；同时支持多源大模型的排名式静态评估方案，以支持策略管理。
 
-\noindent\hangindent=2em\hangafter=1 (4) \textbf{策略交付与部署验证}：将通过确认的候选策略下发至目标环境，并记录执行状态、验证结果与审计信息。
+\noindent\hangindent=2em\hangafter=1 (4) \textbf{策略管理}：将通过评估检查的安全策略下发至目标环境进行部署验证，并记录执行状态、验证结果与审计信息。
 
 \section{总体设计}
 
-系统采用分层架构，自顶向下分为界面层、服务层、智能引擎层和数据层，见图~\ref{fig:system_architecture}。该分层并不是对方法步骤的简单堆叠，而是将第三章中的知识组织、分析生成、评审优化与结果交付拆解为具有明确职责边界的实现单元，使各层可以独立演化、独立测试，同时通过定义清晰的接口契约保持整体一致。
-
-在设计取向上，系统遵循三条核心原则。其一，\textbf{职责分离}：将展示逻辑、业务编排、智能分析与数据持久化分置于不同层次，避免跨层耦合；各层间以 REST 接口和内部函数调用为唯一通信方式，上层不直接访问下层的内部状态。其二，\textbf{会话驱动的迭代生成}：系统以会话为基本单元组织候选策略的生成与优化过程，同一漏洞实例可在多个会话中产出不同版本的候选集合，支持按需追加评审轮次而无须重新触发全量生成。其三，\textbf{全程可审计}：证据来源、中间分析结果、评审意见与排序确认均随候选策略一并持久化，确保每条最终交付结论均可追溯到对应的上下文依据与专家决策记录。
-
-四个层次的职责如下：
-
-\noindent\hangindent=2em\hangafter=1 (1) \textbf{界面层}：基于 Vue3 构建单页应用，采用 Pinia 管理应用级状态，并集成 ECharts 可视化组件，负责 CVE 详情展示、策略交互与评审结果呈现。界面层通过 HTTP 调用服务层接口，不直接访问智能引擎或数据层，所有业务操作均通过接口提交。
-
-\noindent\hangindent=2em\hangafter=1 (2) \textbf{服务层}：采用 Flask 实现 REST API 网关，负责请求路由、访问控制与接口编排；同时通过任务调度器管理耗时较长的会话任务，并协调知识检索、候选策略生成、评审提交与部署验证等流程。耗时任务异步执行，接口以轮询方式反馈进度，避免长连接阻塞。
-
-\noindent\hangindent=2em\hangafter=1 (3) \textbf{智能引擎层}：封装系统核心分析能力，由 KPEAgent 引擎统一调度安全知识整理、漏洞分析、候选策略生成、评审反馈吸收与策略优化等处理单元，完成从漏洞实例到候选策略集合 $\Pi_v$ 的迭代生成。该层对服务层暴露统一的调用入口，屏蔽模型切换、提示词组装与重试控制等实现细节。
-
-\noindent\hangindent=2em\hangafter=1 (4) \textbf{数据层}：负责数据持久化与检索支撑，包括存放 CVE 元数据、证据片段、中间分析结果与候选策略对象的文件存储，以及支持安全上下文构建的向量索引库。向量索引按漏洞实例独立维护，保证多实例并发检索互不干扰。
-
-
-\begin{figure}[htb]
+KPEDefense 系统采用分层架构，自顶向下分为界面层、服务层、智能引擎层和数据层，见图~\ref{fig:system_architecture}。
+\begin{figure}[htb!]
     \centering
     \includegraphics[width=0.82\textwidth,height=0.52\textheight,keepaspectratio]{images/system.png}
-    \bicaption{系统总体架构与分层设计（UML 组件图）}{Overall system architecture and layered design (UML component diagram)}
+    \bicaption{系统总体架构图}{Overall system architecture and layered design}
     \label{fig:system_architecture}
 \end{figure}
 
+\noindent\hangindent=2em\hangafter=1 (1) \textbf{界面层}：基于 Vue3 构建单页应用，采用 Pinia 管理应用级状态，并集成 ECharts 可视化组件，负责 CVE 详情展示、策略交互与评审结果呈现。
+
+\noindent\hangindent=2em\hangafter=1 (2) \textbf{服务层}：采用 Flask 实现 REST API 网关，负责请求路由、访问控制与接口编排；同时通过任务调度器管理耗时较长的会话任务，并协调知识检索、候选策略生成、评审提交与部署验证等流程。
+
+\noindent\hangindent=2em\hangafter=1 (3) \textbf{智能引擎层}：封装系统核心分析能力，统一调度安全知识整理、漏洞分析、候选策略生成、评审反馈吸收与策略优化等智能体，完成从漏洞实例到候选策略集合 $\Pi_v$ 的迭代生成。
+
+\noindent\hangindent=2em\hangafter=1 (4) \textbf{数据层}：负责数据持久化与检索支撑，包括存放 CVE 元数据、证据片段、中间分析结果与候选策略对象的文件存储，以及支持安全上下文构建的向量索引库。
+
+
+
 
 \section{详细设计}
-\subsection{数据模型设计}
+本小节介绍 KPEDefense 系统详细设计，包括实体类设计、详细流程设计、交互时序设计。
+\subsection{实体类设计}
 
-系统持久化围绕四类核心实体展开（图~\ref{fig:storage_schema}），分别对应第三章中的漏洞实例 $v$、分析会话、候选策略集合 $\Pi_v$ 与评审结果：\textbf{CVE 实体}以 \texttt{status} 枚举字段驱动处置状态机，与会话呈一对多关系；\textbf{会话实体}记录模型配置与提示词模板，承载从证据检索到策略生成的完整上下文；\textbf{策略实体}保存生成内容、推理链快照与 RAG 召回片段，支持来源追溯与版本对比；\textbf{排序实体}存储评审员标识、时间戳与多维评分，关联会话与策略，记录专家决策的即时快照。
+实体类设计围绕四类核心实体展开（图~\ref{fig:storage_schema}），分别对应第三章中的漏洞实例 $v$、分析会话、候选策略集合 $\Pi_v$ 与评审结果：\textbf{CVE 实体}以 \texttt{status} 枚举字段驱动处置状态机，与会话呈一对多关系；\textbf{会话实体}记录模型配置与提示词模板，承载从证据检索到策略生成的完整上下文；\textbf{策略实体}保存生成内容、推理链快照与 RAG 召回片段，支持来源追溯与版本对比；\textbf{排序实体}存储评审员标识、时间戳与多维评分，关联会话与策略，记录专家决策的即时快照。
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.5\textwidth]{images/chap4/storage_schema}
-    \bicaption{系统核心实体类图（UML 类图）}{Core entity class diagram (UML class diagram)}
+    \includegraphics[width=0.8\textwidth]{images/chap4/storage_schema}
+    \bicaption{系统核心实体类图}{Core entity class diagram }
     \label{fig:storage_schema}
 \end{figure}
 
 \subsection{详细流程设计}
 
-图~\ref{fig:cve_lifecycle} 以程序流程图描述 CVE 处置总体流程，包含六个顶层状态。\textbf{未处理}为初始态，漏洞条目导入后安全工程师确认范围并触发分析。\textbf{策略生成与优化中}对应第三章 \ref{subsec:kb}～\ref{subsec:agent} 节的核心方法链：五个智能体依序完成证据召回、漏洞分析、候选生成、评审与优化，形成 $\text{RAG}\to\text{CoT}\to\text{Feedback}$ 迭代闭环，输出候选策略集合 $\Pi_v$；$\Pi_v$ 中存在满足质量阈值的候选或累计轮次达到上限时，自动推进至\textbf{待评审}状态。\textbf{待评审}阶段专家对候选进行三维排序（对应第三章 \ref{subsec:quality} 节），质量不足时驳回并附注意见，流程回退重新迭代。\textbf{已批准}后排序结果、评审者标识与评分快照写入持久层。\textbf{部署中}将 $\pi^{\star}$ 推送至目标集群并执行配置合规验证，验证失败回退至已批准状态，由工程师确认后重新部署。\textbf{已部署}为终止态，处置证据链完整闭合。
+图~\ref{fig:cve_lifecycle} 以程序流程图描述 CVE 处置总体流程，包含六个顶层状态。\textbf{未处理}为初始态，漏洞条目导入后安全工程师确认范围并触发分析。\textbf{策略生成与优化中}对应第三章~\ref{subsec:kb}～\ref{subsec:agent} 节的核心方法链：五个智能体依序完成证据召回、漏洞分析、候选生成、评审与优化，形成 $\text{RAG}\to\text{CoT}\to\text{Feedback}$ 迭代闭环，输出候选策略集合 $\Pi_v$；$\Pi_v$ 中存在满足质量阈值的候选或累计轮次达到上限时，自动推进至\textbf{待评审}状态。\textbf{待评审}阶段专家对候选进行三维排序（对应第三章 \ref{subsec:quality} 节），质量不足时驳回并附注意见，流程回退重新迭代。\textbf{已批准}后排序结果、评审者标识与评分快照写入持久层。\textbf{部署中}将 $\pi^{\star}$ 推送至目标集群并执行配置合规验证，验证失败回退至已批准状态，由工程师确认后重新部署。\textbf{已部署}为终止态，处置证据链完整闭合。
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.55\textwidth]{images/chap4/cve_lifecycle}
+    \includegraphics[width=0.75\textwidth]{images/chap4/cve_lifecycle}
     \bicaption{CVE 漏洞处置总体流程图}{CVE vulnerability handling lifecycle state diagram (UML state diagram)}
     \label{fig:cve_lifecycle}
 \end{figure}
@@ -76,20 +69,21 @@
 
 \subsection{交互时序设计}
 
-候选策略生成涉及证据检索、结构化分析、候选组织与反馈修订等多轮处理，单次任务耗时较长，因此系统采用异步交互时序。完整链路分为四个阶段，前两个阶段见图~\ref{fig:pipeline_sequence_a}，后两个阶段见图~\ref{fig:pipeline_sequence_b}。
+安全策略生成涉及证据检索、结构化分析、候选组织与反馈修订等多轮处理，单次任务耗时较长，因此系统采用异步交互时序。完整链路分为四个阶段，前两个阶段见图~\ref{fig:pipeline_sequence_a}，后两个阶段见图~\ref{fig:pipeline_sequence_b}。
 
 \textbf{阶段一：会话创建。}安全工程师选定目标 CVE 后提交创建请求，服务层在数据持久层初始化会话目录结构并返回 \texttt{session\_id}，后续所有操作均绑定至该会话上下文。
 
-\textbf{阶段二：安全上下文构建与候选策略生成。}工程师发起生成请求后，服务层以异步任务形式启动智能体引擎管线：引擎依次完成证据检索、安全上下文 $c$ 构建、漏洞分析、候选策略生成与评审优化，将中间分析结果与候选策略集合 $\Pi_v$ 同步写入持久层，任务完成后经轮询接口将结果返回前端。
+\textbf{阶段二：安全上下文构建与候选策略生成。}工程师发起生成请求后，服务层以异步任务形式启动工作流，次完成证据检索、安全上下文 $c$ 构建、漏洞分析、候选策略生成与评审优化，将中间分析结果与候选策略集合 $\Pi_v$ 同步写入持久层，任务完成后经轮询接口将结果返回前端。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/chap4/pipeline_sequence_a}
     \bicaption{会话创建与候选策略生成时序（UML 时序图）}{Session creation and candidate strategy generation sequence (UML)}
     \label{fig:pipeline_sequence_a}
 \end{figure}
+
 \textbf{阶段三：评审反馈驱动优化。}专家评审员提交修改意见后，服务层携带反馈内容重新调用智能体引擎，策略优化智能体据此修订 $\Pi_v$ 并将更新版本写入持久层。该阶段可按需触发多次，每次修订均以独立记录追加存储，原始版本不被覆盖。
 
-\textbf{阶段四：质量排序与结果确认。}专家完成拖拽排序并填写三维评分后提交确认请求，服务层首先执行同类型候选的全序完整性校验，通过后将排序结果、维度评分与评审员标识一并写入持久层，CVE 处置状态随即迁移至"已批准"。
+\textbf{阶段四：质量排序与结果确认。}专家完成拖拽排序并填写三维评分后提交确认请求，服务层首先执行同类型候选的全序完整性校验，通过后将排序结果、维度评分与评审员标识一并写入持久层。
 \begin{figure}[htb!]
     \centering
     \includegraphics[width=0.7\textwidth]{images/chap4/pipeline_sequence_b}
@@ -101,55 +95,109 @@
 
 本节按功能模块说明系统的交互流程与实现方式,并验证系统功能。下文依次介绍知识库管理、策略生成与优化、专家评审与排序以及策略部署管理四个模块。
 
-\subsection{CVE 知识库管理}
+\subsection{知识库管理}
 
-知识库管理模块承担漏洞条目的汇聚、检索、证据关联与状态维护，是安全上下文构建的入口环节。该模块对应服务层的 CVE 知识库组件，直接影响 CVE 实体的 \texttt{status} 字段及后续会话流程。如图~\ref{fig:ui_cve_list} 所示，系统主界面以列表视图展示已录入的 CVE 条目，核心字段包括 CVE 编号、漏洞摘要、CVSS 风险评分和当前处置状态。界面上方提供关键词检索与状态筛选功能，支持安全工程师依据漏洞编号、漏洞类型或关键描述快速定位目标记录；选择具体条目后，系统即可进入详情视图并发起分析会话，为后续候选证据检索和安全上下文整理提供统一入口。
+知识库管理模块承担漏洞条目的汇聚、检索、证据关联与状态维护，是安全上下文构建的入口环节。该模块对应服务层的 CVE 知识库组件，直接影响 CVE 实体的 \texttt{status} 字段及后续会话流程。如图~\ref{fig:ui_cve_list} 所示，系统主界面以列表视图展示已录入的 CVE 条目，核心字段包括 CVE 编号、漏洞摘要、CVSS 风险评分和当前处置状态。支持安全工程师依据漏洞编号、漏洞类型或关键描述快速定位目标记录。
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.75\textheight,keepaspectratio]{images/ui/cve库查看功能}
+    \includegraphics[width=0.85\textwidth,height=0.75\textheight,keepaspectratio]{images/ui/cve库查看功能}
     \bicaption{CVE 知识库查看与管理界面}{Interface for CVE knowledge base browsing and management}
     \label{fig:ui_cve_list}
 \end{figure}
 
-\subsection{策略生成与优化}
+\subsection{智能体调度}
 
-策略生成与优化模块负责将漏洞证据转化为可交付的候选策略，并通过评审反馈闭环持续修订结果。系统以会话为基本单元，依次经过证据检索、结构化分析与候选生成三个阶段。证据检索阶段（图~\ref{fig:ui_rag}）从漏洞实例抽取语义特征，在知识库中召回 Top-K 相关片段，界面同时展示来源文档与相关度得分供人工核验。结构化漏洞分析阶段（图~\ref{fig:ui_cot}）展示攻击路径分解、权限边界识别与 Kubernetes 控制点映射等中间步骤，便于复核。完成分析后系统输出候选策略集合，专家评审意见可驱动再生成，界面并列展示原始版本与修订版本并高亮变更位置。
-
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=0.85\textwidth,height=0.42\textheight,keepaspectratio]{images/ui/策略生成-rag模块}
-    \bicaption{安全上下文构建阶段的检索结果展示（RAG 实现）}{Display of retrieval results in the security-context construction stage (RAG-based implementation)}
-    \label{fig:ui_rag}
-\end{figure}
+智能体调度模块负责将漏洞证据转化为可交付的候选策略，并通过评审反馈闭环持续修订结果。系统以会话为基本单元，依次经过证据检索、结构化分析与候选生成三个阶段。如图~\ref{fig:ui_session_start}所示，工作界面左侧支持选择目标 CVE 并创建会话，右侧以进度条形式呈现“检索 \textrightarrow{} COT 推理 \textrightarrow{} 策略生成 \textrightarrow{} 评审 \textrightarrow{} 优化\u201d五个主要步骤的运行状态。
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.85\textwidth,height=0.42\textheight,keepaspectratio]{images/ui/策略生成-cot模块}
-    \bicaption{结构化漏洞分析展示界面（CoT 实现）}{Interface for structured vulnerability analysis (CoT-based implementation)}
-    \label{fig:ui_cot}
+    \includegraphics[width=0.75\textwidth,height=0.45\textheight,keepaspectratio]{images/ui/策略生成-开始}
+    \bicaption{会话创建与工作流开始界面}{Session creation and analysis pipeline launch interface}
+    \label{fig:ui_session_start}
 \end{figure}
 
-\subsection{专家评审与排序}
+证据检索阶段（图~\ref{fig:ui_rag}）从漏洞实例抽取语义特征，在知识库中召回 Top-K 相关片段，界面同时展示来源文档与相关度得分供人工核验；完成检索后，策略生成流程继续推进，候选策略集合生成完成后界面自动切换至评审阶段（图~\ref{fig:ui_strategy_generated}）。
 
-专家评审与排序模块通过”定性评审 + 拖拽排序”两阶段引入专家知识。评审阶段收集围绕有效性、干扰风险与前置条件的逐项反馈，驱动策略优化。排序阶段如图~\ref{fig:ui_ranking} 所示，专家对同类型候选进行拖拽排序并填写三维维度评分；系统提交前执行全序完整性校验，确认后将排序结果、维度评分与评审员标识写入持久层，形成可审计的偏好数据集。
-
-\begin{figure}[htb]
+\begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.85\textwidth,height=0.32\textheight,keepaspectratio]{images/ui/人工排序}
-    \bicaption{策略排序主界面}{Main interface for strategy ranking}
-    \label{fig:ui_ranking}
+    \subfloat[安全上下文检索结果展示\label{fig:ui_rag}]{%
+        \includegraphics[width=0.85\textwidth,height=0.32\textheight,keepaspectratio]{images/ui/策略生成-rag模块}%
+    }\\[4pt]
+    \subfloat[候选策略生成完成后进入评审阶段\label{fig:ui_strategy_generated}]{%
+        \includegraphics[width=0.85\textwidth,height=0.32\textheight,keepaspectratio]{images/ui/策略生成-生成1}%
+    }
+    \bicaption{证据检索与候选策略生成阶段界面}{Security-context retrieval and candidate strategy generation stage interfaces}
+    \label{fig:ui_rag_gen_group}
 \end{figure}
 
-\subsection{策略部署管理}
+结构化漏洞分析阶段展示攻击路径分解、权限边界识别与 Kubernetes 控制点映射等中间步骤。其中 COT 推理阶段支持切换底层模型（图~\ref{fig:ui_cot_module}），押下 \textit{Run CoT} 后，系统调用指定模型对检索到的安全上下文开展引导式推理，推理链输出结果展示于详情面板（图~\ref{fig:ui_cot_detail}），包括漏洞类型、攻击向量、影响范围与关键发现等结构化分析结果。
 
-策略部署管理模块将通过评审的候选策略下发至目标环境，支持 Kubernetes（Python SDK 连接 API Server）与 SSH 两种部署方式。如图~\ref{fig:ui_deploy_manage} 所示，部署管理面板统一展示跨集群、跨主机的策略实例，记录策略名称、目标对象、部署时间与状态，并提供回滚与日志查看操作，便于异常诊断与后续运维。
-
-\begin{figure}[thb]
+\begin{figure}[htb!]
     \centering
-    \includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio]{images/ui/策略部署-部署管理}
-    \bicaption{策略部署管理界面}{Interface for strategy deployment management}
-    \label{fig:ui_deploy_manage}
+    \subfloat[COT 推理模型选择与启动界面\label{fig:ui_cot_module}]{%
+        \includegraphics[width=0.85\textwidth,height=0.30\textheight,keepaspectratio]{images/ui/策略生成-cot模块}%
+    }\\[4pt]
+    \subfloat[COT 推理结果详情展示\label{fig:ui_cot_detail}]{%
+        \includegraphics[width=0.85\textwidth,height=0.30\textheight,keepaspectratio]{images/ui/cot详情}%
+    }
+    \bicaption{COT 推理阶段：模型选择与推理结果}{CoT reasoning stage: model selection and reasoning chain output}
+    \label{fig:ui_cot_group}
+\end{figure}
+
+策略生成完成后，评审智能体自动对候选策略展开结构化评审（图~\ref{fig:ui_review_detail}），输出内容包含有效点、风险项、信息缺口（\texttt{gaps}）与干扰源（\texttt{noise\_sources}），为后续优化提供明确依据。完成评审与迭代优化后，系统输出候选策略集合的最终展示结果（图~\ref{fig:ui_strategy_final}），工程师可在界面查看各候选的完整控制条目并发起部署。
+
+\begin{figure}[htb!]
+    \centering
+    \subfloat[评审智能体结构化评审输出\label{fig:ui_review_detail}]{%
+        \includegraphics[width=0.85\textwidth,height=0.28\textheight,keepaspectratio]{images/ui/review详情}%
+    }\\[4pt]
+    \subfloat[候选策略集合最终生成结果展示\label{fig:ui_strategy_final}]{%
+        \includegraphics[width=0.85\textwidth,height=0.28\textheight,keepaspectratio]{images/ui/策略优化的最终生成}%
+    }
+    \bicaption{评审智能体输出与候选策略最终展示}{Critic agent output and final candidate strategy display}
+    \label{fig:ui_review_final_group}
+\end{figure}
+
+\subsection{质量评审}
+
+质量评审模块为安全专家提供安全策略的排序式评价界面。评审阶段收集围绕有效性、干扰风险与前置条件的逐项反馈，驱动策略优化。専家可展开候选策略详情面板（图~\ref{fig:ui_ranking_detail}），查看完整执行步骤与策略 JSON 内容，以支持基于实施细节的评价。排序阶段如图~\ref{fig:ui_ranking} 所示，专家对同类型候选进行拖拽排序并填写三维维度评分；系统提交前执行候选策略完整性校验，确认后将排序结果、评分评价与评审员标识写入持久层，形成可审计的偏好数据集。
+
+\begin{figure}[htb!]
+    \centering
+    \subfloat[候选策略详情面板（包含完整执行步骤与 JSON 内容）\label{fig:ui_ranking_detail}]{%
+        \includegraphics[width=0.85\textwidth,height=0.35\textheight,keepaspectratio]{images/ui/人工排序-策略详情}%
+    }\\[4pt]
+    \subfloat[策略拖拽排序主界面\label{fig:ui_ranking}]{%
+        \includegraphics[width=0.85\textwidth,height=0.24\textheight,keepaspectratio]{images/ui/人工排序}%
+    }
+    \bicaption{候选策略详情与拖拽排序界面}{Candidate strategy detail and drag-and-drop ranking interface}
+    \label{fig:ui_ranking_group}
+\end{figure}
+
+排序提交页面（图~\ref{fig:ui_ranking_submit}）支持填写排序理由并查看历史排序记录，历史记录按三个评价维度分别展示每次提交的候选策略排序结果，便于对比多轮评审意见的演变趋势。
+
+\begin{figure}[htb!]
+    \centering
+    \includegraphics[width=0.85\textwidth,height=0.5\textheight,keepaspectratio]{images/ui/人工排序-提交保存}
+    \bicaption{排序提交页面（包含排序理由输入与历史记录）}{Ranking submission page with reason input and historical ranking records}
+    \label{fig:ui_ranking_submit}
+\end{figure}
+
+\subsection{策略管理}
+
+策略部署管理模块将通过评审的候选策略下发至目标环境，支持 Kubernetes（Python SDK 连接 API Server）与 SSH 两种部署方式。部署前需在目标设置页面（图~\ref{fig:ui_deploy_target}）配置连接参数：kubectl 类动作通过 Python SDK 直连 API Server，仅需 kubeconfig 文件路径；SSH 方式则用于执行非 kubectl 的 shell/helm 命令，需配置主机地址、用户名与密钥路径。如图~\ref{fig:ui_deploy_manage} 所示，部署管理面板统一展示跨集群、跨主机的策略实例，记录策略名称、目标对象、部署时间与状态。
+
+\begin{figure}[htb!]
+    \centering
+    \subfloat[部署目标连接配置页面\label{fig:ui_deploy_target}]{%
+        \includegraphics[width=0.85\textwidth,height=0.35\textheight,keepaspectratio]{images/ui/策略部署-部署目标设置}%
+    }\\[4pt]
+    \subfloat[策略部署管理面板\label{fig:ui_deploy_manage}]{%
+        \includegraphics[width=0.85\textwidth,height=0.35\textheight,keepaspectratio]{images/ui/策略部署-部署管理}%
+    }
+    \bicaption{部署目标设置与策略部署管理界面}{Deployment target configuration and strategy deployment management interface}
+    \label{fig:ui_deploy_group}
 \end{figure}
 
 \section{小结}
-本章完成了 KPEAgent 原型系统的设计与实现。需求分析部分明确了两类用户角色和五项功能需求；总体设计部分给出了分层架构、数据模型、详细流程和交互时序；详细设计部分说明了知识库管理、策略生成与优化、专家评审与排序以及策略部署管理四个模块的交互流程与实现方式。这些设计为下一章的实验验证提供了平台支撑。
+本章完成了 KPEDefense 系统的设计与实现。需求分析部分明确了两类用户角色和四项功能需求；总体设计部分给出了分层架构、数据模型、详细流程和交互时序；详细设计部分说明了知识库管理、智能体调度、策略评审以及策略部署管理四个模块的实现与交互方式。

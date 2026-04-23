@@ -1,4 +1,4 @@
-% !TeX root = ../../main.tex
+﻿% !TeX root = ../../main.tex
 \section{案例一：CVE-2022-24768内部权限问题}
 
 \subsection{漏洞详解与复现}
@@ -63,5 +63,6 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 \noindent\textbf{可部署性：}
 该策略依赖的能力均为云原生常用组件，具有较强可落地性。Kubernetes RBAC 与 Argo CD RBAC 均为原生能力，配置可版本化并可审计。Gatekeeper 或 Kyverno 属于成熟的准入控制方案，可按项目逐步推广，并与审计治理配合使用。
 
-就 CVE-2022-24768 而言，本文方法生成的策略能够在权限写入、策略表达和身份映射三个环节收紧攻击面。Kubernetes RBAC 收敛、Argo CD RBAC 加固与 Gatekeeper/Kyverno 准入控制协同后，攻击者难以再借助 \texttt{sync\allowbreak+\allowbreak override} 权限诱导控制平面创建高权限绑定。复现实验表明，策略生效后权限提升路径被阻断。该方案适用于已采用 GitOps 交付模式的 Kubernetes 集群，但仍需配合版本升级。
+就 CVE-2022-24768 而言，KPEDefense 生成的策略能够在权限写入、策略表达和身份映射三个环节收紧攻击面。Kubernetes RBAC 收敛、Argo CD RBAC 加固与 Gatekeeper/Kyverno 准入控制协同后，攻击者难以再借助 \texttt{sync\allowbreak+\allowbreak override} 权限诱导控制平面创建高权限绑定。复现实验表明，策略生效后权限提升路径被阻断。该方案适用于已采用 GitOps 交付模式的 Kubernetes 集群，但仍需配合版本升级。
+
 

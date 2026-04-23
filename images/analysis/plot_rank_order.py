@@ -79,8 +79,12 @@ def _safe_label(name: str) -> str:
     if name is None:
         return ""
     s = str(name)
+    if s == "all":
+        return "KPEDefense"
     if s.startswith("no_"):
-        return "w/o " + s[3:].replace("_", " ")
+        suffix = s[3:].replace("_", " ")
+        display_suffix = suffix.upper() if len(suffix) <= 4 else suffix.capitalize()
+        return "KPEDefense w/o " + display_suffix
     return s.replace("_", " ")
 
 
