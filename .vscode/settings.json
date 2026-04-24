@@ -109,5 +109,6 @@
     "code-runner.runInTerminal": true,
     "code-runner.executorMap": {
         "tex": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"xelatex -synctex=1 -interaction=nonstopmode -file-line-error \\\"$file\\\"; xelatex -synctex=1 -interaction=nonstopmode -file-line-error \\\"$file\\\"\""
-    }
+    },
+    "python.defaultInterpreterPath": "C:\\Users\\HXY\\AppData\\Roaming\\uv\\python\\cpython-3.13.3-windows-x86_64-none\\python.exe"
 }
