@@ -17,11 +17,11 @@ DIMENSIONS = ["有效性", "无干扰性", "可部署性"]
 
 # Paper-friendly LLM legend labels (do not use raw profile keys)
 LLM_LEGEND = [
-    ("qwen", "qwen3-max", "qwen.png"),
-    ("deepseek", "deepseek-v3.1", "deepseek.png"),
-    ("glm", "glm4.5", "glm.png"),
-    ("gpt", "gpt5", "gpt.png"),
-    ("grok", "grok4", "grok.png"),
+    ("qwen", "Qwen3-Max", "qwen.png"),
+    ("deepseek", "DeepSeekV3.2", "deepseek.png"),
+    ("glm", "GLM-4.5", "glm.png"),
+    ("gpt", "GPT-5", "gpt.png"),
+    ("grok", "Grok 4", "grok.png"),
 ]
 
 LLM_BADGES = {
@@ -64,11 +64,11 @@ plt.rcParams.update(
 
 COMPACT_RANK_FIGSIZE = (8.6, 4.7)
 COMPACT_ICON_FIGSIZE = (9.0, 4.9)
-COMPACT_TITLE_SIZE = 17
-COMPACT_AXIS_LABEL_SIZE = 14
-COMPACT_TICK_SIZE = 13
-COMPACT_LEGEND_TITLE_SIZE = 12
-COMPACT_LEGEND_TEXT_SIZE = 11
+COMPACT_TITLE_SIZE = 19
+COMPACT_AXIS_LABEL_SIZE = 16
+COMPACT_TICK_SIZE = 15
+COMPACT_LEGEND_TITLE_SIZE = 14
+COMPACT_LEGEND_TEXT_SIZE = 13
 COMPACT_MARKER_SIZE = 210
 COMPACT_MARKER_LEGEND_SIZE = 6.5
 COMPACT_ICON_ZOOM = 0.17
@@ -329,21 +329,6 @@ def _add_llm_legend(fig: plt.Figure, ranks: pd.DataFrame, llm_dir: Path) -> None
     # Noticeably further right to improve overall balance
     ax_leg = fig.add_axes([0.80, 0.16, 0.18, 0.68])
     ax_leg.set_axis_off()
-
-    # Bordered legend panel (white background)
-    ax_leg.add_patch(
-        plt.Rectangle(
-            (0.0, 0.0),
-            1.0,
-            1.0,
-            transform=ax_leg.transAxes,
-            facecolor="#FFFFFF",
-            edgecolor="#1F1F1F",
-            linewidth=0.9,
-            zorder=-10,
-        )
-    )
-
 
     n = len(legend_items)
     ys = np.linspace(0.82, 0.12, n)

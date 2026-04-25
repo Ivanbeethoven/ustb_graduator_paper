@@ -1,25 +1,22 @@
 
 \chapter{案例分析}\label{chap:case}
-本章选取 7 个典型 CVE 案例，考察 KPEDefense 在真实云原生权限提升漏洞场景中的表现。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{三维质量验证}三个阶段：在可控环境中重现攻击路径；基于 KPEDefense 生成监控策略与防护策略候选；从有效性 $E$、无干扰性 $I$ 与可部署性 $D$ 三个维度评估策略的阻断效果与工程可行性。
+本章选取 7 个典型 CVE 案例，考察 KPEDefense 针对真实云原生权限提升漏洞进行安全防控的有效性。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{部署验证}三个阶段。
 
 
 \section{案例分析实验设计}
 
-\subsection{CVE 案例选择标准}
+\subsection{CVE 案例选择}
 
-为保证案例具有代表性且可复现，本文按以下标准筛选 CVE：
+为保证案例具有代表性且可复现，本文按以下准则选择云原生权限提升CVE作为案例：
 
-\noindent\hangindent=2em\hangafter=1 \textbf{风险等级与影响范围}：CVSS 评分 $\geq 5.0$，在 Kubernetes 生态中影响较广，如核心组件或高使用率第三方应用漏洞。
-
-\noindent\hangindent=2em\hangafter=1 \textbf{成因类型覆盖}：所选案例覆盖两级成因分类框架的主要类别，包括配置缺陷、安全逻辑缺陷、敏感信息泄露与代码注入，以检验方法的适用范围。
-
-\noindent\hangindent=2em\hangafter=1 \textbf{可复现性}：具备公开 PoC 或完整技术细节，可在隔离环境中安全复现；受影响版本与修复版本明确，便于对比验证。
-
-\noindent\hangindent=2em\hangafter=1 \textbf{防控价值}：具有明确的临时防控需求，如补丁尚未发布、业务无法立即升级或需要多层防御。
-
+\begin{itemize}
+    \item \textbf{风险等级与影响范围}：CVSS 评分 $\geq 5.0$，在 Kubernetes 生态中影响较广，如核心组件或高使用率第三方应用漏洞。
+    \item \textbf{成因类型覆盖}：所选案例覆盖两级成因分类框架的主要类别，包括配置缺陷、安全逻辑缺陷、敏感信息泄露与代码注入等，验证方法的适用范围。
+    \item \textbf{可复现性}：具备公开 PoC 或完整技术细节，可在隔离环境中安全复现；受影响版本与修复版本明确，便于对比验证。
+\end{itemize}
 
 \begin{table}[htb]
-    \centering\bicaption{本章所选 CVE 案例一览}{Overview of selected CVE cases in this chapter}\label{tab:cve-summary}
+    \centering\bicaption{本章所选云原生权限提升 CVE 案例}{Overview of selected CVE cases in this chapter}\label{tab:cve-summary}
     \noindent\renewcommand{\arraystretch}{1.3}
     \setlength{\tabcolsep}{4pt}
     \begin{tabularx}{0.92\linewidth}{c c c c X}
@@ -39,8 +36,7 @@
 
 
 \subsection{实验环境与复现流程}
-
-\noindent\hangindent=2em\hangafter=1 \textbf{环境搭建}。所有漏洞复现与策略验证均在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总于表~\ref{tab:chap6-env}。
+\textbf{环境搭建}。所有漏洞复现与策略验证均在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总于表~\ref{tab:chap6-env}。
 
 \begin{table}[htb]
     \centering\bicaption{实验环境软硬件配置与工具版本汇总}{Summary of hardware and software environment configuration and tool versions}\label{tab:chap6-env}
@@ -49,7 +45,7 @@
         \toprule
         项目 & 配置 \\
         \midrule
-        计算资源 & 本地虚拟机集群，96核CPU，96GB内存，200GB存储 \\
+        计算资源 & 本地虚拟机，96核CPU，96GB内存，200GB存储 \\
         集群工具与版本 & Minikube v1.18.1；Kubernetes v1.18.3\\
         节点规模与规格 & 1个控制节点与2个工作节点；每节点4核CPU/8GB内存 \\
         CNI/网络策略 & Calico v3.28.2, Kubernetes-Network-Policy v1.5.5 \\
@@ -60,20 +56,13 @@
     \end{tabularx}
 \end{table}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现流程}。对每个 CVE，按以下步骤进行复现：
+\textbf{漏洞案例分析流程}。对每个权限提升CVE，结合本文方法依据如下步骤进行：
 \begin{enumerate}
-    \item \textbf{基线环境准备}：部署受影响版本的目标组件，创建模拟业务负载与低权限身份（如 ServiceAccount）；
-    \item \textbf{攻击执行}：根据公开 PoC 或技术分析模拟权限提升攻击，记录攻击步骤与异常行为；
-    \item \textbf{影响确认}：验证是否成功实现权限提升（如获取集群管理员权限、访问受限资源等）。
+    \item \textbf{漏洞复现}：为有效进行安全策略验证，需根据CVE描述进行漏洞复现。部署受影响版本的目标组件，创建模拟业务负载与低权限身份；根据公开 PoC 或技术分析模拟权限提升攻击，记录攻击步骤与异常行为；验证是否成功实现权限提升。
+    \item \textbf{安全策略生成}：基于本文方法和KPEDefense 系统，使用至少三个大模型生成候选安全策略，并通过静态评估从有效性 $E$（阻断攻击路径）、无干扰性 $I$（对业务的影响）、可部署性 $D$（配置完整性与可执行性）三个维度综合评估，筛选出一个最佳的安全策略集合。
+    \item \textbf{策略验证}：部署生成的安全策略，并根据漏洞复现执行攻击测试，验证策略能否对漏洞进行有效监控和防护，并根据三维质量评价体系分析结果。
 \end{enumerate}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{策略生成与验证}。复现成功后，使用 KPEDefense 生成安全策略并进行三维评价：
-\begin{enumerate}
-    \item \textbf{安全上下文构建}：将 CVE 公告、组件文档、攻击日志与社区讨论输入向量知识库，检索漏洞相关证据；
-    \item \textbf{策略生成}：基于安全上下文与漏洞分析结果，通过思维链推理与评审反馈优化生成候选策略；
-    \item \textbf{策略部署与复测}：在测试集群部署生成策略（如 NetworkPolicy、RBAC 规则、Gatekeeper 策略等），重新执行攻击验证阻断效果；
-    \item \textbf{三维质量评价}：从有效性 $E$（阻断攻击路径）、无干扰性 $I$（对业务的影响）、可部署性 $D$（配置完整性与可执行性）三个维度综合评估。
-\end{enumerate}
 
 \input{contents/chap6/case1.tex}
 

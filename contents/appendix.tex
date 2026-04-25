@@ -1,4 +1,4 @@
-﻿
+
 \appendix
 
 
@@ -155,7 +155,7 @@ CVE-2025-32445    & Argo Events                                   & 内部权限
 	\end{tabular}
 \end{table}
 
-\section{KubeGuard 权限提升检测规则汇总}\label{app:pe-detection-rules}
+\textbf{KubeGuard 权限提升检测规则汇总}
 
 本节补充给出前期工作 KubeGuard 在四类权限提升场景下采用的代表性检测规则汇总。
 
@@ -283,7 +283,7 @@ kubectl auth can-i '*' '*' --as bob
 
 \section{策略代码清单}\label{app:cve-2022-24768-policy}
 
-\subsection{Kubernetes RBAC：收敛 AppProject 的写权限}
+\textbf{Kubernetes RBAC：收敛 AppProject 的写权限}
 \begin{AppendixCode}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -330,7 +330,7 @@ subjects:
 	apiGroup: rbac.authorization.k8s.io
 \end{AppendixCode}
 
-\subsection{Argo CD RBAC：默认只读 + 高风险能力隔离}
+\textbf{Argo CD RBAC：默认只读 + 高风险能力隔离}
 \begin{AppendixCode}
 apiVersion: v1
 kind: ConfigMap
@@ -358,7 +358,7 @@ data:
 	policy.default: role:readonly
 \end{AppendixCode}
 
-\subsection{准入控制：Gatekeeper（推荐）}\label{app:cve-2022-24768-gatekeeper}
+\textbf{准入控制：Gatekeeper（推荐）}\label{app:cve-2022-24768-gatekeeper}
 \begin{AppendixCode}
 apiVersion: templates.gatekeeper.sh/v1beta1
 kind: ConstraintTemplate
@@ -446,7 +446,7 @@ spec:
 		enforceProjPrefix: true
 \end{AppendixCode}
 
-\subsection{准入控制：Kyverno（替代方案）}\label{app:cve-2022-24768-kyverno}
+\textbf{准入控制：Kyverno（替代方案）}\label{app:cve-2022-24768-kyverno}
 \begin{AppendixCode}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -532,14 +532,14 @@ kubectl get clusterprovision <name> -n your-namespace -o yaml
 
 \section{策略代码清单}\label{app:cve-2025-2241-policy}
 
-\subsection{1）立刻收敛 \texttt{ClusterProvision} 的读取权限（RBAC）}
+\textbf{1）立刻收敛 \texttt{ClusterProvision} 的读取权限（RBAC）}
 \begin{AppendixCode}
 oc adm policy who-can get clusterprovision
 oc adm policy who-can list clusterprovision
 oc adm policy who-can watch clusterprovision
 \end{AppendixCode}
 
-\subsection{2）对读取行为启用审计并联动告警}
+\textbf{2）对读取行为启用审计并联动告警}
 \begin{AppendixCode}
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -551,13 +551,13 @@ rules:
 		resources: ["clusterprovisions"]
 	omitStages: ["RequestReceived"]
 \end{AppendixCode}
-\subsection{3）缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
+\textbf{3）缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
 \begin{AppendixCode}
 oc get clusterprovision -n <ns>
 oc delete clusterprovision -n <ns> <name>
 \end{AppendixCode}
 
-\subsection{4）"敏感字段守护"检测（Gatekeeper/Kyverno，建议审计模式）}
+\textbf{4）"敏感字段守护"检测（Gatekeeper/Kyverno，建议审计模式）}
 \begin{AppendixCode}
 sensitive_key(k) {
 				lk := lower(k)
@@ -683,7 +683,7 @@ ClusterRole: cfs-csi-cluster-role
 
 \section{策略代码清单}
 
-\subsection{1）RBAC 最小化：移除 ClusterRole 中的 \texttt{secrets} 权限}
+\textbf{1）RBAC 最小化：移除 ClusterRole 中的 \texttt{secrets} 权限}
 
 \begin{AppendixCode}
 cat <<'EOF' | kubectl apply -f -
@@ -707,7 +707,7 @@ EOF
 kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
 \end{AppendixCode}
 
-\subsection{2）准入防回归（OPA Gatekeeper）：禁止创建包含 secrets 读取动词的 ClusterRole}
+\textbf{2）准入防回归（OPA Gatekeeper）：禁止创建包含 secrets 读取动词的 ClusterRole}
 \begin{AppendixCode}
 has_secrets_rule(rule) {
 				rule.resources[_] == "secrets"
@@ -745,7 +745,7 @@ spec:
 EOF
 \end{AppendixCode}
 
-\subsection{3）审计与检测：对 \texttt{secrets} 枚举行为进行可观测化}
+\textbf{3）审计与检测：对 \texttt{secrets} 枚举行为进行可观测化}
 \begin{AppendixCode}
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -809,7 +809,7 @@ kubectl -n $NAMESPACE run netcheck \
 
 \section{策略代码清单}
 
-\subsection{1）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
+\textbf{1）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
 \begin{AppendixCode}
 cat <<'EOF' | kubectl apply -f -
@@ -871,6 +871,150 @@ kubectl -n $FLUX_NS logs deploy/kustomize-controller --tail=200
 kubectl -n $APP_NS get events --sort-by=.lastTimestamp | findstr /i "Kustomization Reconciliation"
 \end{AppendixCode}
 
+\section{策略清单}
+
+\textbf{1）前置校验：CI 流水线拦截异常路径引用}
+\begin{AppendixCode}
+# CI 阶段对 kustomization.yaml 进行路径穿越检查
+# 以下脚本可嵌入 GitHub Actions / GitLab CI 等流水线
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+VIOLATIONS=0
+
+# 扫描所有 kustomization.yaml 中的路径字段
+for f in $(find "$REPO_ROOT" -name "kustomization.yaml" \
+           -o -name "kustomization.yml"); do
+  # 检测 resources / patches / components 中的 .. 穿越
+  if grep -Pn '^\s*(- |path:\s*).*\.\.' "$f"; then
+    echo "[BLOCK] 路径穿越检测: $f"
+    VIOLATIONS=$((VIOLATIONS + 1))
+  fi
+done
+
+if [ "$VIOLATIONS" -gt 0 ]; then
+  echo "共发现 $VIOLATIONS 处异常路径引用，提交被拦截"
+  exit 1
+fi
+echo "路径校验通过"
+\end{AppendixCode}
+
+\textbf{2）权限收敛：限制 Flux 源仓库写入与 Kustomization 同步范围}
+\begin{AppendixCode}
+# 收紧 Flux GitRepository 与 Kustomization 的 ServiceAccount 权限
+cat <<'EOF' | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flux-kustomize-restricted
+  namespace: flux-system
+rules:
+- apiGroups: ["kustomize.toolkit.fluxcd.io"]
+  resources: ["kustomizations"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["source.toolkit.fluxcd.io"]
+  resources: ["gitrepositories"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-kustomize-restricted-binding
+  namespace: flux-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: flux-kustomize-restricted
+subjects:
+- kind: ServiceAccount
+  name: flux-restricted-sa
+  namespace: flux-system
+EOF
+
+kubectl -n flux-system get role,rolebinding | \
+  findstr /i "flux-kustomize-restricted"
+\end{AppendixCode}
+
+\textbf{3）运行时加固：收紧 kustomize-controller 容器安全上下文}
+\begin{AppendixCode}
+# 为 kustomize-controller 添加只读根文件系统与非特权约束
+kubectl -n flux-system patch deploy kustomize-controller \
+  --type=strategic -p '
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
+'
+
+# 验证安全上下文已生效
+kubectl -n flux-system get deploy kustomize-controller \
+  -o jsonpath='{.spec.template.spec.containers[0].securityContext}' | \
+  python -m json.tool
+\end{AppendixCode}
+
+\textbf{4）网络隔离：限制 kustomize-controller 出站访问}
+\begin{AppendixCode}
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kustomize-controller-egress
+  namespace: flux-system
+spec:
+  podSelector:
+    matchLabels:
+      app: kustomize-controller
+  policyTypes: ["Egress"]
+  egress:
+  # 仅允许 DNS 解析
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # 仅允许访问 source-controller 拉取制品
+  - to:
+    - podSelector:
+        matchLabels:
+          app: source-controller
+    ports:
+    - protocol: TCP
+      port: 9090
+  # 允许访问 Kubernetes API Server
+  - to:
+    - ipBlock:
+        cidr: <API-SERVER-CIDR>/32
+    ports:
+    - protocol: TCP
+      port: 443
+EOF
+
+kubectl -n flux-system get networkpolicy | \
+  findstr /i "kustomize-controller"
+\end{AppendixCode}
+
 \chapter{CVE-2022-29171 复现步骤与策略清单}\label{app:cve-2022-29171}
 
 \section{漏洞复现详细步骤}
@@ -889,7 +1033,7 @@ kubectl -n $NAMESPACE logs deploy/gitserver --since=10m | findstr /i "gitolite p
 
 \section{策略清单}
 
-\subsection{1）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
+\textbf{1）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
 \begin{AppendixCode}
 NAMESPACE=sourcegraph
 
@@ -973,7 +1117,7 @@ kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc tok
 
 \section{策略清单}
 
-\subsection{权限收敛：RBAC 最小化与项目边界约束}
+\textbf{权限收敛：RBAC 最小化与项目边界约束}
 \begin{AppendixCode}
 apiVersion: v1
 kind: ConfigMap

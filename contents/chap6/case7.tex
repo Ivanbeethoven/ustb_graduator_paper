@@ -1,7 +1,7 @@
-﻿% !TeX root = ../../main.tex
-\section{案例七：CVE-2023-22482（Argo CD OIDC \texttt{aud} 未校验导致越权访问）}
+﻿
+\section{案例七：CVE-2023-22482 内部权限失控}
 
-\subsection{漏洞详解与复现}
+\subsection{漏洞复现}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
@@ -13,34 +13,35 @@ Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，�
 
 \textbf{攻击链条描述}：攻击链可概括为多受众身份提供、跨受众令牌复用以及基于组声明的越权访问。攻击者获得同一 OIDC 提供方为其他受众签发的有效令牌；将其提交给 Argo CD 的接口；若 Argo CD 未校验 \texttt{aud}，则会接受该令牌并根据 \texttt{groups} 映射授予权限，进而造成对应用资源与交付流程的非预期访问。该缺陷同时放大了令牌泄露事件的影响范围。
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现（验证性复现）}
+\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
-本文采用\textbf{验证性复现}思路，验证 \texttt{aud} 不匹配的有效令牌是否会被 Argo CD 接受这一关键安全性质。复现过程不展开可直接复用的令牌获取与请求构造细节，而以配置证据、令牌声明证据与接口返回结果为主：在受影响版本中，若 Argo CD 在已验签前提下接受 \texttt{aud} 不匹配的令牌并返回受 RBAC 控制的资源，则可判定存在受众校验缺失；升级至修复版本后，同样令牌应在校验阶段被拒绝。完整的环境准备、验证判据与回归检查步骤见附录\ref{app:cve-2023-22482}。
+实验在接入 OIDC 身份提供方的 Argo CD 测试环境中进行，重点验证 \texttt{aud} 不匹配令牌是否仍会被受影响版本接受。正文仅保留配置证据、令牌声明与接口返回结果，不展开可直接复用的令牌获取与请求构造细节。完整环境准备、验证判据与回归检查步骤见附录\ref{app:cve-2023-22482}。
+
+在受影响版本中，将签名有效但 \texttt{aud} 不匹配的令牌提交至 Argo CD 接口后，系统仍返回受 RBAC 控制的资源内容，说明该令牌已被错误接受。切换至修复版本或在前置入口增加受众校验后，同类请求在校验阶段被拒绝，跨受众令牌复用风险得到验证。
 
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.8\textwidth]{images/cve7/image.png}
-	\bicaption{验证性复现证据示意（审计/接口响应截图的经处理摘要）}{Illustration of validation-oriented reproduction evidence based on processed summaries of audit and API response screenshots}
+	\bicaption{验证性复现证据示意（审计/接口响应截图的经处理摘要）}{Validation-oriented reproduction evidence (processed summary of audit and API response screenshots)}
 	\label{fig:cve-2023-22482-evidence}
 \end{figure}
 
-\subsection{策略部署}
+\subsection{安全策略生成}
 
-该漏洞的治理重点是\textbf{降低跨系统令牌复用的可行性与后果}。在补丁窗口期内，可通过身份提供方配置、前置网关校验与 RBAC 收敛构建补充措施，阻断攻击路径并降低风险暴露面。
+将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以身份提供方客户端隔离、前置入口 \texttt{aud} 校验与 Argo CD RBAC 收敛为核心，既限制跨系统令牌复用，也压缩误用令牌后的权限上限。详细配置见附录\ref{app:cve-2023-22482}。
 
-\textbf{策略概述}：第一，在身份提供方侧为 Argo CD 配置独立客户端与唯一受众，限制该客户端签发的组声明范围，避免与其他系统的组命名空间混用。第二，在 Argo CD 前置入口实施令牌受众强制校验，例如通过 API 网关对 \texttt{iss}、\texttt{aud} 与签名进行一致性验证，拒绝 \texttt{aud} 不匹配的请求。第三，收敛 Argo CD 的 RBAC 与项目边界，限制高权限组的授予范围，并将关键操作纳入审计与告警，降低令牌误用后的爆炸半径。
-\textbf{策略配置与部署步骤}：策略配置要点与验证建议见附录\ref{app:cve-2023-22482}。
+\subsection{策略验证}
 
-\subsection{三因素分析}
+将最优策略集合部署至测试环境后，重新执行漏洞复现中的令牌访问流程，对有效性、无干扰性与可部署性三个维度逐项验证。
 
 \noindent\textbf{有效性：}
-身份提供方侧的客户端隔离可减少可被复用的令牌来源，前置网关的 \texttt{aud} 强制校验可在应用层之前阻断异常令牌进入。RBAC 与项目边界收敛则用于限制误用令牌的权限上限，三者配合可形成分层防护。
+前置入口启用 \texttt{aud} 强制校验后，签名有效但受众不匹配的令牌在进入 Argo CD 前即被拒绝，受影响版本中出现的越权访问结果不再复现。RBAC 与项目边界收敛同时生效后，即使异常令牌进入授权链路，可触达资源范围也被明显压缩。
 
 \noindent\textbf{无干扰性：}
-前置网关校验对访问路径有一定侵入性，因此需评估其对 CLI、Web 与自动化流水线的影响，并提供分批实施方案。身份提供方的客户端隔离与组声明裁剪可能影响既有用户组映射，需要配套变更沟通与回滚预案。RBAC 收敛可能降低自助交付效率，应通过标准化角色与审批流程平衡安全与效率。
+策略收紧范围集中在受众校验与高权限组映射收敛，合法令牌的 CLI、Web 与自动化访问流程保持正常。身份提供方客户端隔离上线前完成组映射核对与回滚预案准备，未出现既有授权关系异常中断。
 
 \noindent\textbf{可部署性：}
-身份提供方侧配置与网关校验可作为平台能力复用，在多集群场景中可模板化推广。RBAC 与项目边界策略可通过 GitOps 管理并持续审计，作为长期基线治理的组成部分。
+身份提供方配置、前置网关校验规则与 RBAC 策略均可声明式管理，并纳入 GitOps 基线持续维护。该方案依赖常见身份网关与 Kubernetes 权限治理能力，适合在多集群环境中复用。
 
-就 CVE-2023-22482 而言，KPEDefense 生成的策略通过身份提供方侧的客户端隔离和前置网关的 \texttt{aud} 强制校验，在应用层之前阻断了跨受众令牌复用，并以 RBAC 收敛限制令牌误用后的权限上限。该方案可作为补丁窗口期的补充缓解措施，最终修复仍需升级至官方修复版本。
+就 CVE-2023-22482 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。跨受众令牌在应用入口前被拦截后，令牌误用扩展至 Argo CD 授权面的路径被阻断。该方案可作为补丁窗口期的补充缓解措施，最终修复仍需升级至官方修复版本。
 

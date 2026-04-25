@@ -6,24 +6,24 @@
 
 \section{研究动机}
 
-云原生权限提升漏洞防控面临补丁窗口期暴露、专家依赖和工具有效性不足三方面挑战。大语言模型为此提供了新的思路：大语言模型不能直接替代安全准入控制器或运行时系统，但能\textbf{通过漏洞语义进行现有安全工具的领域特定代码生成，从而迅速生成临时性防控策略}。该思路落地须要进一步回答以下三个问题：
+云原生权限提升漏洞防控面临补丁窗口期暴露、专家依赖和工具有效性不足三方面挑战。大语言模型由于生成速度和成本问题不能直接替代安全准入控制器或运行时系统，但能\textbf{通过漏洞语义理解和复杂推理生成Kuberneetes安全监控与防护工具的领域特定语言，从而实现对漏洞的临时性防控}。该思路落地须要进一步回答以下三个问题：
 
-\noindent\hangindent=1em\hangafter=1 (1) \textbf{如何构建面向具体漏洞的安全上下文}。权限提升漏洞的关键信息分散在代码仓库、漏洞公告、Issue/PR 讨论与修复提交等多类来源中，缺少统一的组织方式就很难准确把握漏洞成因、利用前提与影响边界。需建立可检索、可追溯的领域知识库，将分散证据转化为可供大模型使用的安全上下文。
+\noindent\hangindent=1em\hangafter=1 (1) \textbf{如何构建面向具体漏洞的安全上下文}。权限提升漏洞相关的漏洞成因与影响边界等关键信息分散在代码仓库、问题讨论区与修复提交等多类来源中，需建立可检索、可追溯的领域安全知识库，将分散证据精炼为可供大模型使用的安全上下文。
 
-\noindent\hangindent=1em\hangafter=1 (2) \textbf{如何基于漏洞语义生成安全策略代码}。从漏洞理解到策略落地并非单一步骤，而是涉及成因分析、控制点选择、约束方式确定和策略表达生成等多个环节。如何在保证有效性的同时兼顾可执行性与工具适配性，将抽象的漏洞语义转化为面向实际控制面的具体措施，是临时防控策略生成中的关键问题。
+\noindent\hangindent=1em\hangafter=1 (2) \textbf{如何基于漏洞语义生成安全策略代码}。大语言模型的单步问答不能实现从漏洞语义理解到防控策略的有效生成。漏洞成因分析、攻击路径分析、安全工具选择以及策略代码生成等子问题均能影响安全策略生成质量，应设计完整工作流分析上述问题。
 
-\noindent\hangindent=1em\hangafter=1 (3) \textbf{如何评估策略代码质量}。由于大模型幻觉，生成的策略代码可能防控覆盖不足或干扰正常业务，需对策略进行质量评价。然而策略代码由于异构性和人工评估成本，存在较大的测试预言问题\cite{oracleproblem2015survey}，需保证评估效率的同时提升评估结果的可靠性与一致性。
+\noindent\hangindent=1em\hangafter=1 (3) \textbf{如何评估安全策略中代码质量}。由于大语言模型幻觉问题，生成的安全工具DSL代码可能存在防控覆盖能力不足或干扰正常业务等问题，需对安全策略进行质量评价。然而策略内代码由于异构性和人工评估成本而存在测试预言问题\cite{oracleproblem2015survey}，需保证评估效率的同时提升评估结果的可靠性与一致性。
 
-本文提出 KPEDefense，一种面向云原生权限提升漏洞的智能化防控方法，以安全知识库解决安全上下文构建问题,以多智能体协同方式组织策略代码生成工作流，并构建基于排序的多模型质量评价方法。
+本文提出 KPEDefense，一种面向云原生权限提升漏洞的智能化防控方法，以安全知识库解决安全上下文构建问题,以多智能体协同工作流组织策略代码生成工作流，并构建基于排序的多源模型质量量化评估方法。
 
 \section{方法框架}
 
-本文云原生权限提升漏洞防控问题建模为面向具体漏洞临时防控策略生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，形成从漏洞理解到策略生成与质量评估的整体方法链。如图~\ref{fig:overall-framework}所示，方法由三个部分构成：云原生安全知识库部分从第三方开源应用的开源代码仓库中的多源信息中采集上下文特征，形成包含 CVE/CWE 统计、权限提升风险分类框架与向量化领域知识的安全知识库，为后续分析提供可检索的证据支撑；基于多智能体的策略生成与优化部分以权限提升 CVE 为输入，通过安全知识检索、代码生成、代码评估、代码优化等多智能体协同工作流生成安全策略候选集合；策略代码质量评估部分采用大模型排名式度量指标进行静态评估。此外动态评估通过案例分析对安全策略的有效性进行实证验证（见章节~\ref{chap:case}）。下文从基本概念定义（\ref{subsec:def} 节）、安全知识库构建（\ref{subsec:kb} 节）、多智能体策略生成与优化（\ref{subsec:agent} 节）以及策略代码质量评估（\ref{subsec:quality} 节）四个方面展开。
+本文云原生权限提升漏洞防控问题建模为面向具体漏洞临时防控策略生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，形成从漏洞理解到策略生成与质量评估的整体方法。本方法法三个部分构成如图~\ref{fig:overall-framework}所示：云原生安全知识库部分从第三方开源应用的开源代码仓库中的多源信息中采集上下文特征，形成包含 CVE/CWE 统计、权限提升风险分类框架与向量化领域知识的安全知识库，为后续分析提供可检索的证据支撑；基于多智能体的策略生成与优化部分以权限提升 CVE 为输入，通过安全知识检索上下文构建、思维链推到、反馈优化等多智能体协同工作流生成安全策略候选集合；策略代码质量评估部分采用大模型排名式多维量化指标进行静态评估。此外动态评估通过案例分析对安全策略的有效性进行实证验证（见章节~\ref{chap:case}）。下文从基本概念定义（\ref{subsec:def} 节）、安全知识库构建（\ref{subsec:kb} 节）、多智能体策略生成与优化（\ref{subsec:agent} 节）以及策略代码质量评估（\ref{subsec:quality} 节）四个方面展开。
 
 \begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/总体框架.png}
-    \bicaption{基于多智能体的策略化漏洞防控研究总体框架}{Overall multi-agent framework for strategy-based vulnerability prevention and control based on large language models}\label{fig:overall-framework}
+    \bicaption{基于多智能体的策略化漏洞防控研究总体框架}{Overall framework of multi-agent strategy-based vulnerability prevention and control}\label{fig:overall-framework}
 \end{figure}
 
 \newcounter{flatdefinition}
@@ -88,7 +88,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.92\textwidth]{images/chap3_cve_database.png}
-    \bicaption{云原生权限提升漏洞知识库构建}{Overview of the cloud-native privilege escalation vulnerability knowledge base construction}\label{fig:cve-database}
+    \bicaption{云原生权限提升漏洞知识库构建流程}{Construction of the cloud-native privilege escalation vulnerability knowledge base}\label{fig:cve-database}
 \end{figure}
 
 
@@ -107,9 +107,9 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 
 \subsubsection{3）漏洞分类}
 
-漏洞样本的分类方式直接影响后续策略生成的有效性。为此，本文构建了面向策略生成场景的两级成因分类框架，旨在为模型提供稳定且可解释的风险语义线索，同时可以提示安全工具类型的使用。
+漏洞样本的分类方式影响后续策略生成方向。为此，本文构建了面向策略生成场景的两级成因分类框架，旨在为模型提供稳定且可解释的风险语义线索，同时可以提示安全工具类型的使用。
 
-为建立该分类框架，首先参考 CVE 采用的弱点分类体系 CWE（Common Weakness Enumeration）。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对应多个弱点条目，不同条目在抽象层次上也可能彼此交叉。在本文收集的 55 个权限提升漏洞中，有 20 个样本同时关联两个及以上 CWE 标签，占比 36\%。为更客观地反映 CWE 分布，统计时令每个 CVE 的总权重为 1，多标签样本按标签数平均分配。结果表明，权限提升漏洞特征丰富，而 CWE 的类目划分并不能指出权限提升漏洞攻击的关键缺陷或攻击路径。
+为建立该分类框架，首先参考现有权限提升漏洞CVE 采用的弱点分类体系 CWE（Common Weakness Enumeration）。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对应多个弱点条目，不同条目在抽象层次上也可能彼此交叉。在本文收集的 55 个权限提升漏洞中，有 20 个样本同时关联两个及以上 CWE 标签，占比 36\%。为更客观地反映 CWE 分布，统计时令每个 CVE 的总权重为 1，多标签样本按标签数平均分配。结果表明，权限提升漏洞特征丰富，而 CWE 的类目划分并不能指出权限提升漏洞攻击的关键缺陷或攻击路径。
 
 \begin{figure}[htb]
     \centering
@@ -187,15 +187,15 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 上述流程得到的向量知识库为后续策略生成提供了可追溯的证据支撑：模型分析漏洞和对应防控手段时可检索相关事实与上下文片段，并通过来源标识完成定位与复核。
 
 
-\subsection{基于多智能体的策略生成与优化}\label{subsec:agent}
+\subsection{基于多智能体的安全策略生成与优化}\label{subsec:agent}
 
 
-策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，在不同生成配置 $g=(a,h)$ 下开展多次独立生成，并将各配置输出的安全策略子集按定义~\ref{def:candidate-strategy-set} 汇合为候选策略集合 $\Pi_v$。如图~\ref{fig:method}所示，整个工作流分为安全上下文构建、基于漏洞分析思维链的策略生成、基于评审反馈的策略优化三个步骤，分别简写为 $\text{RAG}$, $\text{COT}$ 和 $\text{Feedback}$。
+策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，在不同生成配置 $g$ 下开展多次独立生成，并将各配置输出的安全策略子集按定义~\ref{def:candidate-strategy-set} 汇合为候选策略集合 $\Pi_v$。如图~\ref{fig:method}所示，整个工作流分为安全上下文构建、基于漏洞分析思维链的策略生成、基于评审反馈的策略优化三个步骤，分别简写为 $\text{RAG}$, $\text{COT}$ 和 $\text{Feedback}$。
 
 \begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/method.png}
-    \bicaption{多智能体协同的策略化漏洞防控工作流}{Multi-agent collaborative framework for strategy-based vulnerability prevention and control}\label{fig:method}
+    \bicaption{多智能体协同的策略化漏洞防控工作流}{Multi-agent collaborative workflow for strategy-based vulnerability prevention and control}\label{fig:method}
 \end{figure}
 
 
@@ -284,7 +284,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 合并后构成当前生成配置下的候选子集；若信息不足，显式说明 assumptions。
     \end{BVerbatim}
     \end{tcolorbox}
-    \bicaption{策略生成智能体提示词示例}{Simplified prompt template for the strategy generation agent}\label{fig:prompt-strategy-gen}
+    \bicaption{策略生成智能体提示词简化示例}{Simplified prompt template for the strategy generation agent}\label{fig:prompt-strategy-gen}
 \end{figure}
 
 策略对象为防控条目的集合，每个条目采用 $\tau$（控制类型）、$m$（控制机理）与 $\mathbf{a}$（执行表达序列）三字段模式。策略可包含多条不同类型的控制措施，覆盖监控与防护等多重目标。候选策略至少需覆盖明确的防控目标、包含可验证的实施步骤，并对潜在副作用与回滚边界作出说明。候选策略进入评估前须经规范化整理：统一字段格式、补齐必要步骤、清理冗余信息，并在证据不足处显式标记假设条件与前置依赖。
@@ -313,7 +313,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 显式标注待补充信息。
     \end{BVerbatim}
     \end{tcolorbox}
-    \bicaption{策略评审智能体提示词示例}{Simplified prompt template for the strategy review agent}\label{fig:prompt-strategy-review}
+    \bicaption{策略评审智能体提示词简化示例}{Simplified prompt template for the strategy review agent}\label{fig:prompt-strategy-review}
 \end{figure}
 
 
@@ -336,14 +336,18 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 策略为防控条目集合 {e_1, e_2, ...}，每个 e_i = <t, m, a>。
     \end{BVerbatim}
     \end{tcolorbox}
-    \bicaption{策略优化智能体提示词示例}{Simplified prompt template for the strategy optimization agent}\label{fig:prompt-strategy-optimize}
+    \bicaption{策略优化智能体提示词简化示例}{Simplified prompt template for the strategy optimization agent}\label{fig:prompt-strategy-optimize}
 \end{figure}
 
 \subsection{策略代码质量评估}\label{subsec:quality}
 
+
+
+
 策略代码质量评估有两方面意义：一方面可在候选策略集合内识别质量差异，从中选出最优策略；另一方面，构建了一种评估基准，用于比较不同大模型与智能体工作流的生成质量，以期为生产环境提供有效参考。大语言模型在绝对评分任务中难以形成跨样本一致的内部尺度函数，易受文本长度、表达风格与候选顺序等非语义因素影响，产生系统性偏置~\cite{wu2024scoring,wang2023fair,hwang2025persuasion}；排序任务将评价约化为局部比较，有利于降低尺度漂移与偏置累积，结果与人类评审的一致性通常更高~\cite{velez2025writing,liu2023geval,wang2025trustjudge}。
 
-为此本文提出三维质量评价体系：以有效性、无干扰性、可部署性三个维度刻画策略质量，定义了数值型的量化指标，并提供详细的评价方法。
+安全策略代码的质量需从多维度进行综合评估。具体而言，（1）有效性：安全策略应能准确检测并有效防御与漏洞相关的权限提升攻击；（2）无干扰性：策略在运行时可能过度限制功能权限，故应最大限度降低对Kubernetes集群其他业务正常运行的干扰；（3）可部署性：策略代码应能够快速部署至Kubernetes集群，其中的策略条目${e}$应在保持精简的前提下确保有效性。基于上述考量，本文构建了一种三维质量评价体系，从有效性、无干扰性及可部署性三个维度对策略质量进行形式化刻画，定义了相应的数值型量化指标，并给出了针对安全策略基于多源模型排序的静态方法。
+
 
 \begin{flatdefinition}{三维质量向量}\label{def:quality-vector}
 一个安全策略的质量向量量化为一个三维0~1的数值向量，数值越高表明质量越好：
@@ -407,7 +411,7 @@ t3: "节点加固：find /opt/cni/bin -perm -4000 定期检查 SUID 文件..."
     src: Calico_Security_Guide.md
     \end{BVerbatim}
     \end{tcolorbox}
-    \bicaption{漏洞实例 $v$ 与安全上下文 $c$ 示例}{Example of vulnerability instance $v$ and security context $c$}
+    \bicaption{漏洞实例 $v$ 与安全上下文 $c$ 示例}{Example of vulnerability instance $v$ and corresponding security context $c$}
     \label{fig:chap3-v-context}
 \end{figure}
 
@@ -474,7 +478,7 @@ spec:
                     namespaces: ["kube-system","calico-system"]
     \end{Verbatim}
     \end{tcolorbox}
-    \bicaption{针对CCVE-2024-33522漏洞生成的安全策略代码}{Supplementary Falco monitoring rule and Kyverno admission control policy example}\label{fig:chap3-falco-kyverno}
+    \bicaption{针对CVE-2024-33522漏洞生成的安全策略代码}{Security policy code generated for CVE-2024-33522}\label{fig:chap3-falco-kyverno}
 \end{figure}
 
 \noindent\textbf{步骤 3（对应 \ref{subsec:quality} 节）：安全策略评审}

@@ -1107,11 +1107,10 @@ def plot_judge_consistency(csv3: pd.DataFrame, out_dir: Path) -> None:
                 dim_mean["std_rank"].astype(float).tolist(),
                 color=_bar_palette(len(dim_mean), monochrome=True),
             )
-            plt.ylabel("平均标准差", fontsize=12)
-            plt.xlabel("维度", fontsize=12)
-            plt.title("按维度：评审一致性标准差", fontsize=14, pad=12)
+            plt.ylabel("平均标准差", fontsize=15)
+            plt.xlabel("维度", fontsize=15)
             ax = plt.gca()
-            ax.bar_label(bars, fmt="{:.2f}", fontsize=9, padding=2)
+            ax.bar_label(bars, fmt="{:.2f}", fontsize=12, padding=2)
             _style_axes(ax)
             plt.tight_layout()
             plt.savefig(plots_dir / "judge_dispersion_by_dimension.png", dpi=200)

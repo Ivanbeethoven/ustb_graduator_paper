@@ -1,7 +1,7 @@
-﻿% !TeX root = ../../main.tex
-\section{案例二：CVE-2025-2241（Hive \texttt{ClusterProvision} 敏感信息泄露）}
+﻿
+\section{案例二：CVE-2025-2241 敏感信息泄露}
 
-\subsection{漏洞详解与复现}
+\subsection{漏洞复现}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
@@ -30,42 +30,27 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
-本案例复现目标是验证：\textbf{无 \texttt{Secret} 访问权限但可读 \texttt{ClusterProvision} 的用户}，是否可从对象中提取到 vCenter 凭据。
-由于该漏洞涉及敏感凭据泄露，本文仅给出\textbf{受控测试环境}的复现要点，详细 YAML 与命令序列见附录\ref{app:cve-2025-2241}。
+实验在部署 ACM/MCE 与 Hive 的 OpenShift 测试集群中进行，以具备 \texttt{ClusterProvision} 读取权限、但无 \texttt{Secret} 访问权限的低权身份接入。vSphere 测试专用 vCenter 账号采用最小权限配置，详细 YAML 与命令序列见附录\ref{app:cve-2025-2241}。
 
-\textbf{环境配置}：测试集群为 OpenShift 或 Kubernetes，并已部署 ACM/MCE 与 Hive，具体版本以厂商公告与实验环境为准。基础设施侧需要可用的 vSphere 环境与测试专用的 vCenter 账号，建议采用最小权限配置。权限模型侧需准备至少一个只读主体，其具备 \texttt{ClusterProvision} 的读取权限但不具备 \texttt{Secret} 的读取权限，用于验证旁路泄露条件。
+触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
 
-\textbf{攻击步骤（摘要）}：
-\begin{enumerate}
-	\item 创建 vSphere 集群供应配置（Hive \texttt{ClusterDeployment} 等相关对象），触发供应流程；
-	\item 使用低权限但可读 \texttt{ClusterProvision} 的身份读取对象并导出 YAML；
-	\item 在输出中定位 vCenter 用户名/密码等敏感字段（例如 \texttt{status.\allowbreak vCenter.\allowbreak credentials\allowbreak.*} 或同类结构）。
-\end{enumerate}
+\subsection{安全策略生成}
 
-\textbf{攻击结果}：若在 \texttt{ClusterProvision} 的可读字段中发现明文凭据，则说明存在经由 CR 状态字段的敏感信息旁路泄露；该风险不依赖 \texttt{Secret} 读取权限，属于权限边界外泄。
+将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以 \texttt{ClusterProvision} 读取权限收敛与对象生命周期治理为核心，覆盖 CR 访问控制、敏感字段审计与供应完成后的对象清理，详细配置见附录\ref{app:cve-2025-2241}。
 
-\subsection{策略部署}
-本案例侧重敏感信息泄露的多层次控制，通过\textbf{防护策略}收敛读取权限面，通过\textbf{监控策略}缩短暴露时间。
+\subsection{策略验证}
 
-\textbf{策略概述}：该方案从\textbf{防护策略}（身份与权限、准入检测）与\textbf{监控策略}（审计与告警、资源生命周期治理）四个层面分层实施。具体方法包括：
-\begin{itemize}
-    \item \textbf{防护策略}：收敛 $\texttt{ClusterProvision}$ 的读取权限；采用 Gatekeeper 或 Kyverno 以 $\texttt{dryrun/Audit}$ 模式对对象中疑似敏感字段进行检测提示。
-    \item \textbf{监控策略}：启用读取行为审计并联动告警；在供应完成后对对象进行清理以缩短暴露窗口；在发现泄露风险后执行 vCenter 凭据轮换与强化。
-\end{itemize}
-
-\textbf{策略配置与部署步骤}：详见附录\ref{app:cve-2025-2241}，包含复现步骤、RBAC 清单、审计策略片段、自动化清理示例与准入检测规则。
-
-\subsection{三因素分析}
+将最优策略集合部署至实验集群后，以低权身份重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
 
 \noindent\textbf{有效性：}
-RBAC 收敛可直接降低非必要主体读取 \texttt{ClusterProvision} 的概率，是风险抑制的关键手段。审计与告警用于发现异常读取行为，并在凭据轮换后复核风险是否仍然存在。对象清理及其自动化能够进一步缩短凭据暴露窗口。审计型准入检测则用于在配置漂移或版本回退时及时发现敏感字段再次出现。
+RBAC 收敛后，低权身份对 \texttt{ClusterProvision} 的 \texttt{get/list} 请求被拒绝，无法再导出 YAML。供应完成后再次复查对象，\texttt{status} 字段中不再保留明文 vCenter 凭据，凭据旁路路径被阻断。
 
 \noindent\textbf{无干扰性：}
-RBAC 收敛主要影响运维与排障可见性，因此需要以按需、限时、可审计的授权流程替代全局可读。审计与告警对业务链路通常无直接影响，但会增加日志量与告警治理成本。自动化清理需避免破坏 Hive 的对账或回收流程，建议先在预生产环境验证，并以标签或状态条件精确匹配对象后再删除。
+RBAC 收紧后，高权限访问改为按需、限时、可审计授权，正常供应流程未受影响。自动清理任务在预生产环境验证后确认不影响 Hive 对账流程，再推广至生产。审计与告警不影响业务主链路。
 
 \noindent\textbf{可部署性：}
-\textbf{防护策略}层：RBAC 收敛属于平台原生能力，可在多集群中以模板化方式发布。准入\textbf{防护策略}建议从 $\texttt{dryrun/Audit}$ 起步，用于检测与辅助治理，通常不建议强制拦截控制器写入 $\texttt{status}$ 字段，以避免影响供应流程。\textbf{监控策略}层：审计与告警对业务链路通常无直接影响，但会增加日志量与告警治理成本。自动化清理属于运维流程治理，建议与 GitOps 或流水线集成，在供应完成后打标签并由定时任务触发清理。
+RBAC 为平台原生能力，可模板化发布至多集群。自动清理任务可通过 GitOps 流水线或定时任务实现，无需人工介入。
 
-就 CVE-2025-2241 而言，KPEDefense 生成的策略通过 RBAC 收敛限制了非必要主体对 \texttt{ClusterProvision} 的读取，并配合审计告警与对象自动清理缩短了凭据暴露窗口。该方案适合作为补丁发布前的临时缓解，但根因仍在于 Hive 控制器将凭据写入 CR 状态字段，最终修复仍依赖厂商补丁。
+就 CVE-2025-2241 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。RBAC 收敛与供应完成后的对象清理协同后，敏感凭据可读窗口进一步缩短。该方案可作为平台防御基线的一部分持续管理，最终修复仍依赖厂商补丁，根因在于 Hive 控制器将凭据写入 CR 状态字段的设计缺陷。
 
 

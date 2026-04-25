@@ -1,7 +1,7 @@
-﻿% !TeX root = ../../main.tex
-\section{案例三：CVE-2023-30512（CubeFS CSI 过度权限配置）}
+﻿
+\section{案例三：CVE-2023-30512 过度权限配置}
 
-\subsection{漏洞详解与复现}
+\subsection{漏洞复现}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
@@ -22,58 +22,44 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image.png}
-	\bicaption{CVE-2023-30512：攻击成功证据（基于 CSI ServiceAccount 的越权访问结果）}{CVE-2023-30512: evidence of successful attack based on unauthorized access through a CSI ServiceAccount}
+	\bicaption{CVE-2023-30512：攻击成功证据（基于 CSI ServiceAccount 的越权访问结果）}{CVE-2023-30512: evidence of successful attack via unauthorized access through a CSI ServiceAccount}
 	\label{fig:cve-2023-30512-overview}
 \end{figure}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现（验证性复现）}
 
-考虑到本文面向论文复现实验，且该漏洞的攻击细节容易被滥用，本文采用\textbf{验证性复现}思路：以 RBAC 权限证据与受控权限验证为主，证明 \texttt{cfs-csi-service-account} 具备不应存在的 \texttt{secrets} 读取能力；同时在策略部署后复测，验证该能力被有效移除。
-完整命令与策略清单见附录\ref{app:cve-2023-30512}。
+实验在 Kubernetes 测试集群中部署受影响版本的 CubeFS CSI，明确节点插件与控制器组件使用的 \texttt{cfs-csi-service-account}，并导出其对应的 ClusterRole 与 ClusterRoleBinding。权限证据显示，该服务账号关联的 ClusterRole 含有 \texttt{secrets} 资源的 \texttt{get/list/watch} 动词，完整命令与策略清单见附录\ref{app:cve-2023-30512}。
 
-\textbf{环境配置}：Kubernetes 测试集群可选 Kind、Minikube 或实验集群，版本以实验环境为准。需要部署受影响版本的 CubeFS CSI，部署方式可为 Helm 或 YAML，命名空间按实际为准。同时应明确 CSI 使用的 ServiceAccount 以及其绑定的 ClusterRole 与 ClusterRoleBinding，以便开展权限证据提取与复测。
-
-\textbf{复现步骤（摘要）}：
-\begin{enumerate}
-	\item 盘点并导出 CSI 的 RBAC 绑定，确认 ClusterRole 规则含 \texttt{resources:\allowbreak[\allowbreak secrets\allowbreak]} 且 verbs 包含 \texttt{get/list/watch}；
-	\item 以该 ServiceAccount 身份执行权限验证（\texttt{kubectl auth can-i}），确认其具备跨命名空间读取 \texttt{Secret} 的能力；
-	\item 按最小权限、准入防回归与审计检测三项措施部署策略后，重复第 2 步验证权限应为 \texttt{no}。
-\end{enumerate}
+以 \texttt{cfs-csi-service-account} 身份执行 \texttt{kubectl auth can-i list secrets --all-namespaces}，结果返回 \texttt{yes}，表明该账号具备跨命名空间读取 \texttt{Secret} 的能力。攻击者一旦控制 CSI Pod 运行时上下文，即可沿该权限路径继续获取高价值凭据。
 
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image2.png}
-	\bicaption{CVE-2023-30512：攻击成功证据（Secrets 读取能力验证/权限提升结果截图）}{CVE-2023-30512: evidence of successful attack showing secret-reading capability and privilege escalation results}
+	\bicaption{CVE-2023-30512：攻击成功证据（Secrets 读取能力验证/权限提升结果截图）}{CVE-2023-30512: evidence of successful attack showing secrets-read capability and privilege-escalation results}
 	\label{fig:cve-2023-30512-verify}
 \end{figure}
 
 \textbf{攻击结果（摘要）}：若服务账号具备集群范围 \texttt{Secret} 读取权限，则攻击者一旦控制 CSI Pod/节点，存在获取高价值凭据并进一步获得集群控制的风险。
 
 
-\subsection{策略部署}
+\subsection{安全策略生成}
 
-本案例侧重\textbf{移除不必要的 Secrets 读取权限}并\textbf{防止权限回归}。本文通过\textbf{防护策略}（RBAC 基线治理 + 准入策略）与\textbf{监控策略}（审计检测）的组合，在配置漂移或误授权场景下提供分层防护。
-
-\textbf{策略概述}：该方案从\textbf{防护策略}（身份与权限、策略执行、网络收敛）与\textbf{监控策略}（审计与检测）等层面分层实施。核心方法包括：
-\begin{itemize}
-    \item \textbf{防护策略}：对 CSI 相关 RBAC 进行最小化与清理，按需评估 ServiceAccount 硬化措施；在准入侧阻断再次引入含 $\texttt{secrets}$ 读取动词的 ClusterRole；必要时进一步收敛 CSI 工作负载的出站访问面。
-    \item \textbf{监控策略}：对 $\texttt{secrets}$ 的枚举行为建立监控和告警。
-\end{itemize}
-
-\textbf{策略配置与部署步骤}：RBAC 最小化示例、准入规则与验证命令见附录\ref{app:cve-2023-30512}。
+将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以 RBAC 最小化与准入防回归为核心，覆盖 ServiceAccount 权限收敛、ClusterRole 规则约束与过度授权变更阻断，详细配置见附录\ref{app:cve-2023-30512}。
 
 
-\subsection{三因素分析}
+\subsection{策略验证}
+
+将最优策略集合部署至实验集群后，重新以 \texttt{cfs-csi-service-account} 身份执行漏洞复现中的权限验证，对有效性、无干扰性与可部署性三个维度逐项验证。
 
 \noindent\textbf{有效性：}
-RBAC 最小化可直接移除攻击链中的关键条件，即 \texttt{secrets} 读取能力，从根源降低风险。准入防回归用于阻断误配置、版本回滚或安装脚本重复执行导致的过度授权再次出现。审计检测可在异常访问出现时提供证据，并触发凭据轮换等止血动作。
+RBAC 收敛后，\texttt{kubectl auth can-i list secrets --all-namespaces} 的结果由 \texttt{yes} 变为 \texttt{no}，说明 CSI ServiceAccount 对 \texttt{Secret} 的跨命名空间读取能力已移除。准入规则生效后，包含 \texttt{secrets} 读取动词的 ClusterRole 变更无法再次进入集群，过度授权回归路径被阻断。
 
 \noindent\textbf{无干扰性：}
-RBAC 收敛可能影响 CSI 的部分诊断与自愈路径，因此应在预生产环境验证 PVC/PV 生命周期以及 attach/detach 等关键流程。准入策略若采用 \texttt{deny} 强制模式，需要避免误拦截平台必需组件的合法权限，建议先以 \texttt{dryrun/audit} 运行并结合白名单迭代。审计与检测会增加日志量与告警治理成本，但通常不影响业务链路。
+策略收紧对象限于 CSI 组件的非必要权限，PVC/PV 生命周期、挂载与卸载流程保持正常。准入规则先以审计模式运行，确认无平台必需权限被误拦截后再切换至强制模式。
 
 \noindent\textbf{可部署性：}
-RBAC 与审计属于平台原生能力，适合在多集群场景中模板化推广。准入策略与网络收敛则属于长期基线治理内容，可通过 GitOps 与策略即代码持续交付。工程落地时建议提供回滚与分批推进路径，先在测试与预生产验证后再逐步推广至生产。
+RBAC 规则与准入策略均采用 YAML 形式管理，可直接纳入 Git 基线并通过 \texttt{kubectl apply} 部署。该方案依赖 Kubernetes 原生权限机制与常用准入组件，适合在多集群场景中复用。
 
-就 CVE-2023-30512 而言，KPEDefense 生成的策略通过 RBAC 最小化直接移除了 CSI ServiceAccount 不应具备的 \texttt{secrets} 读取能力，并以准入策略阻止过度授权再次引入。复测显示 \texttt{kubectl auth can-i} 的结果由 \texttt{yes} 变为 \texttt{no}。部署时仍需验证 CSI 的 PVC/PV 生命周期与相关功能不受影响。
+就 CVE-2023-30512 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。CSI ServiceAccount 的 \texttt{Secret} 读取能力被移除后，节点或 Pod 被攻陷后继续触达集群敏感凭据的路径被阻断。该方案可作为版本修复前的补充缓解措施，最终仍需结合官方修复与安装清单更新完成根因处理。
 
 
