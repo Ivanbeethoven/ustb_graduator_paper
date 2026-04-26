@@ -1,4 +1,4 @@
-
+﻿
 \chapter{背景介绍}\label{chap:background}
 本章介绍相关概念与技术，并梳理 Kubernetes 权限提升漏洞相关的国内外研究现状。
 
@@ -20,7 +20,7 @@
 
 
 \subsection{容器集群系统Kubernetes}
-Kubernetes 是面向容器集群负载的分布式编排系统，简称 K8S。它源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面通过循环控制持续驱动对象状态转变为期望状态\cite{kubernetes2024}。图\ref{fig:k8s-arch}展示了 Kubernetes 的基本体系结构。一个 Kubernetes 集群由\textbf{控制平面}和多个\textbf{工作节点}构成。控制平面负责集群控制、调度与状态协调，其中：\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态。工作节点侧，\textbf{kubelet}负责与 API Server 通信并维护本节点工作负载运行，\textbf{容器运行时}负责镜像拉取、容器创建和生命周期管理，\textbf{kube-proxy}负责服务转发与网络规则实现。
+Kubernetes 是面向容器工作负载的容器集群编排系统，简称 K8S。它源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面通过循环控制持续驱动对象状态转变为期望状态\cite{kubernetes2024}。图\ref{fig:k8s-arch}展示了 Kubernetes 的基本体系结构。一个 Kubernetes 集群由\textbf{控制平面}和多个\textbf{工作节点}构成。控制平面负责集群控制、调度与状态协调，其中：\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态。工作节点侧，\textbf{kubelet}负责与 API Server 通信并维护本节点工作负载运行，\textbf{容器运行时}负责镜像拉取、容器创建和生命周期管理，\textbf{kube-proxy}负责服务转发与网络规则实现。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/k8s.png}
@@ -28,7 +28,7 @@ Kubernetes 是面向容器集群负载的分布式编排系统，简称 K8S。�
 \end{figure}
 
 Kubernetes 通过一系列持久化\textbf{资源对象}描述集群中不同资源的编排与管理。这类对象通过结构化数据存储在etcd数据库中。例如，\textbf{Pod}是最小调度单元，包含一个或多个共享网络与存储的容器；Deployment、StatefulSet 与 DaemonSet 分别面向无状态、有状态和节点守护型工作负载提供副本控制与更新策略；Service 与 Endpoint/EndpointSlice 提供稳定的服务发现与负载均衡抽象；Ingress 面向南北向流量提供入口控制；ConfigMap 与 Secret 用于配置和敏感信息的声明式注入；Volume、PV 与 PVC 则提供存储生命周期与绑定关系的抽象。
-以一个典型的 Deployment 对象为例，图~\ref{fig:k8s-deployment-yaml} 展示了其 YAML 声明格式及各字段含义。其中\texttt{apiVersion} 与 \texttt{kind} 共同确定资源所属的 API 组、版本及对象类型；\texttt{metadata} 包含对象的基本标识，其中 \texttt{name} 与 \texttt{namespace} 唯一确定对象在集群中的位置，\texttt{labels} 为对象附加键值对标签以供选择器关联，\texttt{annotations} 则用于存放不影响调度逻辑的补充说明信息；\texttt{spec} 字段承载对象的期望状态声明，其具体字段因 \texttt{kind} 不同而差异显著，控制器将持续对比此声明与集群实际状态并自动进行调节。
+以一个典型的 Deployment 对象为例，图~\ref{fig:k8s-deployment-yaml} 展示了其 YAML 声明格式及各字段含义。其中"apiVersion"与"kind"共同确定资源所属的 API 组、版本及对象类型；"metadata"包含对象的基本标识，其中"name"与"namespace"唯一确定对象在集群中的位置，"labels"为对象附加键值对标签以供选择器关联，"annotations"则用于存放不影响调度逻辑的补充说明信息；"spec"字段承载对象的期望状态声明，其具体字段因"kind"不同而差异显著，控制器将持续对比此声明与集群实际状态并自动进行调节。
 \begin{figure}[htb]
     \centering
     \setlength{\abovecaptionskip}{3pt}
@@ -55,14 +55,14 @@ spec:                    # 期望状态声明（字段因 kind 而异）
 
 
 \subsection{Kubernetes 权限模型}
-基于角色的访问控制（$\mathrm{RBAC}$）是 $\mathrm{Kubernetes}$ 授权机制的核心\cite{kubernetes2024}。图~\ref{fig:k8s-rbac-yaml} 左侧展示了权限元模型的形式化表达。该模型可以概括为\textbf{主语、动作与对象}之间的授权关系，即界定何种实体被允许对何种资源执行何种操作，其中：
+基于角色的访问控制（RBAC）是 Kubernetes 授权机制的核心\cite{kubernetes2024}。图~\ref{fig:k8s-rbac-yaml} 左侧展示了权限元模型的形式化表达。该模型可以概括为\textbf{主语、动作与对象}之间的授权关系，即界定何种实体被允许对何种资源执行何种操作，其中：
 \begin{itemize}
     \item \textbf{服务账户（ServiceAccount）}对应模型中的主语节点，表示发起请求的身份载体。在 Kubernetes 中，工作负载通常通过 ServiceAccount 与控制平面交互。
-    \item \textbf{权限角色（Role/ClusterRole）}对应模型中的动作与对象约束，用于声明在特定作用域内针对各类资源（$\mathrm{resources}$）允许执行的操作动词（$\mathrm{verbs}$）集合。
+    \item \textbf{权限角色（Role/ClusterRole）}对应模型中的动作与对象约束，用于声明在特定作用域内针对各类资源（"resources"）允许执行的操作动词（"verbs"）集合。
     \item \textbf{角色绑定（RoleBinding/ClusterRoleBinding）}负责建立服务账户与权限角色之间的关联关系，从而完成授权。
 \end{itemize}
 
-图~\ref{fig:k8s-rbac-yaml} 右侧给出了一个典型的 $\mathrm{RBAC}$ 授权流程示例：首先创建名为 $\mathrm{kada}$ 的 $\mathrm{ServiceAccount}$；随后定义名为 \texttt{basic-operation} 的 $\mathrm{Role}$，并在其 $\mathrm{rules}$ 字段中授予对 $\mathrm{pods}$ 与 $\mathrm{secrets}$ 的 $\mathrm{get}$、$\mathrm{list}$、$\mathrm{create}$ 权限；最后通过 $\mathrm{RoleBinding}$ 将该 $\mathrm{Role}$ 绑定至 $\mathrm{kada}$ 账户。这类配置在接入第三方应用时较为常见，但若授予的权限范围超出实际需要，就可能引发权限提升风险。
+图~\ref{fig:k8s-rbac-yaml} 右侧给出了一个典型的 RBAC 授权流程示例：首先创建名为 "kada" 的 "ServiceAccount"；随后定义名为"basic-operation"的 "Role"，并在其 "rules" 字段中授予对 "pods" 与 "secrets" 的 "get"、"list"、"create" 权限；最后通过 "RoleBinding" 将该 "Role" 绑定至 "kada" 账户。这类配置在接入第三方应用时较为常见，但若授予的权限范围超出实际需要，就可能引发权限提升风险。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.95\textwidth]{images/yaml.png}
@@ -73,14 +73,14 @@ spec:                    # 期望状态声明（字段因 kind 而异）
 
 权限提升是指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置将自身权限提升到更高等级的过程\cite{mead2003computer}。
 
-在 Kubernetes 场景下，权限提升表现为授权范围扩大或横向获取，或节点侧系统权限提升，从而影响更大范围的资源与工作负载。一方面，单个节点往往承载多个 Pod，一旦节点侧权限提升成功，攻击者便可能对同节点上的多个工作负载实施敏感信息窃取、运行环境篡改或恶意组件注入。另一方面，Kubernetes 的资源对象与运维动作高度集中且自动化，控制平面授权不当也会显著放大攻击后果。结合图~\ref{fig:k8s-rbac-yaml}中的示例，若主体被授予针对 $\texttt{Secret}$ 的 $\mathrm{get}/\mathrm{list}$ 权限，攻击者即可读取服务账户令牌、数据库口令或 API 密钥等敏感信息；若被授予针对 $\texttt{Pod}$ 的 $\mathrm{create}$ 权限，则可能进一步创建携带恶意镜像、特权配置或宿主机挂载的工作负载，作为横向移动、凭据窃取乃至后续节点侧利用的跳板。
+在 Kubernetes 场景下，权限提升表现为授权范围扩大或横向获取，或节点侧系统权限提升，从而影响更大范围的资源与工作负载。一方面，单个节点往往承载多个 Pod，一旦节点侧权限提升成功，攻击者便可能对同节点上的多个工作负载实施敏感信息窃取、运行环境篡改或恶意组件注入。另一方面，Kubernetes 的资源对象与运维动作高度集中且自动化，控制平面授权不当也会显著放大攻击后果。结合图~\ref{fig:k8s-rbac-yaml}中的示例，若主体被授予针对 "Secret" 的 "get"/"list" 权限，攻击者即可读取服务账户令牌、数据库口令或 API 密钥等敏感信息；若被授予针对 "Pod" 的 "create" 权限，则可能进一步创建携带恶意镜像、特权配置或宿主机挂载的工作负载，作为横向移动、凭据窃取乃至后续节点侧利用的跳板。
 
-图\ref{fig:cve-2024-33522} 以 \texttt{CVE-2024-33522} 为例展示了典型的节点侧权限提升漏洞。该漏洞源于 Calico CNI 安装程序的 SUID 位配置不当。若攻击者借助弱口令或服务暴露等前置手段获取节点本地访问权限，便可注入恶意二进制文件，并诱导安装程序以高权限执行。越权成功后，攻击者可以直接接管容器运行时数据、窃取高权限凭据并干扰网络组件，其影响将突破单一工作负载的隔离边界，迅速蔓延至整个集群。
+图\ref{fig:cve-2024-33522} 以 CVE-2024-33522 为例展示了典型的节点侧权限提升漏洞。该漏洞源于 Calico CNI 安装程序的 SUID 位配置不当。若攻击者借助弱口令或服务暴露等前置手段获取节点本地访问权限，便可注入恶意二进制文件，并诱导安装程序以高权限执行。越权成功后，攻击者可以直接接管容器运行时数据、窃取高权限凭据并干扰网络组件，其影响将突破单一工作负载的隔离边界，迅速蔓延至整个集群。
 
 \begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/cve_example.png}
-    \bicaption{\texttt{CVE-\allowbreak2024-\allowbreak33522}节点侧权限提升漏洞 Issue 报告}{Issue report of node-side privilege escalation vulnerability \texttt{CVE-\allowbreak2024-\allowbreak33522} in Calico}\label{fig:cve-2024-33522}
+    \bicaption{CVE-2024-33522 节点侧权限提升漏洞 Issue 报告}{Issue report of node-side privilege escalation vulnerability CVE-2024-33522 in Calico}\label{fig:cve-2024-33522}
 \end{figure}
 
 
@@ -92,7 +92,7 @@ spec:                    # 期望状态声明（字段因 kind 而异）
 
 动态方面，准入控制、网络隔离与运行时监控更侧重集群运行阶段的风险约束。OPA/Gatekeeper\cite{opa2025} 与 Kyverno\cite{kyverno2025} 在 API Server 持久化资源前执行策略校验，可用于拦截特权容器、危险挂载和敏感权限变更；NetworkPolicy 及其在 Calico、Cilium 和 Weave Net 等插件中的实现，用于收敛服务间连通范围并降低横向移动风险；Falco\cite{falco2025} 则依托 eBPF 技术\cite{hoiland2018express}采集系统调用和 Kubernetes 事件，并通过规则引擎对异常行为进行实时检测与告警。这些技术分别从事前阻断、横向隔离和事中观测三个层面增强了集群安全性，但整体上仍以通用规则为主，难以直接围绕某一具体漏洞在补丁窗口期快速生成兼顾针对性与可部署性的临时防控策略。
 
-图~\ref{fig:falco-opa-examples} 给出了 Falco 与 OPA/Gatekeeper 的典型规则示例，分别代表运行时监控与准入控制两类防护手段的声明方式。Falco 规则通过 \texttt{condition} 字段声明检测条件（如特权容器启动事件），并在 \texttt{output} 字段中定义告警内容格式；OPA/Gatekeeper 策略则以 Rego 语言编写 \texttt{deny} 规则，在 API Server 持久化资源前对不合规请求直接拒绝。两者均以声明式配置表达安全意图，前者侧重事中观测与告警，后者侧重事前拦截与阻断。
+图~\ref{fig:falco-opa-examples} 给出了 Falco 与 OPA/Gatekeeper 的典型规则示例，分别代表运行时监控与准入控制两类防护手段的声明方式。Falco 规则通过"condition"字段声明检测条件（如特权容器启动事件），并在"output"字段中定义告警内容格式；OPA/Gatekeeper 策略则以 Rego 语言编写"deny"规则，在 API Server 持久化资源前对不合规请求直接拒绝。两者均以声明式配置表达安全意图，前者侧重事中观测与告警，后者侧重事前拦截与阻断。
 
 \begin{figure}[htb]
     \centering
@@ -136,7 +136,7 @@ deny[msg] {
 
 \section{国内外研究现状}
 
-根据本研究主题，本节从权限提升风险与防控、云原生权限安全、大语言模型与智能化漏洞防控三个方向梳理国内外相关工作，归纳各方向的主要进展与局限。之后介绍本课题前期工作研究并说明本文的研究定位。
+围绕论文主题，本节从权限提升风险与防控、云原生权限安全、大语言模型与智能化漏洞防控三个方向梳理国内外相关工作，归纳各方向的主要进展与局限。之后介绍本课题前期工作研究并说明本工作的定位。
 
 \subsection{权限提升风险与防控}
 
@@ -192,4 +192,5 @@ Helm Chart 是用于管理 Kubernetes 应用的部署模板配置文件，其中
 
 \section{小结}
 
-本章围绕本文所关注的云原生权限提升漏洞智能化防控问题，介绍了容器、Kubernetes 及其权限模型等基础概念与云原生安全技术，并从权限提升风险与防控、云原生权限安全以及智能化漏洞防控三个方向梳理了国内外研究现状，此外、还详细介绍了前期研究成果并阐述本文的不同之处。
+本章围绕云原生权限提升漏洞智能化防控问题，介绍了容器、Kubernetes 及其权限模型等基础概念与云原生安全技术，并从权限提升风险与防控、云原生权限安全以及智能化漏洞防控三个方向梳理了国内外研究现状，此外还详细介绍了前期研究成果并阐述本工作的不同之处。
+

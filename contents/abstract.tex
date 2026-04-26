@@ -1,22 +1,22 @@
 %% 中文摘要页
 \begin{ChineseAbstract}
     
-Kubernetes 生态中的第三方云原生应用存在可导致权限提升的高危漏洞。该类漏洞在披露至补丁落地的窗口期内，权限提升攻击风险可威胁Kubernetes集群所有节点。现有研究侧重对配置文件的静态风险分析，难以围绕具体漏洞快速生成可落地的临时防控策略；Kuberneets现有安全工具则依赖专家经验进行策略制定，无法针对特定漏洞进行有效防控。
+Kubernetes 是由云原生计算基金会托管的容器集群编排系统，被广泛用于企业级微服务的大规模部署与运维管理。Kubernetes 生态中的第三方云原生应用存在可导致权限提升的高危漏洞。该类漏洞在披露至补丁落地的窗口期内，权限提升攻击风险可威胁Kubernetes集群所有节点。现有研究侧重对配置文件的静态风险分析，难以围绕具体漏洞快速生成可落地的临时防控策略；Kuberneets现有安全工具则依赖专家经验进行策略制定，无法针对特定漏洞进行有效防控。
 
-本文基于大语言模型的漏洞语义理解与代码生成能力，结合运行时监控、策略准入引擎、网络策略等多种安全工具实现对云原生应用权限提升相关漏洞的动态防护与监控，同时开发了支持工具。本文的主要工作如下。
+基于大语言模型的漏洞语义理解与代码生成能力，结合运行时监控、策略准入引擎、网络策略等多种安全工具，可对云原生应用权限提升相关漏洞实施动态防护与监控；在此基础上进一步开发了支持工具。主要工作如下。
 
-\textbf{（1）提种一种基于安全策略生成的智能化漏洞防控方法KPEDefense}：本文基于大语言模型将漏洞防控问题转化为包含安全工具领域特定语言的安全策略生成问题。首先，基于漏洞来源的开源代码仓库中多源信息构建安全知识库，同时提出了一种权限提升漏洞成因分类框架。然后，搭建由安全上下文构建、思维链推理、反馈优化等步骤组成的多智能体工作流，针对特定权限提升漏洞防护与监控策略代码的自动生成与迭代优化。最后面向安全策略代码的实际应用需求，设计了覆盖有效性、非干扰性与可部署性的多源模型三维质量量化评估方法。
+\textbf{（1）提出一种智能化漏洞防控安全策略生成方法KPEDefense}：将漏洞防控问题转化为包含安全工具领域特定语言的安全策略生成问题。首先，基于漏洞来源的开源代码仓库中多源信息构建安全知识库，同时提出了一种权限提升漏洞成因分类框架。然后，搭建由安全上下文构建、思维链推理、反馈优化等步骤组成的多智能体工作流，实现针对特定权限提升漏洞防护与监控策略代码的自动生成与迭代优化。最后，面向安全策略代码的实际应用需求，设计了覆盖有效性、非干扰性与可部署性的多源模型三维质量量化评估方法。
 
 \textbf{（2）开发支持工具}：设计并实现 KPEDefense 方法支持工具，集成知识库管理、策略生成工作流、专家评审排序与策略部署验证等功能模块，实现面向云原生权限提升漏洞的智能化自动防控流程。
 
-\textbf{（3）进行实验验证与案例分析}：将近5年权限提升漏洞样本作为实验对象，基于5种大语言模型对DPEDefense方法进行实验研究。实验结果表明，KPEDefense方法相较现有规则化风险扫描方法更具有效性，且方法不同部分对安全策略有效性均有正向贡献。进一步地，本文对7个不同CVE进行案例分析，从三个维度进一步验证了 KPEDefense 的实际效果。
+\textbf{（3）进行实验验证与案例分析}：将近5年权限提升漏洞样本作为实验对象，基于5种大语言模型对DPEDefense方法进行实验研究。实验结果表明，KPEDefense方法相较现有规则化风险扫描方法更具有效性，且方法不同部分对安全策略有效性均有正向贡献。进一步地，研究选取7个不同CVE进行案例分析，从三个维度进一步验证了 KPEDefense 的实际效果。
 
 \ChineseKeywords{云原生安全；权限提升漏洞；策略代码生成；补丁窗口期防控；多智能体协同}
 \end{ChineseAbstract}
 
 %% 英文摘要页
 \begin{EnglishAbstract}
-Third-party cloud-native applications in the Kubernetes ecosystem contain high-risk vulnerabilities that may lead to privilege escalation. During the window between vulnerability disclosure and patch deployment, the risk of privilege escalation attacks can threaten all nodes in a Kubernetes cluster. Existing research focuses on static risk analysis of configuration files and struggles to rapidly generate actionable interim mitigation strategies for specific vulnerabilities; meanwhile, existing Kubernetes security tools rely on expert experience for policy design and cannot effectively defend against specific vulnerabilities.
+Kubernetes is a container cluster orchestration system maintained by the Cloud Native Computing Foundation (CNCF), widely used for large-scale deployment and operation of enterprise-grade microservices, forming a core component of cloud-native infrastructure. Third-party cloud-native applications in the Kubernetes ecosystem contain high-risk vulnerabilities that may lead to privilege escalation. During the window between vulnerability disclosure and patch deployment, the risk of privilege escalation attacks can threaten all nodes in a Kubernetes cluster. Existing research focuses on static risk analysis of configuration files and struggles to rapidly generate actionable interim mitigation strategies for specific vulnerabilities; meanwhile, existing Kubernetes security tools rely on expert experience for policy design and cannot effectively defend against specific vulnerabilities.
 
 Leveraging the vulnerability semantic understanding and code generation capabilities of large language models, and combining runtime monitoring, policy admission engines, network policies, and other security mechanisms, this thesis achieves dynamic protection and monitoring for privilege-escalation-related vulnerabilities in cloud-native applications, along with a supporting prototype system. The main contributions are as follows.
 

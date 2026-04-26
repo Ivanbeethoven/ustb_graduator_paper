@@ -7,7 +7,7 @@
 
 \subsection{CVE 案例选择}
 
-为保证案例具有代表性且可复现，本文按以下准则选择云原生权限提升CVE作为案例：
+为保证案例具有代表性且可复现，研究按以下准则选择云原生权限提升CVE作为案例：
 
 \begin{itemize}
     \item \textbf{风险等级与影响范围}：CVSS 评分 $\geq 5.0$，在 Kubernetes 生态中影响较广，如核心组件或高使用率第三方应用漏洞。
@@ -56,10 +56,10 @@
     \end{tabularx}
 \end{table}
 
-\textbf{漏洞案例分析流程}。对每个权限提升CVE，结合本文方法依据如下步骤进行：
+\textbf{漏洞案例分析流程}。对每个权限提升CVE，依据如下步骤进行分析：
 \begin{enumerate}
     \item \textbf{漏洞复现}：为有效进行安全策略验证，需根据CVE描述进行漏洞复现。部署受影响版本的目标组件，创建模拟业务负载与低权限身份；根据公开 PoC 或技术分析模拟权限提升攻击，记录攻击步骤与异常行为；验证是否成功实现权限提升。
-    \item \textbf{安全策略生成}：基于本文方法和KPEDefense 系统，使用至少三个大模型生成候选安全策略，并通过静态评估从有效性 $E$（阻断攻击路径）、无干扰性 $I$（对业务的影响）、可部署性 $D$（配置完整性与可执行性）三个维度综合评估，筛选出一个最佳的安全策略集合。
+    \item \textbf{安全策略生成}：基于 KPEDefense 系统，使用至少三个大模型生成候选安全策略，并通过静态评估从有效性 $E$（阻断攻击路径）、无干扰性 $I$（对业务的影响）、可部署性 $D$（配置完整性与可执行性）三个维度综合评估，筛选出一个最佳的安全策略集合。
     \item \textbf{策略验证}：部署生成的安全策略，并根据漏洞复现执行攻击测试，验证策略能否对漏洞进行有效监控和防护，并根据三维质量评价体系分析结果。
 \end{enumerate}
 
@@ -78,27 +78,6 @@
 
 \input{contents/chap6/case7.tex}
 
-表~\ref{tab:case-summary-eid}从有效性、无干扰性与可部署性三个维度汇总了 7 个案例的验证结论。
-
-\begin{table}[htb]
-    \centering\bicaption{案例验证三维质量汇总}{Summary of three-dimensional quality verification across cases}\label{tab:case-summary-eid}
-    \noindent\renewcommand{\arraystretch}{1.15}
-    \setlength{\tabcolsep}{3pt}
-    \small
-    \begin{tabularx}{\linewidth}{c >{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
-        \toprule
-        \textbf{序号} & \textbf{CVE 编号} & \textbf{有效性 $E$} & \textbf{无干扰性 $I$} & \textbf{可部署性 $D$} \\
-        \midrule
-        1 & CVE-2022-24768 & 多环节阻断攻击链，复测确认提权失败 & 保留正常同步能力，建议先审计后强制 & RBAC/准入控制均为原生能力 \\
-        2 & CVE-2025-2241 & RBAC 收敛+审计告警+对象清理降低凭据暴露 & 需以按需授权替代全局可读 & 原生能力，准入建议 dryrun 起步 \\
-        3 & CVE-2023-30512 & 直接移除 secrets 读取能力，复测 can-i 为 no & 需验证 CSI 的 PVC/PV 生命周期 & RBAC/准入可模板化推广 \\
-        4 & CVE-2020-4062 & 默认拒绝策略阻断横向移动，复测端口不可达 & 需验证组件间通信与标签一致性 & NetworkPolicy 原生资源，维护成本低 \\
-        5 & CVE-2022-24877 & CI 校验阻断异常路径引用进入仓库 & 历史不规范写法可能触发误报 & CI 准入检查可复用，GitOps 交付 \\
-        6 & CVE-2022-29171 & 禁用 Gitolite 消除命令执行入口 & 影响依赖该集成的仓库同步功能 & 标准化配置管理，可模板化推广 \\
-        7 & CVE-2023-22482 & 前置网关 aud 校验阻断跨受众令牌复用 & 需评估对 CLI/Web/流水线的影响 & 身份侧配置可跨集群复用 \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
 
 \section{小结}
 7 个覆盖不同成因类型的典型 CVE 均在隔离集群中完成了漏洞复现与策略部署验证。如表~\ref{tab:case-summary-eid}所示，生成策略在有效性维度上均能阻断或显著缓解攻击路径；在无干扰性维度上，多数策略对业务影响可控，但仍需在预生产环境验证；在可部署性维度上，策略主要依赖 Kubernetes 原生能力与成熟准入控制组件，具备模板化推广的条件。

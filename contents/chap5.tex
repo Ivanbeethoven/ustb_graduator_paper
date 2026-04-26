@@ -8,11 +8,16 @@
 本章围绕以下问题展开实验：
 
 \begin{enumerate}
-\item[\textbf{(1)}] \textbf{相较于 KPEDefense，现有静态分析方法的局限性如何？}通过与常见 Kubernetes 安全风险静态扫描方法的对比，验证 KPEDefense 在权限提升漏洞防控的优势；并通过典型 CVE 案例的漏洞复现与策略部署，验证生成策略的实际防控效果。
-\item[\textbf{(2)}] \textbf{方法设计中三个核心部分在质量指标上的贡献如何？}需要通过消融实验验证检索增强、思维链推理与反馈优化分别对策略有效性、无干扰性与可部署性的影响，以及这种影响在不同模型下是否稳定。
-\item[\textbf{(3)}] \textbf{不同大语言模型在策略生成任务中的能力差异如何？}需要评估不同模型在三维质量指标和输出稳定性上的表现差异。
-\item[\textbf{(4)}] \textbf{基于大语言模型的静态评估方法是否具备足够的可信度？}需要从评审模型间的一致性以及与人工评审的对照结果两个角度进行验证。
-\item[\textbf{(5)}] \textbf{KPEDefense 的时间与经济成本如何？}需要量化不同配置下的词元消耗、时间开销和经济成本，为实际部署中的选型提供依据。
+\item[\textbf{(1)}] \textbf{相较于 KPEDefense，现有静态分析方法的局限性如何？}
+通过与常见 Kubernetes 安全风险静态扫描方法的对比，验证 KPEDefense 在权限提升漏洞防控的优势；并通过典型 CVE 案例的漏洞复现与策略部署，验证生成策略的实际防控效果。
+\item[\textbf{(2)}] \textbf{方法设计中三个核心部分在质量指标上的贡献如何？}
+需要通过消融实验验证检索增强、思维链推理与反馈优化分别对策略有效性、无干扰性与可部署性的影响，以及这种影响在不同模型下是否稳定。
+\item[\textbf{(3)}] \textbf{不同大语言模型在策略生成任务中的能力差异如何？}
+需要评估不同模型在三维质量指标和输出稳定性上的表现差异。
+\item[\textbf{(4)}] \textbf{基于大语言模型的静态评估方法是否具备足够的可信度？}
+需要从评审模型间的一致性以及与人工评审的对照结果两个角度进行验证。
+\item[\textbf{(5)}] \textbf{KPEDefense 的时间与经济成本如何？}
+需要量化不同配置下的词元消耗、时间开销和经济成本，为实际部署中的选型提供依据。
 \end{enumerate}
 
 \section{实验对象}
@@ -61,7 +66,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 
 \subsection{基线方法}
 
-为与传统静态扫描方法进行比较，本文选取四种代表性静态扫描方法（含文献方法）作为基线。在得到风险合规报告后，再人工评估其对策略生成的实际帮助，包括能否定位与漏洞路径相关的高风险配置，以及是否给出可直接落地的修正建议。
+为与传统静态扫描方法进行比较，研究选取四种代表性静态扫描方法（含文献方法）作为基线。在得到风险合规报告后，再人工评估其对策略生成的实际帮助，包括能否定位与漏洞路径相关的高风险配置，以及是否给出可直接落地的修正建议。
 \begin{table}[htb]
 	\centering\bicaption{静态扫描方法}{Static scanning methods}
 	\label{tab:static-tools}
@@ -83,7 +88,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 
 本节从案例选择、实验环境与实验流程三个方面统一给出实验设置。
 
-\textbf{案例选择}。为保证案例具有代表性与可复现性，本文按以下准则选择云原生权限提升 CVE：
+\textbf{案例选择}。为保证案例具有代表性与可复现性，研究按以下准则选择云原生权限提升 CVE：
 
 \begin{itemize}
     \item \textbf{风险等级与影响范围}：CVSS 评分 $\geq 5.0$，在 Kubernetes 生态中影响较广，如核心组件或高使用率第三方应用漏洞。
@@ -135,7 +140,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 
 针对所有CVE生成的候选安全策略集合进行人工独立评审，以检验自动评审结果与人工判断的一致性。人工评审与自动评审采用相同的评价维度、排序规则和候选展示方式，从而保证两者具有可比性。通过自动评审与人工对照相结合的方式，可以进一步验证评审结果的可靠性，并为分析自动评审方法的有效性提供依据。
 
-此外，对第三章收集的 55 个 CVE 相关应用版本代码，均使用四种静态扫描方法执行全量风险扫描并统计报告；同时，对每个漏洞样本均完成候选策略生成、自动评审与人工对照。在完成 55 个 CVE 的全量实验后，本文再按风险等级、成因覆盖与可复现性三个准则筛选 7 个典型 CVE，在隔离 Kubernetes 集群中进行漏洞复现与策略部署验证，以案例分析方式评估策略在真实攻击场景下的实际效果。所选典型案例见表~\ref{tab:cve-summary}。
+此外，对第三章收集的 55 个 CVE 相关应用版本代码，均使用四种静态扫描方法执行全量风险扫描并统计报告；同时，对每个漏洞样本均完成候选策略生成、自动评审与人工对照。在完成 55 个 CVE 的全量实验后，研究再按风险等级、成因覆盖与可复现性三个准则筛选 7 个典型 CVE，在隔离 Kubernetes 集群中进行漏洞复现与策略部署验证，以案例分析方式评估策略在真实攻击场景下的实际效果。所选典型案例见表~\ref{tab:cve-summary}。
 
 \begin{table}[htb]
 	\centering\bicaption{本章所选云原生权限提升 CVE 案例}{Overview of selected CVE cases in this chapter}\label{tab:cve-summary}
@@ -162,7 +167,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 
 \subsection{RQ1：静态扫描方法对比与案例分析}
 
-现有静态扫描方法对权限提升 CVE 防控的参考价值有限。本文选取 \texttt{Kubescape}、\texttt{KubeSec}、\texttt{kube-linter} 和 \texttt{SLI-Kube} 作为对照方法，在相关 Kubernetes 部署清单上进行扫描，并将报告条目按统一风险类型归并统计，结果见表~\ref{tab:risk-summary-four-tools}。四种静态扫描方法的报告主要集中在配置基线与通用加固项，如资源配置缺失、身份与密钥暴露、网络隔离和非 Root 运行。这类结果对日常治理和合规检查仍有价值，但与本文收集的 55 个权限提升漏洞逐一对应时，能够直接指向漏洞触发前提的情况并不多。只有 CVE-2020-4062 与 CVE-2024-31989 在报告中出现了较明确的关联线索，而且都落在网络隔离项上，分别由 \texttt{Kubescape} 与 \texttt{SLI-Kube} 命中。其余样本的关键攻击路径通常依赖具体组件行为、权限边界或运行时条件，超出了静态规则直接覆盖的范围。就补丁窗口期的漏洞防控而言，静态扫描更适合作为保障方法，而 KPEDefense 更适合提供面向具体漏洞场景的处置建议。
+现有静态扫描方法对权限提升 CVE 防控的参考价值有限。研究选取 \texttt{Kubescape}、\texttt{KubeSec}、\texttt{kube-linter} 和 \texttt{SLI-Kube} 作为对照方法，在相关 Kubernetes 部署清单上进行扫描，并将报告条目按统一风险类型归并统计，结果见表~\ref{tab:risk-summary-four-tools}。四种静态扫描方法的报告主要集中在配置基线与通用加固项，如资源配置缺失、身份与密钥暴露、网络隔离和非 Root 运行。这类结果对日常治理和合规检查仍有价值，但与收集的 55 个权限提升漏洞逐一对应时，能够直接指向漏洞触发前提的情况并不多。只有 CVE-2020-4062 与 CVE-2024-31989 在报告中出现了较明确的关联线索，而且都落在网络隔离项上，分别由 \texttt{Kubescape} 与 \texttt{SLI-Kube} 命中。其余样本的关键攻击路径通常依赖具体组件行为、权限边界或运行时条件，超出了静态规则直接覆盖的范围。就补丁窗口期的漏洞防控而言，静态扫描更适合作为保障方法，而 KPEDefense 更适合提供面向具体漏洞场景的处置建议。
 
 \begin{table}[htb]
 \centering
@@ -188,7 +193,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 \end{tabularx}
 \end{table}
 
-为进一步回答 RQ1，本文选取 7 个典型 CVE，在隔离 Kubernetes 集群中开展漏洞复现、策略生成与部署验证，以考察 KPEDefense 在真实场景中的防控效果。对每个权限提升CVE，均依据如下步骤进行：
+为进一步回答 RQ1，研究选取 7 个典型 CVE，在隔离 Kubernetes 集群中开展漏洞复现、策略生成与部署验证，以考察 KPEDefense 在真实场景中的防控效果。对每个权限提升CVE，均依据如下步骤进行：
 \begin{enumerate}
     \item \textbf{漏洞复现}：根据CVE描述部署受影响版本的目标组件，创建模拟业务负载与低权限身份；依据公开 PoC 或技术分析模拟权限提升攻击，记录攻击步骤与异常行为，并验证是否成功实现权限提升。
     \item \textbf{安全策略生成}：基于 KPEDefense 系统，使用至少三个大模型生成候选安全策略，并从有效性 $E$、无干扰性 $I$、可部署性 $D$ 三个维度进行静态评估，筛选出最优策略集合。
@@ -352,33 +357,33 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 \renewcommand{\arraystretch}{0.9}
 \setlength{\tabcolsep}{6pt}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{2.2cm} r r r r r >{\raggedleft\arraybackslash}p{1.55cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{2.2cm} r r r r r}
 \toprule
-\textbf{方法} & \textbf{模型} & \makecell{\textbf{输入}\\\textbf{Token}} & \makecell{\textbf{输出}\\\textbf{Token}} & \makecell{\textbf{输入成本}\\\textbf{(CNY)}} & \makecell{\textbf{输出成本}\\\textbf{(CNY)}} & \makecell{\textbf{总成本}\\\textbf{(CNY)}} & \multicolumn{1}{c}{\makecell{\textbf{平均成本}\\\textbf{(CNY)}}} \\ 
+\textbf{方法} & \textbf{模型} & \makecell{\textbf{输入}\\\textbf{Token}} & \makecell{\textbf{输出}\\\textbf{Token}} & \makecell{\textbf{输入成本}\\\textbf{(CNY)}} & \makecell{\textbf{输出成本}\\\textbf{(CNY)}} & \makecell{\textbf{总成本}\\\textbf{(CNY)}} \\ 
 \midrule
-\multirow{5}{*}{\texttt{KPEDefense}} & Qwen3-Max & 228842 & 92360 & 0.57 & 0.92 & 1.50 & \multirow{5}{*}{\textbf{12.99}} \\
- & DeepSeekV3.2 & 213174 & 360923 & 0.51 & 2.60 & 3.11 & \\
- & GLM-4.5 & 217216 & 158493 & 0.17 & 0.32 & 0.49 & \\
- & GPT-5 & \textbf{376812} & \textbf{672931} & \textbf{3.30} & \textbf{47.11} & \textbf{50.40} & \\
- & Grok4 & 246549 & 108188 & 2.96 & 6.49 & 9.45 & \\
+\multirow{5}{*}{\texttt{KPEDefense}} & Qwen3-Max & 228842 & 92360 & 0.57 & 0.92 & 1.50 \\
+ & DeepSeekV3.2 & 213174 & 360923 & 0.51 & 2.60 & 3.11 \\
+ & GLM-4.5 & 217216 & 158493 & 0.17 & 0.32 & 0.49 \\
+ & GPT-5 & \textbf{376812} & \textbf{672931} & \textbf{3.30} & \textbf{47.11} & \textbf{50.40} \\
+ & Grok4 & 246549 & 108188 & 2.96 & 6.49 & 9.45 \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o COT}}} & Qwen3-Max & 147128 & 44759 & 0.37 & 0.45 & 0.82 & \multirow{5}{*}{11.29} \\
- & DeepSeekV3.2 & 143191 & 310209 & 0.34 & 2.23 & 2.58 & \\
- & GLM-4.5 & 138905 & 141923 & 0.11 & 0.28 & 0.39 & \\
- & GPT-5 & \textbf{201623} & \textbf{646417} & \textbf{1.76} & \textbf{45.25} & \textbf{47.01} & \\
- & Grok4 & 165321 & 61481 & 1.98 & 3.69 & 5.67 & \\
+\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o COT}}} & Qwen3-Max & 147128 & 44759 & 0.37 & 0.45 & 0.82 \\
+ & DeepSeekV3.2 & 143191 & 310209 & 0.34 & 2.23 & 2.58 \\
+ & GLM-4.5 & 138905 & 141923 & 0.11 & 0.28 & 0.39 \\
+ & GPT-5 & \textbf{201623} & \textbf{646417} & \textbf{1.76} & \textbf{45.25} & \textbf{47.01} \\
+ & Grok4 & 165321 & 61481 & 1.98 & 3.69 & 5.67 \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o Feedback}}} & Qwen3-Max & 129241 & 44841 & 0.32 & 0.45 & 0.77 & \multirow{5}{*}{9.88} \\
- & DeepSeekV3.2 & 120138 & 280609 & 0.29 & 2.02 & 2.31 & \\
- & GLM-4.5 & 122551 & 155095 & 0.10 & 0.31 & 0.41 & \\
- & GPT-5 & \textbf{178449} & \textbf{554871} & \textbf{1.56} & \textbf{38.84} & \textbf{40.40} & \\
- & Grok4 & 145538 & 62736 & 1.75 & 3.76 & 5.51 & \\
+\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o Feedback}}} & Qwen3-Max & 129241 & 44841 & 0.32 & 0.45 & 0.77 \\
+ & DeepSeekV3.2 & 120138 & 280609 & 0.29 & 2.02 & 2.31 \\
+ & GLM-4.5 & 122551 & 155095 & 0.10 & 0.31 & 0.41 \\
+ & GPT-5 & \textbf{178449} & \textbf{554871} & \textbf{1.56} & \textbf{38.84} & \textbf{40.40} \\
+ & Grok4 & 145538 & 62736 & 1.75 & 3.76 & 5.51 \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o RAG}}} & Qwen3-Max & 184820 & 46291 & 0.46 & 0.46 & 0.92 & \multirow{5}{*}{11.10} \\
- & DeepSeekV3.2 & 170295 & 318002 & 0.41 & 2.29 & 2.70 & \\
- & GLM-4.5 & 170290 & 116108 & 0.14 & 0.23 & 0.37 & \\
- & GPT-5 & \textbf{338456} & \textbf{603583} & \textbf{2.96} & \textbf{42.25} & \textbf{45.21} & \\
- & Grok4 & 203726 & 64326 & 2.44 & 3.86 & 6.30 & \\
+\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o RAG}}} & Qwen3-Max & 184820 & 46291 & 0.46 & 0.46 & 0.92 \\
+ & DeepSeekV3.2 & 170295 & 318002 & 0.41 & 2.29 & 2.70 \\
+ & GLM-4.5 & 170290 & 116108 & 0.14 & 0.23 & 0.37 \\
+ & GPT-5 & \textbf{338456} & \textbf{603583} & \textbf{2.96} & \textbf{42.25} & \textbf{45.21} \\
+ & Grok4 & 203726 & 64326 & 2.44 & 3.86 & 6.30 \\
 \addlinespace[0.25em]
 \bottomrule
 \end{tabular}%
@@ -395,33 +400,33 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 \renewcommand{\arraystretch}{0.9}
 \setlength{\tabcolsep}{6pt}
 \small
-\begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{2.05cm} r r}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{2.05cm} r}
 \toprule
-\textbf{方法配置} & \textbf{模型} & \makecell{\textbf{平均耗时}\\\textbf{(秒)}} & \makecell{\textbf{方法均值}\\\textbf{(秒)}} \\
+\textbf{方法配置} & \textbf{模型} & \makecell{\textbf{平均耗时}\\\textbf{(秒)}} \\
 \midrule
-\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o RAG}}} & Qwen3-Max & 27.57 & \multirow{5}{*}{132.48} \\
- & DeepSeekV3.2 & 212.84 & \\
- & GLM-4.5 & 55.34 & \\
- & GPT-5 & 340.42 & \\
- & Grok4 & 26.23 & \\
+\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o RAG}}} & Qwen3-Max & 27.57 \\
+ & DeepSeekV3.2 & 212.84 \\
+ & GLM-4.5 & 55.34 \\
+ & GPT-5 & 340.42 \\
+ & Grok4 & 26.23 \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o COT}}} & Qwen3-Max & 26.22 & \multirow{5}{*}{135.64} \\
- & DeepSeekV3.2 & 219.34 & \\
- & GLM-4.5 & 74.22 & \\
- & GPT-5 & 328.47 & \\
- & Grok4 & 29.93 & \\
+\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o COT}}} & Qwen3-Max & 26.22 \\
+ & DeepSeekV3.2 & 219.34 \\
+ & GLM-4.5 & 74.22 \\
+ & GPT-5 & 328.47 \\
+ & Grok4 & 29.93 \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o Feedback}}} & Qwen3-Max & 15.94 & \multirow{5}{*}{86.98} \\
- & DeepSeekV3.2 & 140.94 & \\
- & GLM-4.5 & 35.51 & \\
- & GPT-5 & 228.50 & \\
- & Grok4 & 14.00 & \\
+\multirow{5}{*}{\makecell[l]{\texttt{KPEDefense}\\\texttt{w/o Feedback}}} & Qwen3-Max & 15.94 \\
+ & DeepSeekV3.2 & 140.94 \\
+ & GLM-4.5 & 35.51 \\
+ & GPT-5 & 228.50 \\
+ & Grok4 & 14.00 \\
 \addlinespace[0.25em]\midrule
-\multirow{5}{*}{\texttt{KPEDefense}} & Qwen3-Max & 38.93 & \multirow{5}{*}{\textbf{146.39}} \\
- & DeepSeekV3.2 & 225.20 & \\
- & GLM-4.5 & 75.78 & \\
- & GPT-5 & 354.48 & \\
- & Grok4 & 37.55 & \\
+\multirow{5}{*}{\texttt{KPEDefense}} & Qwen3-Max & 38.93 \\
+ & DeepSeekV3.2 & 225.20 \\
+ & GLM-4.5 & 75.78 \\
+ & GPT-5 & 354.48 \\
+ & Grok4 & 37.55 \\
 \addlinespace[0.25em]
 \bottomrule
 \end{tabular}
