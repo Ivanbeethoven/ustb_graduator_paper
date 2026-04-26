@@ -144,7 +144,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 \end{figure}
 
 
-策略生成完成后，可调用评审智能体对候选策略展开结构化评审（图~\ref{fig:ui_review_detail}），输出内容包含有效点、风险项、信息缺口（\texttt{gaps}）与干扰源（\texttt{noise\_sources}），为后续优化提供明确依据。与仅返回单一结论的生成方式相比，这种结构化反馈更有利于定位候选策略中的薄弱环节，并支持按问题类型进行针对性修订。同时这部分同时支持人工输入评审提示词，增强评审意见的有效性。
+策略生成完成后，可调用评审智能体对候选策略展开结构化评审（图~\ref{fig:ui_review_detail}），输出内容包含有效点、风险项、信息缺口与干扰源，为后续优化提供明确依据。与仅返回单一结论的生成方式相比，这种结构化反馈更有利于定位候选策略中的薄弱环节，并支持按问题类型进行针对性修订。同时这部分同时支持人工输入评审提示词，增强评审意见的有效性。
 
 \begin{figure}[htb!]
     \centering
@@ -178,7 +178,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 \begin{figure}[htb!]
     \centering
     \includegraphics[width=0.86\textwidth,height=0.5\textheight,keepaspectratio]{images/ui/人工排序-提交保存}
-    \bicaption{排序提交页面（包含排序理由输入与历史记录）}{Ranking submission page with reason input and historical ranking records}
+    \bicaption{排序提交页面}{Ranking submission page with reason input and historical ranking records}
     \label{fig:ui_ranking_submit}
 \end{figure}
 

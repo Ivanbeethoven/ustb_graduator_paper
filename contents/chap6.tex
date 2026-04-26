@@ -39,19 +39,19 @@
 \textbf{环境搭建}。所有漏洞复现与策略验证均在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总于表~\ref{tab:chap6-env}。
 
 \begin{table}[htb]
-    \centering\bicaption{实验环境软硬件配置与工具版本汇总}{Summary of hardware and software environment configuration and tool versions}\label{tab:chap6-env}
+    \centering\bicaption{实验环境软硬件配置与软件组件版本汇总}{Summary of hardware and software environment configuration and software component versions}\label{tab:chap6-env}
     \small
     \begin{tabularx}{0.95\textwidth}{C{3.0cm} X}
         \toprule
         项目 & 配置 \\
         \midrule
         计算资源 & 本地虚拟机，96核CPU，96GB内存，200GB存储 \\
-        集群工具与版本 & Minikube v1.18.1；Kubernetes v1.18.3\\
+        集群组件与版本 & Minikube v1.18.1；Kubernetes v1.18.3\\
         节点规模与规格 & 1个控制节点与2个工作节点；每节点4核CPU/8GB内存 \\
         CNI/网络策略 & Calico v3.28.2, Kubernetes-Network-Policy v1.5.5 \\
         准入控制 & OPA/Gatekeeper v3.14.0；Kyverno v1.11.0\\
         运行时安全监控 & Falco v0.38.1\\
-        包管理工具 & Helm v3\\
+        包管理组件 & Helm v3\\
         \bottomrule
     \end{tabularx}
 \end{table}

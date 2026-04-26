@@ -2,7 +2,10 @@
 \appendix
 
 
-\chapter{云原生权限提升漏洞数据集统计}\label{app:cve-dataset}
+\chapter{附录}\label{app:appendix}
+
+\textbf{云原生权限提升漏洞数据集统计}\label{app:cve-dataset}
+
 
 \begingroup
 \footnotesize
@@ -81,7 +84,10 @@ CVE-2025-32445    & Argo Events                                   & 内部权限
 \end{longtable}
 \endgroup
 
-\chapter{云原生权限提升漏洞分类与 CWE 对应关系}\label{app:vuln-cwe-mapping}
+
+\vspace{1em}
+\noindent\textbf{云原生权限提升漏洞分类与 CWE 对应关系}\label{app:vuln-cwe-mapping}
+
 
 \begin{table}[htb]
 	\centering\bicaption{云原生权限提升漏洞分类框架与 CWE 对应关系}{Mapping between the classification framework of cloud-native privilege escalation vulnerabilities and CWE}\label{tab:vuln-cwe-mapping}
@@ -194,9 +200,12 @@ CVE-2025-32445    & Argo Events                                   & 内部权限
 \end{table}
 
 
-\chapter{CVE\-2022\-24768 复现步骤与策略清单}\label{app:cve-2022-24768}
 
-\section{漏洞复现详细步骤}\label{app:cve-2022-24768-repro}
+\vspace{1em}
+\noindent\textbf{CVE\-2022\-24768 复现步骤与策略清单}\label{app:cve-2022-24768}
+
+
+
 \textbf{步骤 1：部署漏洞版本 Argo CD（v2.3.1）}
 \begin{AppendixCode}
 kubectl create namespace argocd
@@ -281,7 +290,7 @@ argocd app sync bob-app --force
 kubectl auth can-i '*' '*' --as bob
 \end{AppendixCode}
 
-\section{策略代码清单}\label{app:cve-2022-24768-policy}
+
 
 \textbf{Kubernetes RBAC：收敛 AppProject 的写权限}
 \begin{AppendixCode}
@@ -509,9 +518,12 @@ spec:
 \end{AppendixCode}
 
 
-\chapter{CVE-2025-2241 复现步骤与策略清单}\label{app:cve-2025-2241}
 
-\section{漏洞复现详细步骤}\label{app:cve-2025-2241-repro}
+\vspace{1em}
+\noindent\textbf{CVE-2025-2241 复现步骤与策略清单}\label{app:cve-2025-2241}
+
+
+
 
 \textbf{前提条件}
 \begin{itemize}
@@ -530,7 +542,7 @@ kubectl get clusterprovision -n your-namespace
 kubectl get clusterprovision <name> -n your-namespace -o yaml
 \end{AppendixCode}
 
-\section{策略代码清单}\label{app:cve-2025-2241-policy}
+
 
 \textbf{1）立刻收敛 \texttt{ClusterProvision} 的读取权限（RBAC）}
 \begin{AppendixCode}
@@ -628,9 +640,12 @@ spec:
 
 
 
-\chapter{CVE-2023-30512 复现步骤与策略清单}\label{app:cve-2023-30512}
 
-\section{漏洞复现详细步骤}
+\vspace{1em}
+\noindent\textbf{CVE-2023-30512 复现步骤与策略清单}\label{app:cve-2023-30512}
+
+
+
 
 \textbf{变量约定（按实际替换）}
 \begin{AppendixCode}
@@ -681,7 +696,7 @@ ClusterRole: cfs-csi-cluster-role
 	(风险：读取高价值凭据 -> 演化为集群级权限提升)
 \end{AppendixCode}
 
-\section{策略代码清单}
+
 
 \textbf{1）RBAC 最小化：移除 ClusterRole 中的 \texttt{secrets} 权限}
 
@@ -758,9 +773,12 @@ rules:
 	omitStages: ["RequestReceived"]
 \end{AppendixCode}
 
-\chapter{CVE-2020-4062 复现步骤与策略清单}\label{app:cve-2020-4062}
 
-\section{漏洞复现详细步骤}
+\vspace{1em}
+\noindent\textbf{CVE-2020-4062 复现步骤与策略清单}\label{app:cve-2020-4062}
+
+
+
 
 \textbf{前提条件}
 \begin{itemize}
@@ -807,7 +825,7 @@ kubectl -n $NAMESPACE run netcheck \
 	--rm -i -- sh -c "nc -vz $POSTGRES_SVC 5432"
 \end{AppendixCode}
 
-\section{策略代码清单}
+
 
 \textbf{1）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
@@ -850,9 +868,12 @@ spec:
 EOF
 \end{AppendixCode}
 
-\chapter{CVE-2022-24877 复现步骤与策略清单}\label{app:cve-2022-24877}
 
-\section{漏洞复现详细步骤}
+\vspace{1em}
+\noindent\textbf{CVE-2022-24877 复现步骤与策略清单}\label{app:cve-2022-24877}
+
+
+
 
 \textbf{参考命令（用于采集受控证据）}
 \begin{AppendixCode}
@@ -871,7 +892,7 @@ kubectl -n $FLUX_NS logs deploy/kustomize-controller --tail=200
 kubectl -n $APP_NS get events --sort-by=.lastTimestamp | findstr /i "Kustomization Reconciliation"
 \end{AppendixCode}
 
-\section{策略清单}
+
 
 \textbf{1）前置校验：CI 流水线拦截异常路径引用}
 \begin{AppendixCode}
@@ -1015,9 +1036,12 @@ kubectl -n flux-system get networkpolicy | \
   findstr /i "kustomize-controller"
 \end{AppendixCode}
 
-\chapter{CVE-2022-29171 复现步骤与策略清单}\label{app:cve-2022-29171}
 
-\section{漏洞复现详细步骤}
+\vspace{1em}
+\noindent\textbf{CVE-2022-29171 复现步骤与策略清单}\label{app:cve-2022-29171}
+
+
+
 
 \textbf{参考命令（用于日志与工作负载证据采集）}
 \begin{AppendixCode}
@@ -1031,7 +1055,7 @@ kubectl -n $NAMESPACE get events --sort-by=.lastTimestamp | findstr /i "gitserve
 kubectl -n $NAMESPACE logs deploy/gitserver --since=10m | findstr /i "gitolite phabricator callsign"
 \end{AppendixCode}
 
-\section{策略清单}
+
 
 \textbf{1）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
 \begin{AppendixCode}
@@ -1094,9 +1118,12 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 \end{AppendixCode}
 
 
-\chapter{CVE-2023-22482 复现步骤与策略清单}\label{app:cve-2023-22482}
 
-\section{漏洞复现详细步骤}
+\vspace{1em}
+\noindent\textbf{CVE-2023-22482 复现步骤与策略清单}\label{app:cve-2023-22482}
+
+
+
 
 \textbf{参考命令（用于配置、令牌与响应证据采集）}
 \begin{AppendixCode}
@@ -1115,7 +1142,7 @@ curl -k -H "Authorization: Bearer $TOKEN" "$ARGOCD_URL/api/v1/applications"
 kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc token aud"
 \end{AppendixCode}
 
-\section{策略清单}
+
 
 \textbf{权限收敛：RBAC 最小化与项目边界约束}
 \begin{AppendixCode}

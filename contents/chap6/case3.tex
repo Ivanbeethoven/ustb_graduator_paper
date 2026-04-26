@@ -1,7 +1,5 @@
 ﻿
-\section{案例三：CVE-2023-30512 过度权限配置}
-
-\subsection{漏洞复现}
+\subsubsection{漏洞复现}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
@@ -22,7 +20,7 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image.png}
-	\bicaption{CVE-2023-30512：攻击成功证据（基于 CSI ServiceAccount 的越权访问结果）}{CVE-2023-30512: evidence of successful attack via unauthorized access through a CSI ServiceAccount}
+	\bicaption{CVE-2023-30512：攻击成功证据}{CVE-2023-30512: evidence of successful attack}
 	\label{fig:cve-2023-30512-overview}
 \end{figure}
 
@@ -35,19 +33,19 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image2.png}
-	\bicaption{CVE-2023-30512：攻击成功证据（Secrets 读取能力验证/权限提升结果截图）}{CVE-2023-30512: evidence of successful attack showing secrets-read capability and privilege-escalation results}
+	\bicaption{CVE-2023-30512：攻击成功证据}{CVE-2023-30512: evidence of successful attack}
 	\label{fig:cve-2023-30512-verify}
 \end{figure}
 
 \textbf{攻击结果（摘要）}：若服务账号具备集群范围 \texttt{Secret} 读取权限，则攻击者一旦控制 CSI Pod/节点，存在获取高价值凭据并进一步获得集群控制的风险。
 
 
-\subsection{安全策略生成}
+\subsubsection{安全策略生成}
 
 将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以 RBAC 最小化与准入防回归为核心，覆盖 ServiceAccount 权限收敛、ClusterRole 规则约束与过度授权变更阻断，详细配置见附录\ref{app:cve-2023-30512}。
 
 
-\subsection{策略验证}
+\subsubsection{策略验证}
 
 将最优策略集合部署至实验集群后，重新以 \texttt{cfs-csi-service-account} 身份执行漏洞复现中的权限验证，对有效性、无干扰性与可部署性三个维度逐项验证。
 

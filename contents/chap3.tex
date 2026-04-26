@@ -121,7 +121,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 基于这一问题，本文进一步提出面向云原生权限提升漏洞的两级成因分类框架。该框架基于漏洞的关键成因，其中一级分类用于概括高层风险来源，如安全逻辑缺陷、配置缺陷、代码注入和敏感信息泄露；二级分类则进一步细化到更贴近防控动作选择的类型，如授权验证不完善、默认不安全配置等。在策略生成阶段，分类结果作为提示词中的结构化约束，引导模型先识别漏洞的主要成因，再定位关键控制点，最后组织可执行的防控动作，从而无关信息以提高策略的有效性。完整的分类见表\ref{tab:cloud-native-vuln}，其与 CWE 的对应关系见附录表~\ref{tab:vuln-cwe-mapping}。
 
 \begin{table}[htb]
-    \centering\bicaption{云原生权限提升漏洞分类框架（CWE 对应详见附录表~\ref{tab:vuln-cwe-mapping}）}{Classification framework for cloud-native privilege escalation vulnerabilities (see Appendix Table~\ref{tab:vuln-cwe-mapping} for the CWE mapping)}\label{tab:cloud-native-vuln}
+    \centering\bicaption{云原生权限提升漏洞分类框架}{Classification framework for cloud-native privilege escalation vulnerabilities}\label{tab:cloud-native-vuln}
     \small
     \setlength{\tabcolsep}{3pt}
     \noindent\renewcommand{\arraystretch}{0.9}
@@ -344,7 +344,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 
 
 
-策略代码质量评估有两方面意义：一方面可在候选策略集合内识别质量差异，从中选出最优策略；另一方面，构建了一种评估基准，用于比较不同大模型与智能体工作流的生成质量，以期为生产环境提供有效参考。大语言模型在绝对评分任务中难以形成跨样本一致的内部尺度函数，易受文本长度、表达风格与候选顺序等非语义因素影响，产生系统性偏置~\cite{wu2024scoring,wang2023fair,hwang2025persuasion}；排序任务将评价约化为局部比较，有利于降低尺度漂移与偏置累积，结果与人类评审的一致性通常更高~\cite{velez2025writing,liu2023geval,wang2025trustjudge}。
+策略代码质量评估可在候选策略集合内识别质量差异并选出最优策略；另一方面，构建了一种评估基准，用于比较不同大模型与智能体工作流的生成质量，以期为生产环境提供有效参考。大语言模型在绝对评分任务中难以形成跨样本一致的内部尺度函数，易受文本长度、表达风格与候选顺序等非语义因素影响，产生系统性偏置~\cite{wu2024scoring,wang2023fair,hwang2025persuasion}；排序任务将评价约化为局部比较，有利于降低尺度漂移与偏置累积，结果与人类评审的一致性通常更高~\cite{velez2025writing,liu2023geval,wang2025trustjudge}。
 
 安全策略代码的质量需从多维度进行综合评估。具体而言，（1）有效性：安全策略应能准确检测并有效防御与漏洞相关的权限提升攻击；（2）无干扰性：策略在运行时可能过度限制功能权限，故应最大限度降低对Kubernetes集群其他业务正常运行的干扰；（3）可部署性：策略代码应能够快速部署至Kubernetes集群，其中的策略条目${e}$应在保持精简的前提下确保有效性。基于上述考量，本文构建了一种三维质量评价体系，从有效性、无干扰性及可部署性三个维度对策略质量进行形式化刻画，定义了相应的数值型量化指标，并给出了针对安全策略基于多源模型排序的静态方法。
 

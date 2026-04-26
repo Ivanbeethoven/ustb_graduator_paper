@@ -1,7 +1,5 @@
 ﻿
-\section{案例一：CVE-2022-24768内部权限问题}
-
-\subsection{漏洞复现}
+\subsubsection{漏洞复现}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
@@ -26,22 +24,22 @@ bob 账户触发 Application 同步后，Argo CD 控制平面将恶意 ClusterRo
 \begin{figure}[htb]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image2.png}
-        \bicaption{漏洞复现实验结果示意（验证权限变化）}{Vulnerability reproduction result (verification of privilege changes)}
+        \bicaption{漏洞复现实验结果示意}{Vulnerability reproduction result}
         \label{fig:cve-2022-24768-poc}
 \end{figure}
 
 \begin{figure}[htb]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image1.png}
-        \bicaption{漏洞复现实验结果示意（验证是否有命名空间级别权限）}{Vulnerability reproduction result (verification of namespace-level privileges)}
+        \bicaption{漏洞复现实验结果示意}{Vulnerability reproduction result}
         \label{fig:cve-2022-24768-chain}
 \end{figure}
 
-\subsection{安全策略生成}
+\subsubsection{安全策略生成}
 
 将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以 RBAC 权限收敛与准入控制为核心，覆盖 Kubernetes 集群侧与 Argo CD 应用侧两个层面，详细配置见附录\ref{app:cve-2022-24768}。
 
-\subsection{策略验证}
+\subsubsection{策略验证}
 
 将最优策略集合部署至实验集群后，以 bob 账户重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
 

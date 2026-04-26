@@ -1,7 +1,5 @@
 ﻿
-\section{案例二：CVE-2025-2241 敏感信息泄露}
-
-\subsection{漏洞复现}
+\subsubsection{漏洞复现}
 
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
@@ -34,11 +32,11 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 
 触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
 
-\subsection{安全策略生成}
+\subsubsection{安全策略生成}
 
 将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以 \texttt{ClusterProvision} 读取权限收敛与对象生命周期治理为核心，覆盖 CR 访问控制、敏感字段审计与供应完成后的对象清理，详细配置见附录\ref{app:cve-2025-2241}。
 
-\subsection{策略验证}
+\subsubsection{策略验证}
 
 将最优策略集合部署至实验集群后，以低权身份重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
 
