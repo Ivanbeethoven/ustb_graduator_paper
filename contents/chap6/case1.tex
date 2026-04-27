@@ -16,11 +16,13 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
         \item \textbf{控制平面滥用阶段}：Argo CD 按 GitOps 同步逻辑将恶意资源应用到集群；
         \item \textbf{权限提升阶段}：借助被创建的高权限 RBAC 绑定获得集群级管理员能力。
 \end{enumerate}
+
 \noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
 实验部署 Argo CD v2.3.1（受影响版本），配置 Kubernetes 测试集群（\texttt{kind} 或 \texttt{minikube}），以低权用户 bob 身份接入；bob 仅在特定项目范围内持有 \texttt{sync} 与 \texttt{override} 权限，对集群级资源无直接写入能力。测试仓库（\url{https://github.com/Ivanbeethoven/bad_repo}）中含正常业务资源 \texttt{app.yaml} 与恶意 ClusterRoleBinding \texttt{hack-admin.yaml}，二者均处于 Argo CD 同步路径下。关键命令与清单见附录\ref{app:cve-2022-24768}。
 
 bob 账户触发 Application 同步后，Argo CD 控制平面将恶意 ClusterRoleBinding 一并应用至集群，以 \texttt{--as bob} 执行 \texttt{kubectl auth can-i '*' '*'} 返回 \texttt{yes}，低权身份提升至集群管理员级别，权限边界放大经实验证实。
+
 \begin{figure}[htb]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image2.png}
@@ -37,9 +39,9 @@ bob 账户触发 Application 同步后，Argo CD 控制平面将恶意 ClusterRo
 
 \subsubsection{安全策略生成}
 
-将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以 RBAC 权限收敛与准入控制为核心，覆盖 Kubernetes 集群侧与 Argo CD 应用侧两个层面，详细配置见附录\ref{app:cve-2022-24768}。
+KPEDefense 针对该漏洞筛选出的最优策略以 RBAC 权限收敛与准入控制为核心，覆盖 Kubernetes 集群侧与 Argo CD 应用侧两个层面：在集群侧收紧低权限主体对高危资源绑定操作的访问，在应用侧限制 AppProject 写入，防止攻击者借助 \texttt{sync\allowbreak+\allowbreak override} 操作创建集群级高权限绑定。详细配置见附录\ref{app:cve-2022-24768}。
 
-\subsubsection{策略验证}
+\subsubsection{安全策略验证}
 
 将最优策略集合部署至实验集群后，以 bob 账户重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
 

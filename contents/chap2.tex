@@ -6,29 +6,28 @@
 
 \subsection{容器}
 计算服务的部署形态经历了从物理机、虚拟机到容器化的持续演进过程（见图~\ref{fig:container-evolution}）。虚拟机部署依赖 KVM 等虚拟化技术，能够提供完整操作系统级别的隔离，但也带来了较高的虚拟化开销、较长的启动时间和较大的镜像体积，从而影响应用交付效率与资源利用率。相比之下，容器通过操作系统内核级的资源隔离共享宿主机内核，在资源利用率和启动速度上更具优势。容器以\textbf{镜像}为交付单元，将应用及其运行依赖整体打包。其实现主要依赖以下三类内核机制：
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=0.9\linewidth]{images/容器.png}
-    \bicaption{服务部署形式演进}{Evolution of service deployment paradigms}\label{fig:container-evolution}
-\end{figure}
-
 \begin{itemize}
     \item \textbf{命名空间（Namespace）隔离}：通过隔离进程、网络、挂载点等，使容器内运行的程序有独立系统抽象资源；
     \item \textbf{控制组（Cgroup）限制}：负责对容器施加 CPU、内存等硬件资源使用的强制规划，提供物理资源隔离；
     \item \textbf{只读分层与隔离挂载}：利用 OverlayFS 等联合文件系统\cite{wright2006versatility}，通过复用底层只读镜像并叠加独立的顶层读写区域，实现容器文件系统隔离。
 \end{itemize}
 
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.9\linewidth]{images/容器.png}
+    \bicaption{服务部署形式演进}{Evolution of service deployment paradigms}\label{fig:container-evolution}
+\end{figure}
 
 \subsection{容器集群系统Kubernetes}
-Kubernetes 是面向容器工作负载的容器集群编排系统，简称 K8S。它源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面通过循环控制持续驱动对象状态转变为期望状态\cite{kubernetes2024}。图\ref{fig:k8s-arch}展示了 Kubernetes 的基本体系结构。一个 Kubernetes 集群由\textbf{控制平面}和多个\textbf{工作节点}构成。控制平面负责集群控制、调度与状态协调，其中：\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态。工作节点侧，\textbf{kubelet}负责与 API Server 通信并维护本节点工作负载运行，\textbf{容器运行时}负责镜像拉取、容器创建和生命周期管理，\textbf{kube-proxy}负责服务转发与网络规则实现。
+Kubernetes 是面向容器工作负载的容器集群编排系统，简称 K8S。K8S源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面通过循环控制持续驱动对象状态转变为期望状态\cite{kubernetes2024}。图\ref{fig:k8s-arch}展示了 K8S 的基本体系结构。一个 K8S 集群由\textbf{控制平面}和多个\textbf{工作节点}构成。控制平面负责集群控制、调度与状态协调，由\textbf{API Server}、\textbf{调度器}、\textbf{控制器}组成。\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态。工作节点侧，\textbf{kubelet}负责与 API Server 通信并维护本节点工作负载运行，\textbf{容器运行时}负责镜像拉取、容器创建和生命周期管理，\textbf{kube-proxy}负责服务转发与网络规则实现。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/k8s.png}
-    \bicaption{Kubernetes 体系结构示意}{Overview of Kubernetes architecture}\label{fig:k8s-arch}
+    \bicaption{K8S 体系结构示意}{Overview of K8S architecture}\label{fig:k8s-arch}
 \end{figure}
 
-Kubernetes 通过一系列持久化\textbf{资源对象}描述集群中不同资源的编排与管理。这类对象通过结构化数据存储在etcd数据库中。例如，\textbf{Pod}是最小调度单元，包含一个或多个共享网络与存储的容器；Deployment、StatefulSet 与 DaemonSet 分别面向无状态、有状态和节点守护型工作负载提供副本控制与更新策略；Service 与 Endpoint/EndpointSlice 提供稳定的服务发现与负载均衡抽象；Ingress 面向南北向流量提供入口控制；ConfigMap 与 Secret 用于配置和敏感信息的声明式注入；Volume、PV 与 PVC 则提供存储生命周期与绑定关系的抽象。
-以一个典型的 Deployment 对象为例，图~\ref{fig:k8s-deployment-yaml} 展示了其 YAML 声明格式及各字段含义。其中"apiVersion"与"kind"共同确定资源所属的 API 组、版本及对象类型；"metadata"包含对象的基本标识，其中"name"与"namespace"唯一确定对象在集群中的位置，"labels"为对象附加键值对标签以供选择器关联，"annotations"则用于存放不影响调度逻辑的补充说明信息；"spec"字段承载对象的期望状态声明，其具体字段因"kind"不同而差异显著，控制器将持续对比此声明与集群实际状态并自动进行调节。
+K8S 通过一系列持久化\textbf{资源对象}描述集群中不同资源的编排与管理。这类对象通过结构化数据存储在etcd数据库中。例如，"Pod"是最小调度单元，包含一个或多个共享网络与存储的容器；"Deployment"、"StatefulSet" 与 "DaemonSet" 分别面向无状态、有状态和节点守护型工作负载提供副本控制与更新策略；"Service" 与 "Endpoint/EndpointSlice" 提供稳定的服务发现与负载均衡抽象；"Ingress" 面向南北向流量提供入口控制；"ConfigMap" 与 "Secret" 用于配置和敏感信息的声明式注入；"Volume"、"PV" 与 "PVC" 则提供存储生命周期与绑定关系的抽象。
+以一个典型的 "Deployment" 对象为例，图~\ref{fig:k8s-deployment-yaml} 展示了其声明格式及各字段含义。其中"apiVersion"与"kind"共同确定资源所属的 API 组、版本及对象类型；"metadata"包含对象的基本标识，其中"name"与"namespace"唯一确定对象在集群中的位置，"labels"为对象附加键值对标签以供选择器关联，"annotations"则用于存放不影响调度逻辑的补充说明信息；"spec"字段承载对象的期望状态声明，其具体字段因"kind"不同而差异显著，控制器将持续对比此声明与集群实际状态并自动进行调节。
 \begin{figure}[htb]
     \centering
     \setlength{\abovecaptionskip}{3pt}
@@ -48,16 +47,16 @@ spec:                    # 期望状态声明（字段因 kind 而异）
   ...
     \end{BVerbatim}
     \end{tcolorbox}
-    \bicaption{Kubernetes Deployment 资源对象 YAML 配置示例}{Example YAML configuration of a Kubernetes Deployment resource object}\label{fig:k8s-deployment-yaml}
+    \bicaption{K8S Deployment 资源对象 YAML 配置示例}{Example YAML configuration of a K8S Deployment resource object}\label{fig:k8s-deployment-yaml}
 \end{figure}
 
 
 
 
 \subsection{Kubernetes 权限模型}
-基于角色的访问控制（RBAC）是 Kubernetes 授权机制的核心\cite{kubernetes2024}。图~\ref{fig:k8s-rbac-yaml} 左侧展示了权限元模型的形式化表达。该模型可以概括为\textbf{主语、动作与对象}之间的授权关系，即界定何种实体被允许对何种资源执行何种操作，其中：
+基于角色的访问控制（RBAC）是 K8S 授权机制的核心\cite{kubernetes2024}。图~\ref{fig:k8s-rbac-yaml} 左侧展示了权限元模型的形式化表达。该模型可以概括为\textbf{主语、动作与对象}之间的授权关系，即界定何种实体被允许对何种资源执行何种操作，其中：
 \begin{itemize}
-    \item \textbf{服务账户（ServiceAccount）}对应模型中的主语节点，表示发起请求的身份载体。在 Kubernetes 中，工作负载通常通过 ServiceAccount 与控制平面交互。
+    \item \textbf{服务账户（ServiceAccount）}对应模型中的主语节点，表示发起请求的身份载体。在 K8S 中，工作负载通常通过 ServiceAccount 与控制平面交互。
     \item \textbf{权限角色（Role/ClusterRole）}对应模型中的动作与对象约束，用于声明在特定作用域内针对各类资源（"resources"）允许执行的操作动词（"verbs"）集合。
     \item \textbf{角色绑定（RoleBinding/ClusterRoleBinding）}负责建立服务账户与权限角色之间的关联关系，从而完成授权。
 \end{itemize}
@@ -66,16 +65,16 @@ spec:                    # 期望状态声明（字段因 kind 而异）
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.95\textwidth]{images/yaml.png}
-    \bicaption{Kubernetes RBAC 权限配置YAML文件示意\cite{kubeguard_icws2025}}{Example of Kubernetes RBAC permission configuration in YAML\cite{kubeguard_icws2025}}\label{fig:k8s-rbac-yaml}
+    \bicaption{K8S RBAC 权限配置YAML文件示意\cite{kubeguard_icws2025}}{Example of K8S RBAC permission configuration in YAML\cite{kubeguard_icws2025}}\label{fig:k8s-rbac-yaml}
 \end{figure}
 
 \subsection{Kubernetes 权限提升漏洞}
 
 权限提升是指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置将自身权限提升到更高等级的过程\cite{mead2003computer}。
 
-在 Kubernetes 场景下，权限提升表现为授权范围扩大或横向获取，或节点侧系统权限提升，从而影响更大范围的资源与工作负载。一方面，单个节点往往承载多个 Pod，一旦节点侧权限提升成功，攻击者便可能对同节点上的多个工作负载实施敏感信息窃取、运行环境篡改或恶意组件注入。另一方面，Kubernetes 的资源对象与运维动作高度集中且自动化，控制平面授权不当也会显著放大攻击后果。结合图~\ref{fig:k8s-rbac-yaml}中的示例，若主体被授予针对 "Secret" 的 "get"/"list" 权限，攻击者即可读取服务账户令牌、数据库口令或 API 密钥等敏感信息；若被授予针对 "Pod" 的 "create" 权限，则可能进一步创建携带恶意镜像、特权配置或宿主机挂载的工作负载，作为横向移动、凭据窃取乃至后续节点侧利用的跳板。
+在 K8S 场景下，权限提升表现为授权范围扩大或横向获取，或节点侧系统权限提升，从而影响更大范围的资源与工作负载。一方面，单个节点往往承载多个 Pod，一旦节点侧权限提升成功，攻击者便可能对同节点上的多个工作负载实施敏感信息窃取、运行环境篡改或恶意组件注入。另一方面，K8S的资源对象与运维动作高度集中且自动化，控制平面授权不当也会显著放大攻击后果。结合图~\ref{fig:k8s-rbac-yaml}中的示例，若主体被授予针对 "Secret" 的 "get"/"list" 权限，攻击者即可读取服务账户令牌、数据库口令或 API 密钥等敏感信息；若被授予针对 "Pod" 的 "create" 权限，则可能进一步创建携带恶意镜像、特权配置或宿主机挂载的工作负载，作为横向移动、凭据窃取乃至后续节点侧利用的跳板。
 
-图\ref{fig:cve-2024-33522} 以 CVE-2024-33522 为例展示了典型的节点侧权限提升漏洞。该漏洞源于 Calico CNI 安装程序的 SUID 位配置不当。若攻击者借助弱口令或服务暴露等前置手段获取节点本地访问权限，便可注入恶意二进制文件，并诱导安装程序以高权限执行。越权成功后，攻击者可以直接接管容器运行时数据、窃取高权限凭据并干扰网络组件，其影响将突破单一工作负载的隔离边界，迅速蔓延至整个集群。
+图\ref{fig:cve-2024-33522} 以 CVE-2024-33522 为例展示了典型的节点侧权限提升漏洞。该漏洞源于网络插件"Calico"安装程序的 SUID 位配置不当。若攻击者借助弱口令或服务暴露等前置手段获取节点本地访问权限，便可注入恶意二进制文件，并诱导安装程序以高权限执行。越权成功后，攻击者可以直接接管容器运行时数据、窃取高权限凭据并干扰网络组件，其影响将突破单一工作负载的隔离边界，迅速蔓延至整个集群。
 
 \begin{figure}[htb]
     \centering
@@ -86,11 +85,11 @@ spec:                    # 期望状态声明（字段因 kind 而异）
 
 \subsection{云原生安全技术}
 
-云原生安全技术围绕镜像构建、资源准入、网络通信和运行时行为等容器应用的生命周期环节，常见工具大多以规则化策略或声明式配置为载体，用于在不同阶段识别或约束风险。从作用方式看，这类技术大致可归纳为静态与动态两方面，它们共同构成 Kubernetes 集群全生命周期安全治理的基础能力。
+云原生安全技术围绕镜像构建、资源准入、网络通信和运行时行为等容器应用的生命周期环节，常见工具大多以规则化策略或声明式配置为载体，用于在不同阶段识别或约束风险，可分为静态风险扫描工具与动态监控工具，共同构成 K8S 集群全生命周期安全治理的基础能力。
 
-静态方面，静态扫描与配置审计主要用于在镜像构建与部署前发现已知漏洞、弱配置和权限异常。代表性工具包括 Trivy\cite{trivy2025}、Grype/Anchore\cite{grype2025} 等镜像与依赖漏洞扫描工具，Syft\cite{syft2025} 等 SBOM 生成工具，以及 Kubescape\cite{kubescape2025}、kube-linter\cite{kubelinter2025}、kube-score\cite{kubescore2025}、KubeSec\cite{kubesec2025}、Polaris\cite{polaris2025}、Checkov\cite{checkov2025}、KubiScan\cite{kubiscan2024}、Krane\cite{krane2024} 和 RBAC Police\cite{paloalto2024} 等面向清单、IaC 与 RBAC 的规则化审计工具。这类方法便于集成到 CI/CD 流程中，能够提前暴露高风险对象，但其判断依据主要来自既有漏洞库、配置基线和审计规则，对特定漏洞的真实利用条件仍缺乏上下文感知能力。
+静态风险扫描工具主要关注配置文件安全风险，用于在镜像构建与部署前发现已知漏洞、弱配置和权限异常。代表性工具包括 Trivy\cite{trivy2025}、Grype/Anchore\cite{grype2025} 等镜像与依赖漏洞扫描工具，Syft\cite{syft2025} 等 SBOM 生成工具，以及Krane\cite{krane2024}、kube-linter\cite{kubelinter2025}、kube-score\cite{kubescore2025}、KubeSec\cite{kubesec2025}、Polaris\cite{polaris2025}、Checkov\cite{checkov2025}、KubiScan\cite{kubiscan2024}、 Kubescape\cite{kubescape2025}、 和 RBAC Police\cite{paloalto2024} 等面向清单、IaC 与 RBAC 的规则化审计工具。这类方法便于集成到 CI/CD 流程中，能够提前暴露高风险对象，但其判断依据主要来自既有漏洞库、配置基线和审计规则，对特定漏洞的真实利用条件仍缺乏上下文感知能力。
 
-动态方面，准入控制、网络隔离与运行时监控更侧重集群运行阶段的风险约束。OPA/Gatekeeper\cite{opa2025} 与 Kyverno\cite{kyverno2025} 在 API Server 持久化资源前执行策略校验，可用于拦截特权容器、危险挂载和敏感权限变更；NetworkPolicy 及其在 Calico、Cilium 和 Weave Net 等插件中的实现，用于收敛服务间连通范围并降低横向移动风险；Falco\cite{falco2025} 则依托 eBPF 技术\cite{hoiland2018express}采集系统调用和 Kubernetes 事件，并通过规则引擎对异常行为进行实时检测与告警。这些技术分别从事前阻断、横向隔离和事中观测三个层面增强了集群安全性，但整体上仍以通用规则为主，难以直接围绕某一具体漏洞在补丁窗口期快速生成兼顾针对性与可部署性的临时防控策略。
+动态监控工具中，准入控制、网络隔离与运行时监控更侧重集群运行阶段的风险约束。OPA/Gatekeeper\cite{opa2025} 与 Kyverno\cite{kyverno2025} 在 API Server 持久化资源前执行策略校验，可用于拦截特权容器、危险挂载和敏感权限变更；NetworkPolicy 及其在 Calico、Cilium 和 Weave Net 等插件中的实现，用于收敛服务间连通范围并降低横向移动风险；Falco\cite{falco2025} 则依托 eBPF 技术\cite{hoiland2018express}采集系统调用和 K8S 事件，并通过规则引擎对异常行为进行实时检测与告警。这些技术分别从事前阻断、横向隔离和事中观测三个层面增强了集群安全性，但整体上仍以通用规则为主，难以直接围绕某一具体漏洞在补丁窗口期快速生成兼顾针对性与可部署性的临时防控策略。
 
 图~\ref{fig:falco-opa-examples} 给出了 Falco 与 OPA/Gatekeeper 的典型规则示例，分别代表运行时监控与准入控制两类防护手段的声明方式。Falco 规则通过"condition"字段声明检测条件（如特权容器启动事件），并在"output"字段中定义告警内容格式；OPA/Gatekeeper 策略则以 Rego 语言编写"deny"规则，在 API Server 持久化资源前对不合规请求直接拒绝。两者均以声明式配置表达安全意图，前者侧重事中观测与告警，后者侧重事前拦截与阻断。
 
@@ -136,7 +135,7 @@ deny[msg] {
 
 \section{国内外研究现状}
 
-围绕论文主题，本节从权限提升风险与防控、云原生权限安全、大语言模型与智能化漏洞防控三个方向梳理国内外相关工作，归纳各方向的主要进展与局限。之后介绍本课题前期工作研究并说明本工作的定位。
+本节从权限提升风险与防控、云原生权限安全、大语言模型与智能化漏洞防控三个方向梳理国内外相关工作，并介绍本课题组前期研究工作。
 
 \subsection{权限提升风险与防控}
 
@@ -154,13 +153,13 @@ deny[msg] {
 
 云原生权限安全研究覆盖配置合规扫描、供应链与模板安全、权限风险挖掘与攻击链分析、运行时防护四个方向。
 
-\textbf{（1）配置合规与静态扫描。}Kubernetes的配置文件中存在权限风险，相关研究基于实证研究进行归纳并总结出规则化静态检测方法。Islam Shamim 等\cite{Islam_Shamim_2020,Shamim_2021}系统总结了 Kubernetes 安全实践，并进一步指出部署清单偏离最佳实践可能直接演化为可利用的提权路径，Curtis 与 Eisty\cite{Curtis_2025}基于 Stack Overflow 数据的实证分析也表明配置安全始终是开发侧的核心关切。在此基础上，Rahman 等\cite{k8smanifests2023}对开源清单中的典型安全误配置进行了大规模归纳与实证研究。不过，静态扫描虽然能够发现显式违规项，却难以判断这些配置在真实场景中是否能够被有效利用。围绕这一问题，Shamim 等\cite{shamim2025prescription}评估了Internet安全中心组织提供的Kubernetes安全配置标准\footnote{\url{https://www.cisecurity.org/benchmark/kubernetes}}的合规现状，指出从业人员对安全基线的理解存在明显差异，现有静态应用程序安全测试工具的检测覆盖也存在不足；其后续工作\cite{shamim2025dastk8s}进一步论证了将动态分析和安全测试纳入配置核验流程的必要性。
+\textbf{（1）配置合规与静态扫描。}K8S的配置文件中存在权限风险，相关研究基于实证研究进行归纳并总结出规则化静态检测方法。Islam Shamim 等\cite{Islam_Shamim_2020,Shamim_2021}系统总结了 K8S 安全实践，并进一步指出部署清单偏离最佳实践可能直接演化为可利用的提权路径，Curtis 与 Eisty\cite{Curtis_2025}基于 Stack Overflow 数据的实证分析也表明配置安全始终是开发侧的核心关切。在此基础上，Rahman 等\cite{k8smanifests2023}对开源清单中的典型安全误配置进行了大规模归纳与实证研究。不过，静态扫描虽然能够发现显式违规项，却难以判断这些配置在真实场景中是否能够被有效利用。围绕这一问题，Shamim 等\cite{shamim2025prescription}评估了Internet安全中心组织提供的K8S安全配置标准\footnote{\url{https://www.cisecurity.org/benchmark/kubernetes}}的合规现状，指出从业人员对安全基线的理解存在明显差异，现有静态应用程序安全测试工具的检测覆盖也存在不足；其后续工作\cite{shamim2025dastk8s}进一步论证了将动态分析和安全测试纳入配置核验流程的必要性。
 
-Helm Chart 是用于管理 Kubernetes 应用的部署模板配置文件，其中也存在安全风险。Zerouali 等\cite{Zerouali_2023} 和 Blaise 与 Rebecchi\cite{Blaise_2022} 分别从 Helm Charts 的生态规模和依赖关系的角度，分析了其带来的供应链风险，指出安全问题并非仅由单一的配置错误引发，更多是通过模板依赖和复用机制在整个系统中传播。Zerouali 等发现，大多数 Helm Charts 存在过时镜像和安全漏洞，而 Blaise 与 Rebecchi 则通过图生成和攻击重建方法，揭示了 Helm Charts 中复杂攻击路径的潜在威胁。Haque 等\cite{KGSecConfig2022} 提出的 KGSecConfig 框架，通过统一建模跨平台的安全配置概念，有效解决了多平台安全语义碎片化的问题。这些研究表明，云原生安全分析已逐步从单一配置项的检查，扩展到模板、依赖链和安全语义的系统化建模。
+Helm Chart 是用于管理 K8S 应用的部署模板配置文件，其中也存在安全风险。Zerouali 等\cite{Zerouali_2023} 和 Blaise 与 Rebecchi\cite{Blaise_2022} 分别从 Helm Charts 的生态规模和依赖关系的角度，分析了其带来的供应链风险，指出安全问题并非仅由单一的配置错误引发，更多是通过模板依赖和复用机制在整个系统中传播。Zerouali 等发现，大多数 Helm Charts 存在过时镜像和安全漏洞，而 Blaise 与 Rebecchi 则通过图生成和攻击重建方法，揭示了 Helm Charts 中复杂攻击路径的潜在威胁。Haque 等\cite{KGSecConfig2022} 提出的 KGSecConfig 框架，通过统一建模跨平台的安全配置概念，有效解决了多平台安全语义碎片化的问题。这些研究表明，云原生安全分析已逐步从单一配置项的检查，扩展到模板、依赖链和安全语义的系统化建模。
 
-\textbf{（2）权限风险挖掘与攻击链分析。}权限风险挖掘相关研究关注权限风险如何沿系统结构演化为完整攻击链。Dell'Immagine 等\cite{Dell_Immagine_2023}面向微服务部署定义了一组安全反模式并实现自动检测工具 KubeHound，表明权限风险可能嵌入服务交互结构之中。Pecka 等\cite{pecka2022privilege}指出一种Kubernetes持续集成场景下的权限提升攻击场景，并通过工具合规应保证系统安全。Yang 等\cite{yang2023take}系统分析了 Kubernetes 生态中第三方插件的权限配置，设计了多种攻击路径利用策略，说明节点逃逸、控制面访问与第三方组件权限可以共同演化为权限提升攻击，甚至控制整个K8s集群。Gu 等\cite{gu2024epscan}提出一种过度权限分析工具EPScan，通过面向容器的程序静态分析自动比对实际资源访问行为与声明权限，识别可被利用的过度特权。与前述配置合规研究相比，这类工作更强调风险如何沿授权链路形成并被放大。不过，其输出大多仍停留在风险发现与报告层面，尚未进一步扩展到围绕具体漏洞生成临时防控策略的研究。
+\textbf{（2）权限风险挖掘与攻击链分析。}权限风险挖掘相关研究关注权限风险如何沿系统结构演化为完整攻击链。Dell'Immagine 等\cite{Dell_Immagine_2023}面向微服务部署定义了一组安全反模式并实现自动检测工具 KubeHound，表明权限风险可能嵌入服务交互结构之中。Pecka 等\cite{pecka2022privilege}指出一种K8S持续集成场景下的权限提升攻击场景，并通过工具合规应保证系统安全。Yang 等\cite{yang2023take}系统分析了 K8S 生态中第三方插件的权限配置，设计了多种攻击路径利用策略，说明节点逃逸、控制面访问与第三方组件权限可以共同演化为权限提升攻击，甚至控制整个K8s集群。Gu 等\cite{gu2024epscan}提出一种过度权限分析工具EPScan，通过面向容器的程序静态分析自动比对实际资源访问行为与声明权限，识别可被利用的过度特权。与前述配置合规研究相比，这类工作更强调风险如何沿授权链路形成并被放大。不过，其输出大多仍停留在风险发现与报告层面，尚未进一步扩展到围绕具体漏洞生成临时防控策略的研究。
 
-\textbf{（3）运行时防护。}安全性防护可通过运行时监控可以检测并防护安全攻击。Minna 等\cite{Minna_2021}指出，容器编排引入的网络抽象与传统安全模型存在显著差异，并指出传统安全防御框架在Kubernetes系统中存在可迁移性问题。Budigiri 等\cite{Budigiri_2021}基于 eBPF 评估了网络安全策略的性能代价，Kim 等\cite{Kim_2025}对比了多种容器网络接口插件的安全能力，二者共同揭示了网络策略在过滤深度与转发性能之间的权衡。在更具体的缓解机制方面，Zhu 与 Gehrmann\cite{Zhu_2022}以及 Le 等\cite{Le_2023}则分别从 AppArmor 配置自动生成和系统调用感知调度角度强化节点侧防护。这类研究提高了云原生权限安全能力，但不能围绕具体漏洞构造针对性处置措施。
+\textbf{（3）运行时防护。}安全性防护可通过运行时监控可以检测并防护安全攻击。Minna 等\cite{Minna_2021}指出，容器编排引入的网络抽象与传统安全模型存在显著差异，并指出传统安全防御框架在K8S系统中存在可迁移性问题。Budigiri 等\cite{Budigiri_2021}基于 eBPF 评估了网络安全策略的性能代价，Kim 等\cite{Kim_2025}对比了多种容器网络接口插件的安全能力，二者共同揭示了网络策略在过滤深度与转发性能之间的权衡。在更具体的缓解机制方面，Zhu 与 Gehrmann\cite{Zhu_2022}以及 Le 等\cite{Le_2023}则分别从 AppArmor 配置自动生成和系统调用感知调度角度强化节点侧防护。这类研究提高了云原生权限安全能力，但不能围绕具体漏洞构造针对性处置措施。
 
 
 综上，云原生权限安全研究主要关注配置风险的静态扫描和权限风险挖掘，缺乏对漏洞防控的关注；而运行时防护相关研究缺乏其依赖的检测规则研究，缺乏对特定漏洞的监控或防护能力。
@@ -171,16 +170,16 @@ Helm Chart 是用于管理 Kubernetes 应用的部署模板配置文件，其中
 
 \textbf{（1）大语言模型安全能力评测。}大语言模型安全任务评测研究探索了大模型针对软件安全保障的能力边界。Chang 等\cite{chang2024survey}系统综述了 LLM 通用评测方法与基准设计原则，为安全领域的专项评测提供了方法参照。在此基础上，安全领域的评测工作逐渐从通用能力测试转向面向真实安全任务的专门基准。Yin 等\cite{yin2024multitask}围绕漏洞检测、定位与修复等多个软件漏洞子任务对主流 LLM 进行测评，结果表明当前模型在漏洞定位与跨语言理解方面仍存在明显短板。Fu 等\cite{fu2025raseval}将评测对象进一步扩展到 LLM 智能体，提出面向真实安全运维环境的评测框架，以考察智能体在信息不完整与噪声干扰条件下的稳定性与鲁棒性。Zhang 等\cite{zhang2025defenderbench}则构建了覆盖告警研判、威胁检测与安全响应等多类防御任务的语言智能体评测基准 DefenderBench，为不同模型和智能体框架之间的横向比较提供了统一平台。上述工作表明，若缺乏面向真实安全任务的系统化评测，模型能力便难以被可靠比较，更难支撑其在漏洞防控场景中的实际应用。
 
-\textbf{（2）智能化漏洞检测与修复。}软件缺陷管理可借助大语言模型智能。Ghosh 等\cite{ghosh2025cve}提出以安全领域本体辅助 LLM 完成 CVE 漏洞评估，通过引入漏洞类型、攻击向量和影响范围等结构化知识约束模型推理，提升了漏洞语义理解与风险评估的准确性。在云原生误配置修复方向，Malul 等\cite{malul2024genkubesec}提出 GenKubeSec，将 LLM 引入 Kubernetes 误配置的检测、定位、推理与修复建议生成，构建了面向云原生配置安全的全流程自动化处理框架；Minna 等\cite{minna2025analyzing}进一步评估了 LLM 修复 Helm Chart 配置异味的效果，指出仅以局部 YAML 片段为输入往往难以生成完整修复方案，且模型存在误删无关配置的风险，说明上下文完整性与输出可靠性是当前方法的关键约束。除修复建议之外，LLM 也开始被用于检测规则生成。Konstantaras 等\cite{konstantaras2026edrrules}探索了由模型从威胁描述中自动归纳生成静态检测规则的方法，为将自然语言形式的攻击知识转化为可部署规则提供了初步路径。总体而言，这类研究展示了从漏洞描述到防控措施生成的自动化潜力，但已有工作多聚焦于通用误配置或孤立漏洞场景，输出也多停留在修复建议或单条规则层面，尚未形成面向云原生权限提升漏洞的多策略协同生成与部署验证闭环。
+\textbf{（2）智能化漏洞检测与修复。}软件缺陷管理可借助大语言模型智能。Ghosh 等\cite{ghosh2025cve}提出以安全领域本体辅助 LLM 完成 CVE 漏洞评估，通过引入漏洞类型、攻击向量和影响范围等结构化知识约束模型推理，提升了漏洞语义理解与风险评估的准确性。在云原生误配置修复方向，Malul 等\cite{malul2024genkubesec}提出 GenKubeSec，将 LLM 引入 K8S 误配置的检测、定位、推理与修复建议生成，构建了面向云原生配置安全的全流程自动化处理框架；Minna 等\cite{minna2025analyzing}进一步评估了 LLM 修复 Helm Chart 配置异味的效果，指出仅以局部 YAML 片段为输入往往难以生成完整修复方案，且模型存在误删无关配置的风险，说明上下文完整性与输出可靠性是当前方法的关键约束。除修复建议之外，LLM 也被用于检测规则生成。Konstantaras 等\cite{konstantaras2026edrrules}探索了由模型从威胁描述中自动归纳生成静态检测规则的方法，为将自然语言形式的攻击知识转化为可部署规则提供了初步路径。总体而言，这类研究展示了从漏洞描述到防控措施生成的自动化潜力，但已有工作多聚焦于通用误配置或孤立漏洞场景，输出也多停留在修复建议或单条规则层面，尚未形成面向云原生权限提升漏洞的多策略协同生成与部署验证闭环。
 
 \textbf{（3）多智能体驱动的安全任务自动化。}当安全任务具有多阶段依赖、高上下文需求和反馈迭代特征时，单一模型往往难以稳定完成整条任务链条，因此多智能体驱动的安全任务自动化成为新的研究方向。Alsabbagh 等\cite{alsabbagh2026autosecagent}提出 AutoSecAgent，通过智能体编排、递归记忆与检索增强生成，使系统能够在多步骤安全任务中跨轮次积累上下文并稳定执行，从而缓解单模型在长链路任务中的信息遗忘问题。Yang 等\cite{yang2026autoegexploitingknownthirdparty}则针对云原生生态中已知第三方组件漏洞的利用验证问题，设计了多智能体协同与迭代反馈机制，通过多轮自主探索实现从漏洞信息到可验证利用策略的端到端自动化。
 
 综上，多智能体框架已在渗透测试和漏洞利用生成等攻击侧任务中显示出较强潜力，可以探索大预言模型自动生成安全防控工具特定代码的安全能力边界，以解决复杂权限提升漏洞的防控问题。
 
 
-\subsection{前期工作}
+\subsection{本课题组前期研究}
 
-本课题组围绕 Kubernetes 权限风险检测已形成较为系统的前期积累，其中代表性成果为系统性权限风险检测框架 KubeGuard\cite{kubeguard_icws2025}。该框架面向过度权限、权限提升和敏感信息泄露三类风险，分别设计了最小权限集构建、规则化审计以及敏感词监测机制。如图\ref{fig:kgf}所示,KubeGuard 的核心贡献在于验证了从权限视角开展风险建模与检测的可行性。一方面，该工作利用 NLP 技术识别应用所需的最小权限集，以判断权限配置是否存在过度授权；另一方面，通过动态规则审计识别多类权限提升风险。具体而言，该框架将权限提升场景归纳为凭证窃取、账户冒用、RBAC 操纵和间接执行四类，并分别提出相应的检测思路。此外，系统还通过监测 Pod 间消息传输并结合关键词匹配，对涉及敏感资源的内容进行告警，以覆盖敏感信息泄露风险。在系统实现与效果验证方面，课题组进一步实现了支持工具 KubeGuarder，并在开源 Kubernetes 应用与模拟场景中开展实验评估。实验结果表明，该系统在过度权限检测方面较静态基线方法具有更高的有效性与准确性，同时能够识别多类型权限提升与敏感信息泄露风险。
+本课题组围绕 K8S 权限风险检测已形成较为系统的前期积累，其中代表性成果为系统性权限风险检测框架 KubeGuard\cite{kubeguard_icws2025}。该框架面向过度权限、权限提升和敏感信息泄露三类风险，分别设计了最小权限集构建、规则化审计以及敏感词监测机制。如图\ref{fig:kgf}所示,KubeGuard 的核心贡献在于验证了从权限视角开展风险建模与检测的可行性。一方面，该工作利用 NLP 技术识别应用所需的最小权限集，以判断权限配置是否存在过度授权；另一方面，通过动态规则审计识别多类权限提升风险。具体而言，该框架将权限提升场景归纳为凭证窃取、账户冒用、RBAC 操纵和间接执行四类，并分别提出相应的检测思路。此外，系统还通过监测 Pod 间消息传输并结合关键词匹配，对涉及敏感资源的内容进行告警，以覆盖敏感信息泄露风险。在系统实现与效果验证方面，课题组进一步实现了支持工具 KubeGuarder，并在开源 K8S 应用与模拟场景中开展实验评估。实验结果表明，该系统在过度权限检测方面较静态基线方法具有更高的有效性与准确性，同时能够识别多类型权限提升与敏感信息泄露风险。
 
 \begin{figure}[htb]
     \centering

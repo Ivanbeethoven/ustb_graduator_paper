@@ -9,7 +9,7 @@ KPEDefense 系统围绕\textbf{安全工程师}与\textbf{专家评审员}两类
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/chap4/role_use_case}
-    \bicaption{系统用户角色与核心用例}{System user roles and core use cases}
+    \bicaption{支持工具用例图}{System requirement use case}
     \label{fig:role_use_case}
 \end{figure}
 
@@ -21,21 +21,14 @@ KPEDefense 系统围绕\textbf{安全工程师}与\textbf{专家评审员}两类
 
 \noindent\hangindent=2em\hangafter=1 (2) \textbf{智能体调度}：围绕漏洞实例，通过构建不同智能体进行安全知识上下文构建、漏洞分析，生成候选安全策略集合，并可将策略交由策略管理模块进行评估与部署。
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}1）漏洞分析与策略生成：以漏洞实例为输入，依次完成安全上下文构建、漏洞成因分析与候选安全策略集合生成。
-
-\noindent\hangindent=4em\hangafter=1\hspace{2em}2）会话管理与结果查看：支持策略生成会话的创建、监控与历史回溯，向安全工程师呈现检索证据与候选策略内容。
 
 \noindent\hangindent=2em\hangafter=1 (3) \textbf{质量评审}：对专家人工评审意见进行统计，围绕有效性、无干扰性和可部署性对同类型候选进行排序比较，并形成可审计的确认结果；同时支持多源大模型的排名式静态评估方案。
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}1）专家人工评审：由专家评审员针对候选策略在有效性、无干扰性和可部署性三个维度进行排序评分与意见提交。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}1）人工评审：由专家评审员针对候选策略在有效性、无干扰性和可部署性三个维度进行排序评分与意见提交。
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}2）大模型自动评估：调用多源大模型对候选策略执行排名式静态评估，生成可审计的质量排序结果，辅助策略筛选。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}2）智能评审：调用多源大模型对候选策略执行排名式静态评估，生成可审计的质量排序结果，辅助策略筛选。
 
 \noindent\hangindent=2em\hangafter=1 (4) \textbf{策略管理}：将通过评估检查的安全策略下发至目标环境进行部署验证，并记录执行状态、验证结果与审计信息。
-
-\noindent\hangindent=4em\hangafter=1\hspace{2em}1）策略部署下发：将通过评审的安全策略推送至目标Kubernetes集群完成部署，并触发部署后验证流程。
-
-\noindent\hangindent=4em\hangafter=1\hspace{2em}2）状态记录与审计：记录策略部署的执行状态、验证结果与操作日志，支持后续审计与回溯查询。
 
 \section{总体设计}
 
@@ -66,7 +59,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.8\textwidth]{images/chap4/storage_schema}
+    \includegraphics[width=0.5\textwidth]{images/chap4/storage_schema}
     \bicaption{系统核心实体类图}{Core entity class diagram}
     \label{fig:storage_schema}
 \end{figure}

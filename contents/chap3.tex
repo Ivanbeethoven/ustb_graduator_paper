@@ -6,19 +6,19 @@
 
 \section{研究动机}
 
-云原生应用通常以控制器、插件、网关或运维组件的形式嵌入 Kubernetes 集群运行过程，并与 API Server、工作负载、网络组件和身份凭据发生交互。权限提升漏洞一旦被利用，攻击者可能从单个组件的异常行为扩展到集群资源访问、策略绕过或控制面影响。与一般软件漏洞相比，此类漏洞的处置不仅要求修复缺陷本身，还需要在修复完成前约束其可利用路径。因此，面向云原生权限提升漏洞的防控需要重点解决以下问题：
+云原生应用运行涉及关键资源控制，权限提升攻击会造成严重集群化失控危害。云原生应用通过API Server与工作负载、网络组件和身份凭据发生交互。权限提升漏洞一旦被利用，攻击者可能从单个组件的异常行为扩展到集群资源访问和恶意控制。面向云原生权限提升漏洞的防控需要解决以下问题：
 
-\noindent\hangindent=2em\hangafter=1 （1）\textbf{需要迅速形成临时防控措施}。权限提升漏洞公开后，防守方需要在有限时间内判断受影响组件、触发条件和可利用权限边界。即使上游已经给出修复版本，生产集群仍需完成依赖检查、灰度验证和变更审批，无法立即消除风险。因而，漏洞处置不能只等待版本升级，还需要在补丁部署前生成临时策略，对高风险操作、异常资源访问或关键路径行为进行约束。
+\noindent\hangindent=2em\hangafter=1 （1）\textbf{临时防控措施及时性}。权限提升漏洞公开后，系统方需要在有限时间内判断受可影响的应用组件和防控措施。即使上游已经给出修复补丁，生产集群在修复前需要完成依赖检查和变更审批等流程。因而，漏洞处置需在补丁部署前生成临时策略，对特定权限提升漏洞相关的高风险操作或关键攻击路径进行约束。
 
-\noindent\hangindent=2em\hangafter=1 （2）\textbf{现有方法难以直接满足漏洞级防控需求}。配置扫描\cite{shamim2025prescription,k8smanifests2023}偏重发现静态配置缺陷，运行时检测\cite{falco2025}、准入控制\cite{opa2025,kyverno2025}和网络隔离\cite{Minna_2021,Budigiri_2021}则依赖预先定义的规则或策略。这些机制提供了防控执行基础，但从漏洞公告到可执行规则之间仍存在语义转换过程：需要识别漏洞触发点，选择合适的工具机制，并将控制意图表达为 Rego、Falco 规则或 Kubernetes 策略。该转换若完全依赖人工完成，容易受到响应时间、经验差异和策略完整性的限制。
+\noindent\hangindent=2em\hangafter=1 （2）\textbf{现有方法有效性不足}。配置扫描\cite{shamim2025prescription,k8smanifests2023}偏重静态风险扫描，与漏洞相关性不足；运行时监控\cite{falco2025}、准入控制\cite{opa2025,kyverno2025}和网络隔离\cite{Minna_2021,Budigiri_2021}则依赖预先定义的规则或策略。这些机制提供了安全方案，但从漏洞公告到可执行规则之间仍完全依赖人工完成，受到安全经验差异的限制。
 
-\noindent\hangindent=2em\hangafter=1 （3）\textbf{权限提升漏洞防控严重依赖安全知识}。权限提升并非单一类型缺陷，其形成往往与 $\mathrm{RBAC}$ 授权关系\cite{ferraiolo1995role}、组件默认权限、控制面接口、运行时行为以及部署方式共同相关。过度授权\cite{yang2023take}、风险组件劫持和敏感信息泄露\cite{kubeguard_icws2025}等问题在不同应用中表现形式不同，防控策略也需要随漏洞上下文调整。有效处置要求综合利用漏洞描述、修复差异、讨论记录和部署文档中的信息，推断攻击前提、权限变化路径和可控制点；若缺少结构化知识组织方式，上述判断难以稳定复用。
+\noindent\hangindent=2em\hangafter=1 （3）\textbf{漏洞防控依赖安全知识}。权限提升漏洞形成与 $\mathrm{RBAC}$ 授权关系\cite{ferraiolo1995role}、过度授权\cite{yang2023take}、风险组件劫持和敏感信息泄露\cite{kubeguard_icws2025}等多种问题相关，防控安全策略编写需要根据具体漏洞描述以及应用相关的信息推断攻击前提、权限变化路径和可控制点。
 
-针对上述问题，提出一种面向云原生权限提升漏洞的智能化防控方法。该方法通过安全知识库组织多源漏洞证据，形成可追溯的安全上下文；通过多智能体协同流程完成漏洞分析、策略生成与反馈优化，将权限提升相关知识转化为规则化安全工具可执行的策略；并从有效性、无干扰性和可部署性三个维度对候选策略进行评价与筛选，从而为补丁部署前的漏洞处置提供临时性防控支持。
+针对上述问题，本文提出一种面向云原生权限提升漏洞的智能化防控方法。该方法通过安全知识库组织多源漏洞证据，形成可追溯的安全上下文；通过多智能体协同流程完成漏洞分析、策略生成与反馈优化，将权限提升相关知识转化为规则化安全工具可执行的策略；并从有效性、无干扰性和可部署性三个维度对候选策略进行评价与筛选，从而为补丁部署前的漏洞处置提供临时性防控支持。
 
 \section{方法框架}
 
-本章将云原生权限提升漏洞防控问题建模为面向具体漏洞的临时防控策略生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，形成从漏洞理解到策略生成与质量评估的整体方法。该方法由三个部分构成，如图~\ref{fig:overall-framework}所示：云原生安全知识库部分从第三方开源应用的开源代码仓库中的多源信息中采集上下文特征，形成包含 CVE/CWE 统计、权限提升风险分类框架与向量化领域知识的安全知识库，为后续分析提供可检索的证据支撑；基于多智能体的策略生成与优化部分以权限提升 CVE 为输入，通过安全知识检索上下文构建、思维链推理与反馈优化等多智能体协同工作流生成安全策略候选集合；策略代码质量评估部分采用大模型排名式多维量化指标进行静态评估。此外，动态评估通过案例分析对安全策略的有效性进行实证验证（见章节~\ref{chap:case}）。下文从基本概念定义（\ref{subsec:def} 节）、安全知识库构建（\ref{subsec:kb} 节）、多智能体策略生成与优化（\ref{subsec:agent} 节）以及策略代码质量评估（\ref{subsec:quality} 节）四个方面展开。
+将云原生权限提升漏洞防控问题建模为面向具体漏洞的临时防控策略生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，形成从漏洞理解到策略生成与质量评估的整体方法。该方法由三个部分构成，如图~\ref{fig:overall-framework}所示：云原生安全知识库部分从第三方开源应用的开源代码仓库中的多源信息中采集上下文特征，形成包含 CVE/CWE 统计、权限提升风险分类框架与向量化领域知识的安全知识库，为后续分析提供可检索的证据支撑；基于多智能体的策略生成与优化部分以权限提升 CVE 为输入，通过安全知识检索上下文构建、思维链推理与反馈优化等多智能体协同工作流生成安全策略候选集合；策略代码质量评估部分采用大模型排名式多维量化指标进行静态评估。
 
 \begin{figure}[htb]
     \centering
@@ -34,8 +34,7 @@
 
 \subsection{基本概念定义}\label{subsec:def}
 
-以下将核心对象形式化为漏洞实例、安全上下文与安全策略三类实体；主要记号与术语见第~\pageref{chap:sym-list}~页。
-
+以下将核心对象形式化为漏洞实例、安全上下文与安全策略三类实体。
 \begin{flatdefinition}{漏洞实例}\label{def:vuln-instance}
 设 $\mathcal{V}$ 为漏洞实例空间，任一漏洞实例表示为
 \begin{equation}
@@ -55,9 +54,9 @@ c = \bigl\{\,\langle t_i,\,\mathit{src}_i \rangle \mid i\in[n_c] \,\bigr\}
 \begin{flatdefinition}{防控条目}\label{def:control-item}
 安全策略的基本组成单元为三元组
 \begin{equation}
-e = \langle \tau,\;m,\;\mathbf{a} \rangle
+e = \langle \tau,\;m,\;a \rangle
 \end{equation}
-其中 $\tau\in\{\mathrm{mon},\mathrm{prot}\}$ 为控制类型：$\mathrm{mon}$（监控型）持续观测运行时状态并触发异常告警；$\mathrm{prot}$（防护型）主动阻断权限滥用并收缩攻击面。$m$ 为控制机理，描述该措施的作用路径，如 Falco 规则告警、Kyverno 准入审计或 RBAC 权限收缩。$\mathbf{a}=(a_1,\ldots,a_k)$ 为 $m$ 对应的执行表达序列（规则片段、配置声明或可执行命令），每个 $a_i$ 对应 $m$ 的一个可部署表达。
+其中 $\tau\in\{\mathrm{mon},\mathrm{prot}\}$ 为控制类型：$\mathrm{mon}$（监控型）持续观测运行时状态并触发异常告警；$\mathrm{prot}$（防护型）主动阻断权限滥用并收缩攻击面。$m$ 为控制机理，描述该措施的作用路径，如 Falco 规则告警、Kyverno 准入审计或 RBAC 权限收缩。$\mathbf{a}=(a_{m_1},\ldots,a_{m_k})$ 为 $m$ 对应的执行表达序列（规则片段、配置声明或可执行命令），每个 $a_{m_i}$ 对应 $m$ 的一个可部署表达。
 \end{flatdefinition}
 
 \begin{flatdefinition}{安全策略}\label{def:security-strategy}
@@ -83,7 +82,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 
 \subsection{安全知识库}\label{subsec:kb}
 
-如图~\ref{fig:cve-database}所示，本节围绕漏洞实例 $v$ 构建可追溯云原生权限提升安全知识库 $\mathcal{K}_v$，并通过检索形成安全上下文 $c$，为后续策略生成提供带来源标识的证据支撑。
+本节围绕漏洞实例 $v$ 构建可追溯云原生权限提升安全知识库 $\mathcal{K}_v$，并通过检索形成安全上下文 $c$，为后续策略生成提供带来源标识的证据支撑，具体流程如图~\ref{fig:cve-database}所示。
 
 \begin{figure}[htb]
     \centering
@@ -109,16 +108,14 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 
 漏洞样本的分类方式影响后续策略生成方向。为此，研究构建了面向策略生成场景的两级成因分类框架，旨在为模型提供稳定且可解释的风险语义线索，同时提示安全工具类型的使用。
 
-为建立该分类框架，首先参考现有权限提升漏洞CVE采用的弱点分类体系 CWE（Common Weakness Enumeration）。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对应多个弱点条目，不同条目在抽象层次上也可能彼此交叉。在收集的 55 个权限提升漏洞中，有 20 个样本同时关联两个及以上 CWE 标签，占比 36\%。为更客观地反映 CWE 分布，统计时令每个 CVE 的总权重为 1，多标签样本按标签数平均分配。结果表明，权限提升漏洞特征丰富，而 CWE 的类目划分并不能指出权限提升漏洞攻击的关键缺陷或攻击路径。
-
+为建立该分类框架，首先参考现有权限提升漏洞CVE采用的弱点分类体系 CWE（Common Weakness Enumeration）。CWE 是 MITRE 维护的软件弱点枚举体系，可用于将具体 CVE 归并到更抽象的弱点类型。CWE 体系并不是严格互斥的分类框架。同一漏洞往往会同时对应多个弱点条目，不同条目在抽象层次上也可能彼此交叉。在收集的 55 个权限提升漏洞中，有 20 个样本同时关联两个及以上 CWE 标签，占比 36\%。为更客观地反映 CWE 分布，统计时令每个 CVE 的总权重为 1，多标签样本按标签数平均分配。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.9\textwidth]{images/cwe_distribution_pie.png}
     \bicaption{Kubernetes 权限提升 CVE 对应的 CWE 类型占比}{Distribution of CWE categories corresponding to Kubernetes privilege escalation CVEs}\label{fig:cwe-distribution-ch3}
 \end{figure}
 
-
-基于这一问题，研究进一步提出面向云原生权限提升漏洞的两级成因分类框架。该框架基于漏洞的关键成因，其中一级分类用于概括高层风险来源，如安全逻辑缺陷、配置缺陷、代码注入和敏感信息泄露；二级分类则进一步细化到更贴近防控动作选择的类型，如授权验证不完善、默认不安全配置等。在策略生成阶段，分类结果作为提示词中的结构化约束，引导模型先识别漏洞的主要成因，再定位关键控制点，最后组织可执行的防控动作，从而减少无关信息并提高策略的有效性。完整的分类见表\ref{tab:cloud-native-vuln}，其与 CWE 的对应关系见附录表~\ref{tab:vuln-cwe-mapping}。
+综上，权限提升漏洞可能存在多种特性，而 CWE 的类目划分并不能指出权限提升漏洞攻击的关键攻击路径。为此，构建面向云原生权限提升漏洞的两级成因分类框架。该框架基于漏洞的关键成因，其中一级分类用于概括高层风险来源，如安全逻辑缺陷、配置缺陷、代码注入和敏感信息泄露；二级分类则进一步细化到更贴近防控动作选择的类型，如授权验证不完善、默认不安全配置等。在策略生成阶段，分类结果作为提示词中的结构化约束，引导模型先识别漏洞的主要成因，再定位关键控制点，最后组织可执行的防控动作，从而减少无关信息并提高策略的有效性。完整的分类见表\ref{tab:cloud-native-vuln}。
 
 \begin{table}[htb]
     \centering\bicaption{云原生权限提升漏洞分类框架}{Classification framework for cloud-native privilege escalation vulnerabilities}\label{tab:cloud-native-vuln}
@@ -148,34 +145,34 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
     \end{tabular}
 \end{table}
 
-以下对各一级分类分别展开说明。
+以下对各级分类分别展开说明。
 
 \textbf{1）配置缺陷}指应用或基础设施的配置不当导致的安全漏洞，主要包括两种情形：
-\begin{itemize}
+\begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
     \item 过度权限配置：Kubernetes RBAC 配置不当、Role/ClusterRole 规则范围过宽或绑定关系不合理等，使低权限主体获得超出其职责的资源访问与高危操作能力。该类问题在第三方应用接入场景中尤为常见，并已被证明可被用于接管集群关键资源\cite{o1995redundant,yang2023take}。
     \item 网络隔离不足：容器、Pod或服务间缺乏网络隔离，导致攻击者可以横向移动获取其他权限。
-\end{itemize}
+\end{enumerate}
 
 \textbf{2）安全逻辑缺陷}指应用代码中的安全机制设计或实现不当，涵盖以下情形：
-\begin{itemize}
+\begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
     \item 访问控制缺陷：应用的权限检查不完全或存在逻辑漏洞，允许绕过权限验证；
     \item 身份验证绕过：认证机制设计缺陷，攻击者可以冒充他人身份或跳过认证步骤；
     \item 输入验证不足：对请求参数、资源标识或边界条件的校验不充分，导致攻击者借由异常输入扩大权限边界或触发越权路径；
     \item 授权验证不完善：权限检查在某些操作路径或边界条件下缺失。
-\end{itemize}
+\end{enumerate}
 
 \textbf{3）敏感信息泄露}指重要的身份、密钥或权限信息意外暴露，常见形式包括：
-\begin{itemize}
+\begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
     \item API 端口暴露：管理接口、内部 API 或调试端口未受保护暴露在网络上；
     \item 日志泄露：错误泄露的日志文件中包含密钥、命令历史等敏感信息；
     \item 配置文件泄露：配置文件包含硬编码的凭证或密钥。
-\end{itemize}
+\end{enumerate}
 
 \textbf{4）代码注入}指应用对用户输入的处理不当，使攻击者得以注入恶意代码，典型子类包括：
-\begin{itemize}
+\begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
     \item 命令注入：应用直接执行用户提供或可控的命令，攻击者可以执行任意系统命令；
     \item 路径遍历：应用文件访问检查不完整，攻击者可以访问系统其他部分的文件。
-\end{itemize}
+\end{enumerate}
 
 \subsubsection{（4）知识库构建}
 
@@ -190,7 +187,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 \subsection{基于多智能体的安全策略生成与优化}\label{subsec:agent}
 
 
-策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，在不同生成配置 $g$ 下开展多次独立生成，并将各配置输出的安全策略子集按定义~\ref{def:candidate-strategy-set} 汇合为候选策略集合 $\Pi_v$。如图~\ref{fig:method}所示，整个工作流分为安全上下文构建、基于漏洞分析思维链的策略生成、基于评审反馈的策略优化三个步骤，分别简写为 $\text{RAG}$, $\text{COT}$ 和 $\text{Feedback}$。
+策略生成阶段以漏洞实例 $v$ 与安全上下文 $c$ 为输入，在不同生成配置 $g$ 下开展多次独立生成，并将各配置输出的安全策略子集按定义~\ref{def:candidate-strategy-set} 汇合为候选策略集合 $\Pi_v$。完整工作流如图~\ref{fig:method}所示，分为安全上下文构建、基于漏洞分析思维链的策略生成、基于评审反馈的策略优化三个步骤，分别简写为 $\text{RAG}$, $\text{COT}$ 和 $\text{Feedback}$。
 
 \begin{figure}[htb]
     \centering
@@ -201,7 +198,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 
 \subsubsection{（1）安全上下文构建}
 
-安全上下文构建中需要基于可追溯证据构建面向漏洞分析的精准上下文，以提高检测的准确性。为此构建安全知识智能体，其职责是将离散证据整理为带来源标识的结构化摘要，不直接输出策略建议。具体提示词范例见图~\ref{fig:prompt-security-knowledge}。
+安全上下文构建中需要基于可追溯证据构建面向漏洞分析的精准上下文，以提高检测的准确性。为此构建安全知识智能体，其职责是将离散证据整理为带来源标识的结构化摘要，不直接输出策略建议。具体提示词见图~\ref{fig:prompt-security-knowledge}。
 
 \begin{figure}[htb]
     
@@ -229,7 +226,7 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 
 \subsubsection{（2）基于漏洞分析思维链的策略生成}
 
-漏洞分析智能体基于漏洞摘要与安全上下文 $c$ 形成结构化分析结果，覆盖漏洞类型、攻击路径、影响范围与成因分类。成因分类直接引用第 \ref{subsec:kb} 节的两级框架，其作用在于提示后续防控工具的选择：一级类确定风险来源，二级类进一步锁定对应的控制手段从而将泛化建议约束为与漏洞语义一致的具体措施，例如配置缺陷类漏洞优先考虑 RBAC 最小权限与准入控制，代码注入类漏洞优先考虑运行时策略与输入过滤。策略生成智能体在上述分析约束下确定实施路径，并将其映射为策略对象；证据不足时显式保留待补充信息与必要假设。具体智能体的提示词见图~\ref{fig:prompt-vuln-analysis} 和图~\ref{fig:prompt-strategy-gen}。
+漏洞分析智能体基于漏洞摘要与安全上下文 $c$ 形成结构化分析结果，覆盖漏洞类型、攻击路径、影响范围与成因分类。成因分类直接引用第 \ref{subsec:kb} 节的两级框架，其作用在于提示后续防控工具的选择：一级类确定风险来源，二级类进一步锁定对应的控制手段从而将泛化建议约束为与漏洞语义一致的具体措施，例如配置缺陷类漏洞优先考虑 RBAC 最小权限与准入控制，代码注入类漏洞优先考虑运行时策略与输入过滤。策略生成智能体在上述分析约束下确定实施路径，并将其映射为策略对象；证据不足时显式保留待补充信息与必要假设。具体智能体提示词见图~\ref{fig:prompt-vuln-analysis} 和图~\ref{fig:prompt-strategy-gen}。
 
 \begin{figure}[htb]
     \centering
@@ -346,7 +343,13 @@ e = \langle \tau,\;m,\;\mathbf{a} \rangle
 
 策略代码质量评估可在候选策略集合内识别质量差异并选出最优策略；另一方面，构建了一种评估基准，用于比较不同大模型与智能体工作流的生成质量，以期为生产环境提供有效参考。大语言模型在绝对评分任务中难以形成跨样本一致的内部尺度函数，易受文本长度、表达风格与候选顺序等非语义因素影响，产生系统性偏置~\cite{wu2024scoring,wang2023fair,hwang2025persuasion}；排序任务将评价约化为局部比较，有利于降低尺度漂移与偏置累积，结果与人类评审的一致性通常更高~\cite{velez2025writing,liu2023geval,wang2025trustjudge}。
 
-安全策略代码的质量需从多维度进行综合评估。具体而言，（1）有效性：安全策略应能准确检测并有效防御与漏洞相关的权限提升攻击；（2）无干扰性：策略在运行时可能过度限制功能权限，故应最大限度降低对Kubernetes集群其他业务正常运行的干扰；（3）可部署性：策略代码应能够快速部署至Kubernetes集群，其中的策略条目${e}$应在保持精简的前提下确保有效性。基于上述考量，研究构建了一种三维质量评价体系，从有效性、无干扰性及可部署性三个维度对策略质量进行形式化刻画，定义了相应的数值型量化指标，并给出了针对安全策略基于多源模型排序的静态方法。
+安全策略代码的质量需从多维度进行综合评估，分为如下三个维度：
+\begin{enumerate}[label=（\arabic*）,leftmargin=*]
+    \item \textbf{有效性}：安全策略应能准确检测并有效防御与漏洞相关的权限提升攻击；
+    \item \textbf{无干扰性}：策略在运行时可能过度限制功能权限，故应最大限度降低对Kubernetes集群其他业务正常运行的干扰；
+    \item \textbf{可部署性}：策略代码应能够快速部署至Kubernetes集群，其中的策略条目${e}$应在保持精简和可行性的前提下确保有效性。
+\end{enumerate}
+基于上述考量，研究构建了一种三维质量评价体系，从有效性、无干扰性及可部署性三个维度对策略质量进行形式化刻画，定义了相应的数值型量化指标，并给出了针对安全策略基于多源模型排序的静态方法。
 
 
 \begin{flatdefinition}{三维质量向量}\label{def:quality-vector}

@@ -7,8 +7,6 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 
 \textbf{CVE 描述}：CVE-2025-2241 指出 Hive 在完成 vSphere 集群供应（provisioning）后，会将 vCenter 凭据暴露在 \texttt{ClusterProvision} 对象中。由于 \texttt{ClusterProvision} 属于自定义资源（CR），拥有其\textbf{读取权限}的用户可直接从该对象中提取敏感凭据，即使该用户并不具备对 Kubernetes \texttt{Secret} 的访问权限。该问题会导致未授权 vCenter 访问、基础设施与集群管理风险，并可能进一步演化为权限提升。
 
-\textbf{CVSS 信息}：CNA（Red Hat）给出的向量为 \texttt{CVSS:3.1/AV:N/AC:H/PR:L}，基准分 8.2（High）。其含义可理解为：攻击者需要一定前置权限（PR:L）和较高攻击复杂度（AC:H），但一旦满足条件，影响范围跨越安全边界（S:C），并造成高机密性与完整性影响（C:H/I:H）。
-
 \textbf{主要成因分类}：敏感信息泄露 / 配置与对象生命周期缺陷，即敏感数据出现在可读的 CR 状态字段中，形成对 \texttt{Secret} 隔离边界的旁路。
 
 \textbf{攻击链条描述}：攻击链可概括为 \texttt{Secret} 隔离被 CR 可读性绕过：
@@ -32,11 +30,12 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 
 触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
 
+
 \subsubsection{安全策略生成}
 
-将漏洞场景描述输入 KPEDefense 系统，调用 GPT5、GLM-4.5 与 DeepSeek-V3.2 三个大模型生成候选安全策略，依据有效性（E）、干扰性（I）、可部署性（D）三个维度静态评估后筛选最优策略集合。最终选定 GPT5 生成的策略，以 \texttt{ClusterProvision} 读取权限收敛与对象生命周期治理为核心，覆盖 CR 访问控制、敏感字段审计与供应完成后的对象清理，详细配置见附录\ref{app:cve-2025-2241}。
+KPEDefense 针对该漏洞筛选出的最优策略以 \texttt{ClusterProvision} 读取权限收敛与对象生命周期治理为核心：通过 RBAC 限制对该对象的访问权限，并在供应完成后自动清理 \texttt{status} 字段中的明文凭据，从访问控制与数据留存两个维度阻断敏感凭据旁路路径。详细配置见附录\ref{app:cve-2025-2241}。
 
-\subsubsection{策略验证}
+\subsubsection{安全策略验证}
 
 将最优策略集合部署至实验集群后，以低权身份重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
 

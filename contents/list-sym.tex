@@ -4,7 +4,7 @@
 
 \chapter*{符号清单与术语表}\addcontentsline{toc}{chapter}{符号清单与术语表}\label{chap:sym-list}
 
-全文中频繁使用的主要符号、核心术语与常用缩写汇总如下。为避免与正文重复，本页重点列出第三章方法定义与后续评价分析中反复出现的记号与表述。
+全文主要符号汇总如下。
 
 {\noindent\large\textbf{符号清单}\par}
 \vspace{0.2em}
@@ -28,7 +28,7 @@
 \bottomrule
 \endlastfoot
 % ---- 基本对象与集合 ----
-$v$ & 单个漏洞实例，三元组形式 $\langle \mathit{id},d,m \rangle$，由编号、描述与元数据组成。 \\
+$v$ & 漏洞实例，三元组形式 $\langle \mathit{id},d,m \rangle$，由编号、描述与元数据组成。 \\
 $c$ & 安全上下文，即带来源标识的有限证据集合。 \\
 $t_i$ & 第 $i$ 条证据内容，如代码片段、公告文本或文档片段。 \\
 $\mathit{src}_i$ & 第 $i$ 条证据来源，如文档路径、链接或代码位置。 \\
@@ -46,7 +46,7 @@ $\mathcal{M}$ & 底层大语言模型集合，表示参与候选策略生成的�
 $\mathcal{G}_v$ & 漏洞 $v$ 的生成配置集合，满足 $\mathcal{G}_v\subseteq\mathcal{A}\times\mathcal{M}$。 \\
 $g=(a,h)$ & 生成配置，表示方法配置 $a$ 与底层大语言模型 $h$ 的组合（定义~\ref{def:gen-config}）。 \\
 $\Pi_v^{(g)}$ & 漏洞 $v$ 在生成配置 $g$ 下输出的候选安全策略子集。 \\
-$\Pi_v$ & 漏洞 $v$ 的候选策略集合，由不同生成配置输出的候选安全策略子集汇合而成。 \\
+$\Pi_v$ & 漏洞 $v$ 的候选策略集合，包括多个不同生成配置输出的候选安全策略。 \\
 $\tau$ & 类型变量，表示某一给定策略类型。 \\
 $\Pi_v^{\tau}$ & 同类型候选子集，表示漏洞 $v$ 在类型 $\tau$ 下的候选安全策略集合。 \\
 $\Pi_v^{\mathrm{mon}},\Pi_v^{\mathrm{prot}}$ & 漏洞 $v$ 的监控型与防护型候选子集，是 $\Pi_v^{\tau}$ 的两种具体情形。 \\[0.4ex]
@@ -74,7 +74,7 @@ $\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排�
 {\noindent\large\textbf{术语表}\par}
 \vspace{0.2em}
 
-为统一全文表述，以下对全文使用频率较高的核心术语与常用缩写作简要说明。
+全文使用频率较高的核心术语与常用缩写作简要说明如下。
 \begingroup
 \small
 \setlength{\tabcolsep}{4pt}
@@ -94,7 +94,7 @@ $\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排�
 \bottomrule
 \endlastfoot
 云原生 & Cloud-native & 论文所讨论的应用与基础设施环境。 \\
-Kubernetes & K8s & Google 开源的容器集群编排系统。 \\
+Kubernetes & K8S & Google 开源的容器集群编排系统。 \\
 权限提升 & Privilege Escalation & 攻击者突破原有权限边界并获取更高权限。 \\
 补丁窗口期 & Patch-gap window & 漏洞披露至补丁可用或补丁完成部署的时间段。 \\
 临时防控 & Interim mitigation & 在补丁窗口期内用于降低风险的临时控制措施。 \\
@@ -137,7 +137,7 @@ CWE & Common Weakness Enumeration & 通用弱点枚举。 \\
 CVSS & Common Vulnerability Scoring System & 通用漏洞评分系统。 \\
 NVD & National Vulnerability Database & 国家漏洞数据库。 \\
 CNCF & Cloud Native Computing Foundation & 云原生计算基金会。 \\
-K8s & Kubernetes & Kubernetes 的常用缩写。 \\
+K8S & Kubernetes & Kubernetes 的常用缩写。 \\
 RBAC & Role-Based Access Control & 基于角色的访问控制。 \\
 LLM & Large Language Model & 大语言模型。 \\
 DSL & Domain Specific Language & 领域专用语言\\
