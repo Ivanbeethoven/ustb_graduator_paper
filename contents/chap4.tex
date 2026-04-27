@@ -55,7 +55,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 本小节介绍 KPEDefense 系统详细设计，包括实体类设计、详细流程设计、交互时序设计。
 \subsection{实体类设计}
 
-实体类设计围绕四类核心实体展开，如图~\ref{fig:storage_schema}所示，分别对应第三章中的漏洞实例 $v$、分析会话、候选策略集合 $\Pi_v$ 与评审结果。\textbf{漏洞实体}（CVE）以 \texttt{status} 枚举字段驱动处置状态机，与会话呈一对多关系；\textbf{会话实体}（Session）记录模型配置与提示词模板，承载从证据检索到策略生成的完整上下文；\textbf{策略实体}（Strategy）保存生成内容、推理链快照与 RAG 召回片段，支持来源追溯与版本对比；\textbf{排序实体}（Ranking）存储评审员标识、时间戳与多维评分，同时关联会话与策略，记录专家决策的即时快照。
+实体类设计围绕四类核心实体展开，如图~\ref{fig:storage_schema}所示。\textbf{漏洞实体}（CVE）以 \texttt{status} 枚举字段驱动处置状态机，与会话呈一对多关系；\textbf{会话实体}（Session）记录模型配置与提示词模板，承载从证据检索到策略生成的完整上下文；\textbf{策略实体}（Strategy）保存生成内容、推理链快照与 RAG 召回片段，支持来源追溯与版本对比；\textbf{排序实体}（Ranking）存储评审员标识、时间戳与多维评分，同时关联会话与策略，记录专家决策的即时快照。
 
 \begin{figure}[htb]
     \centering
