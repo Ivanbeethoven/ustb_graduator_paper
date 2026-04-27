@@ -1,12 +1,12 @@
 
-\chapter{面向云原生权限提升漏洞的智能化防控技术}\label{chap:method}
+\chapter{面向云原生应用权限提升漏洞的智能化防控技术}\label{chap:method}
 
 
-本章阐述面向云原生权限提升漏洞的智能化防控方法，依次展开方法框架、基本概念定义、安全知识库构建、多智能体策略生成与优化，以及基于排序的质量评价四项核心技术。
+本章阐述面向云原生应用权限提升漏洞的智能化防控方法，介绍研究动机、方法框架，并给出一个方法示例。
 
 \section{研究动机}
 
-云原生应用运行涉及关键资源控制，权限提升攻击会造成严重集群化失控危害。云原生应用通过API Server与工作负载、网络组件和身份凭据发生交互。权限提升漏洞一旦被利用，攻击者可能从单个组件的异常行为扩展到集群资源访问和恶意控制。面向云原生权限提升漏洞的防控需要解决以下问题：
+云原生应用运行涉及关键资源控制，权限提升攻击会造成严重集群化失控危害。云原生应用与控制节点、工作负载、网络插件等组件进行数据交互，权限提升漏洞一旦被利用，攻击者可能从单个组件的异常行为扩展到集群资源访问和恶意控制。面向云原生权限提升漏洞的防控需要解决以下问题：
 
 \noindent\hangindent=2em\hangafter=1 （1）\textbf{临时防控措施及时性}。权限提升漏洞公开后，系统方需要在有限时间内判断受可影响的应用组件和防控措施。即使上游已经给出修复补丁，生产集群在修复前需要完成依赖检查和变更审批等流程。因而，漏洞处置需在补丁部署前生成临时策略，对特定权限提升漏洞相关的高风险操作或关键攻击路径进行约束。
 
@@ -18,12 +18,12 @@
 
 \section{方法框架}
 
-将云原生权限提升漏洞防控问题建模为面向具体漏洞的临时防控策略生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，形成从漏洞理解到策略生成与质量评估的整体方法。该方法由三个部分构成，如图~\ref{fig:overall-framework}所示：云原生安全知识库部分从第三方开源应用的开源代码仓库中的多源信息中采集上下文特征，形成包含 CVE/CWE 统计、权限提升风险分类框架与向量化领域知识的安全知识库，为后续分析提供可检索的证据支撑；基于多智能体的策略生成与优化部分以权限提升 CVE 为输入，通过安全知识检索上下文构建、思维链推理与反馈优化等多智能体协同工作流生成安全策略候选集合；策略代码质量评估部分采用大模型排名式多维量化指标进行静态评估。
+将云原生权限提升漏洞防控问题建模为面向具体漏洞的临时防控策略生成问题，以权限提升类 $\mathrm{CVE}$ 为输入，形成从漏洞理解到策略生成与质量评估的整体方法。该方法由三个部分构成，如图~\ref{fig:overall-framework}所示：云原生安全知识库部分从第三方开源应用的开源代码仓库中的多源信息中采集上下文特征，形成包含 CVE/CWE 统计、权限提升风险分类框架与向量化领域知识的安全知识库，为后续分析提供可检索的证据支撑；基于多智能体的策略生成与优化部分以权限提升 CVE 为输入，通过安全知识检索上下文构建、思维链推理与反馈优化等多智能体协同工作流生成安全策略候选集合；策略代码质量评估部分采用大模型排名式多维量化指标进行静态评估，在实验中通过案例分析进行动态评估。
 
 \begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/总体框架.png}
-    \bicaption{基于多智能体的策略化漏洞防控研究总体框架}{Overall framework of multi-agent strategy-based vulnerability prevention and control}\label{fig:overall-framework}
+    \bicaption{智能化漏洞防控安全策略生成方法总体框架}{Overall framework of the intelligent security-strategy generation method for vulnerability prevention and control}\label{fig:overall-framework}
 \end{figure}
 
 \newcounter{flatdefinition}
@@ -56,7 +56,7 @@ c = \bigl\{\,\langle t_i,\,\mathit{src}_i \rangle \mid i\in[n_c] \,\bigr\}
 \begin{equation}
 e = \langle \tau,\;m,\;a \rangle
 \end{equation}
-其中 $\tau\in\{\mathrm{mon},\mathrm{prot}\}$ 为控制类型：$\mathrm{mon}$（监控型）持续观测运行时状态并触发异常告警；$\mathrm{prot}$（防护型）主动阻断权限滥用并收缩攻击面。$m$ 为控制机理，描述该措施的作用路径，如 Falco 规则告警、Kyverno 准入审计或 RBAC 权限收缩。$\mathbf{a}=(a_{m_1},\ldots,a_{m_k})$ 为 $m$ 对应的执行表达序列（规则片段、配置声明或可执行命令），每个 $a_{m_i}$ 对应 $m$ 的一个可部署表达。
+其中 $\tau\in\{\mathrm{mon},\mathrm{prot}\}$ 为控制类型：监控型策略（$\mathrm{mon}$）持续观测运行时状态并触发异常告警；防护型策略（$\mathrm{prot}$）主动阻断权限滥用并收缩攻击面。$m$ 为控制机理，描述该措施的作用路径，如 Falco 规则告警、Kyverno 准入审计或 RBAC 权限收缩。$\mathbf{a}=(a_{m_1},\ldots,a_{m_k})$ 为 $m$ 对应的执行表达序列（规则片段、配置声明或可执行命令），每个 $a_{m_i}$ 对应 $m$ 的一个可部署策略代码。
 \end{flatdefinition}
 
 \begin{flatdefinition}{安全策略}\label{def:security-strategy}
@@ -192,7 +192,7 @@ e = \langle \tau,\;m,\;a \rangle
 \begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/method.png}
-    \bicaption{多智能体协同的策略化漏洞防控工作流}{Multi-agent collaborative workflow for strategy-based vulnerability prevention and control}\label{fig:method}
+    \bicaption{基于多智能体的安全策略生成与优化工作流}{Multi-agent collaborative workflow for security strategy generation and optimization}\label{fig:method}
 \end{figure}
 
 
@@ -338,26 +338,52 @@ e = \langle \tau,\;m,\;a \rangle
 
 \subsection{策略代码质量评估}\label{subsec:quality}
 
-
-
-
 策略代码质量评估可在候选策略集合内识别质量差异并选出最优策略；另一方面，构建了一种评估基准，用于比较不同大模型与智能体工作流的生成质量，以期为生产环境提供有效参考。大语言模型在绝对评分任务中难以形成跨样本一致的内部尺度函数，易受文本长度、表达风格与候选顺序等非语义因素影响，产生系统性偏置~\cite{wu2024scoring,wang2023fair,hwang2025persuasion}；排序任务将评价约化为局部比较，有利于降低尺度漂移与偏置累积，结果与人类评审的一致性通常更高~\cite{velez2025writing,liu2023geval,wang2025trustjudge}。
 
-安全策略代码的质量需从多维度进行综合评估，分为如下三个维度：
+基于排名的多源模型三维质量评价方法如图\ref{fig:quality-eval}所示。该方法基于大模型作为评审员，通过对候选安全策略的排序获得不同安全策略的三维质量向量（定义\ref{def:quality-vector}）。安全策略代码质量三个维度如下：
 \begin{enumerate}[label=（\arabic*）,leftmargin=*]
     \item \textbf{有效性}：安全策略应能准确检测并有效防御与漏洞相关的权限提升攻击；
     \item \textbf{无干扰性}：策略在运行时可能过度限制功能权限，故应最大限度降低对Kubernetes集群其他业务正常运行的干扰；
     \item \textbf{可部署性}：策略代码应能够快速部署至Kubernetes集群，其中的策略条目${e}$应在保持精简和可行性的前提下确保有效性。
 \end{enumerate}
-基于上述考量，研究构建了一种三维质量评价体系，从有效性、无干扰性及可部署性三个维度对策略质量进行形式化刻画，定义了相应的数值型量化指标，并给出了针对安全策略基于多源模型排序的静态方法。
-
-
 \begin{flatdefinition}{三维质量向量}\label{def:quality-vector}
 一个安全策略的质量向量量化为一个三维0~1的数值向量，数值越高表明质量越好：
 \begin{equation}\label{eq:quality-vec}
 q(\pi) = \bigl(E(\pi),\;I(\pi),\;D(\pi)\bigr)
 \end{equation}
 \end{flatdefinition}
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=1\textwidth]{images/evalution.png}
+    \bicaption{基于排名的多源模型三维质量评价方法}{Ranking-based three-dimensional quality evaluation method using multiple models}
+    \label{fig:quality-eval}
+\end{figure}
+
+针对漏洞 $v$ 的候选安全策略集合 $\Pi_v$，研究先对其中各策略进行匿名化与随机化处理，再将其输入一个或多个大语言模型，由评审模型分别在有效性、无干扰性和可部署性三个维度上给出严格全序。质量评估智能体的提示词简化示例见图~\ref{fig:prompt-quality-eval}。在获得各模型的维度排序后，可先将单个评审主体给出的秩次映射为 $[0,1]$ 区间上的维度得分，再对所有评审主体取均值，得到策略在三个维度上的共识得分，并据此构成安全策略的三维质量向量 $q(\pi)$。若需要进一步从候选集合中选出单个总体最优策略，则可在三维共识得分的基础上按权重聚合为总体质量函数 $Q(\pi)$，从而同时支持分维比较与总排序。
+
+
+\begin{figure}[htb]
+    \centering
+    \setlength{\abovecaptionskip}{3pt}
+    \setlength{\belowcaptionskip}{0pt}
+    \begin{tcolorbox}[enhanced,colback=gray!3,colframe=gray!55,boxrule=0.4pt,arc=1mm,left=2mm,right=2mm,top=0.5mm,bottom=0.5mm,title={\small \textbf{质量评估智能体提示词简化示例}},fonttitle=\bfseries,coltitle=black]
+    \begin{BVerbatim}[fontsize=\small,baselinestretch=0.8]
+你是云原生安全策略质量评估助手。
+## 输入
+漏洞实例 v 与匿名化、随机排列的候选安全策略集合
+<<有效性 \\ 无干扰性 \\ 可部署性的具体含义>>
+## 任务
+在三个维度上对输入所有候选策略独立给出严格全序：
+评审时仅依据策略内容，不受策略编号或输入顺序影响；
+
+## 输出
+<<排序结果 JSON 格式>>：分别给出三个维度的严格全序，
+    \end{BVerbatim}
+    \end{tcolorbox}
+    \bicaption{质量评估智能体提示词简化示例}{Simplified prompt template for the quality evaluation agent}\label{fig:prompt-quality-eval}
+\end{figure}
+
 
 \begin{flatdefinition}{质量向量函数}\label{def:ranking}
 设 $\mathcal{H}$ 为评审主体集合，$h\in\mathcal{H}$ 为参与独立评审的大语言模型配置。在维度 $\delta\in\{E,I,D\}$ 上，评审主体 $h$ 对候选集 $\Pi_v$ 给出严格全序，记 $r_{\delta}^{(h)}(\pi)$ 为 $\pi$ 在该排序中的秩（最优获秩 $1$，最劣获秩 $n_v=|\Pi_v|$），则该安全策略在评价维度 $\delta$ 上的质量向量值为：
@@ -371,13 +397,16 @@ s_{\delta}^{(h)}(\pi)=\frac{n_v-r_{\delta}^{(h)}(\pi)}{n_v-1}\in[0,1]
 三维质量向量各分量由对应维度的共识得分给出，即 $E(\pi)=\hat S_E(\pi)$，$I(\pi)=\hat S_I(\pi)$，$D(\pi)=\hat S_D(\pi)$。按 $\hat S_{\delta}$ 降序排列即得维度 $\delta$ 的共识排序 $\bar R_{\delta}$。
 \end{flatdefinition}
 
+
+
+
 \begin{flatdefinition}{总体质量函数}
 \label{def:overall-quality}
 将三维共识得分加权聚合，得总体质量函数 $Q\colon\Pi_v\to[0,1]$：
 \begin{equation}\label{eq:quality-func}
-Q(\pi)=\alpha_E\hat S_E(\pi)+\alpha_I\hat S_I(\pi)+\alpha_D\hat S_D(\pi),\quad \alpha_E+\alpha_I+\alpha_D=1
+Q(\pi)=\alpha_E\hat S_E(\pi)+\alpha_I\hat S_I(\pi)+\alpha_D\hat S_D(\pi)
 \end{equation}
-其中 $\alpha_E,\alpha_I,\alpha_D$ 为维度权重，可按业务场景配置：应急响应场景可提高 $\alpha_E$，生产稳定性优先场景可提高 $\alpha_I$，默认取 $\alpha_E=0.5,\alpha_I=0.3,\alpha_D=0.2$。按 $Q(\pi)$ 降序排列得总排名 $\bar R^{\tau}$。
+其中 $\alpha_E,\alpha_I,\alpha_D$ 为维度权重，且$\alpha_E+\alpha_I+\alpha_D=1$，可按业务场景配置：应急响应场景可提高 $\alpha_E$，生产稳定性优先场景可提高 $\alpha_I$，默认取 $\alpha_E=0.5,\alpha_I=0.3,\alpha_D=0.2$。按 $Q(\pi)$ 降序排列得总排名 $\bar R^{\tau}$。
 \end{flatdefinition}
 
 \section{方法示例}
@@ -481,7 +510,7 @@ spec:
                     namespaces: ["kube-system","calico-system"]
     \end{Verbatim}
     \end{tcolorbox}
-    \bicaption{针对CVE-2024-33522漏洞生成的安全策略代码}{Security policy code generated for CVE-2024-33522}\label{fig:chap3-falco-kyverno}
+    \bicaption{针对CVE-2024-33522漏洞生成的安全策略代码}{Security strategy code generated for CVE-2024-33522}\label{fig:chap3-falco-kyverno}
 \end{figure}
 
 \noindent\textbf{（3）：安全策略评审}

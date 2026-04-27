@@ -21,7 +21,7 @@
 对第三章收集的 55 个 CVE 相关应用版本代码，均使用四种静态扫描方法执行全量风险扫描并统计报告；同时，对每个漏洞样本均完成候选策略生成、自动评审与人工对照。在完成 55 个 CVE 的全量实验后，研究再按风险等级、成因覆盖与可复现性三个准则筛选 7 个典型 CVE，在隔离 Kubernetes 集群中进行漏洞复现与策略部署验证，以案例分析方式评估策略在真实攻击场景下的实际效果。所选典型案例见表~\ref{tab:cve-summary}。
 
 \begin{table}[htb]
-	\centering\bicaption{本章所选云原生权限提升 CVE 案例}{Overview of selected CVE cases in this chapter}\label{tab:cve-summary}
+	\centering\bicaption{本章所选云原生权限提升 CVE 案例}{Overview of selected cloud-native privilege escalation CVE cases in this chapter}\label{tab:cve-summary}
 	\noindent\renewcommand{\arraystretch}{1}
 	\setlength{\tabcolsep}{4pt}
 	\begin{tabularx}{0.92\linewidth}{c c c c X}
@@ -40,7 +40,7 @@
 \end{table}
 在生成模型方面，本章选取截至2025年10月份五个具有代表性的大语言模型参与策略生成与评审。表~\ref{tab:llm-models-info}列出各模型的基本信息。五个模型在架构设计、训练数据和参数规模上存在差异，可用于考察方法在不同模型条件下的适用性。
 \begin{table}[htb]
-	\centering\bicaption{实验采用的大语言模型}{Large language models used in experiments}
+	\centering\bicaption{实验采用的大语言模型}{Large language models used in the experiments}
 	\label{tab:llm-models-info}
 	\renewcommand{\arraystretch}{0.9}
 	\setlength{\tabcolsep}{6pt}
@@ -109,7 +109,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 \textbf{实验环境}。所有漏洞复现与策略验证均在隔离的 Kubernetes 测试集群中进行。为便于复核与复现，实验环境的软硬件配置与安全组件版本统一汇总于表~\ref{tab:chap6-env}。
 
 \begin{table}[htb]
-	\centering\bicaption{实验环境软硬件配置与软件组件版本汇总}{Summary of hardware and software environment configuration and software component versions}\label{tab:chap6-env}
+	\centering\bicaption{实验环境软硬件配置与软件组件版本汇总}{Summary of hardware, software environment, and component versions}\label{tab:chap6-env}
 	\renewcommand{\arraystretch}{0.9}
     \small
     \begin{tabularx}{0.95\textwidth}{C{3.0cm} X}
@@ -189,7 +189,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 消融实验表明，三个模块均能提升策略质量，其中反馈优化的影响最为显著。本节比较完整工作流 \texttt{KPEDefense} 与三种消融配置 \texttt{KPEDefense w/o RAG}、\texttt{KPEDefense w/o COT}、\texttt{KPEDefense w/o Feedback}，评价维度为有效性 $E$、无干扰性 $I$ 与可部署性 $D$。55 个漏洞样本先由五个生成模型产出候选策略，再交由五个评审模型独立排序，最后经等权聚合得到各维度共识得分。表~\ref{tab:ablation-scores}给出具体数值。其中反馈优化（Feedback）移除后有效性降幅达 79\%，无干扰性与可部署性也同步出现最大下降。多轮反馈迭代对各维度质量的提升作用最为全面，然而代价是更高的词元消耗与时间开销。思维链推理（COT）的影响则呈现明显的维度分化：移除后有效性降至 0.234，但可部署性几乎不变（$D=0.403$ 降至 $D=0.398$）。
 
 \begin{table}[htb!]
-	\centering\bicaption{消融实验方法配置得分}{Average scores in ablation study}
+	\centering\bicaption{消融实验方法配置得分}{Average scores of ablation configurations}
 	\label{tab:ablation-scores}
 	\renewcommand{\arraystretch}{0.9}
 	\setlength{\tabcolsep}{6pt}
@@ -342,7 +342,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 本节从词元成本与时间开销两个维度考察 KPEDefense 的资源代价。表~\ref{tab:token_usage_wide} 给出不同方法配置与生成模型下的平均词元消耗及对应成本：
 \begin{table}[htb!]
 \centering
-\bicaption{词元消耗与经济成本统计}{Token usage and economic cost statistics}
+\bicaption{词元消耗与经济成本统计}{Token usage and cost statistics}
 \label{tab:token_usage_wide}
 \renewcommand{\arraystretch}{0.9}
 \setlength{\tabcolsep}{6pt}

@@ -23,7 +23,7 @@ Kubernetes 是面向容器工作负载的容器集群编排系统，简称 K8S�
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/k8s.png}
-    \bicaption{K8S 体系结构示意}{Overview of K8S architecture}\label{fig:k8s-arch}
+  \bicaption{K8S 体系结构示意}{Overview of Kubernetes architecture}\label{fig:k8s-arch}
 \end{figure}
 
 K8S 通过一系列持久化\textbf{资源对象}描述集群中不同资源的编排与管理。这类对象通过结构化数据存储在etcd数据库中。例如，"Pod"是最小调度单元，包含一个或多个共享网络与存储的容器；"Deployment"、"StatefulSet" 与 "DaemonSet" 分别面向无状态、有状态和节点守护型工作负载提供副本控制与更新策略；"Service" 与 "Endpoint/EndpointSlice" 提供稳定的服务发现与负载均衡抽象；"Ingress" 面向南北向流量提供入口控制；"ConfigMap" 与 "Secret" 用于配置和敏感信息的声明式注入；"Volume"、"PV" 与 "PVC" 则提供存储生命周期与绑定关系的抽象。
@@ -47,7 +47,7 @@ spec:                    # 期望状态声明（字段因 kind 而异）
   ...
     \end{BVerbatim}
     \end{tcolorbox}
-    \bicaption{K8S Deployment 资源对象 YAML 配置示例}{Example YAML configuration of a K8S Deployment resource object}\label{fig:k8s-deployment-yaml}
+    \bicaption{K8S Deployment 资源对象 YAML 配置示例}{Example YAML configuration of a Kubernetes Deployment resource object}\label{fig:k8s-deployment-yaml}
 \end{figure}
 
 
@@ -65,7 +65,7 @@ spec:                    # 期望状态声明（字段因 kind 而异）
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.95\textwidth]{images/yaml.png}
-    \bicaption{K8S RBAC 权限配置YAML文件示意\cite{kubeguard_icws2025}}{Example of K8S RBAC permission configuration in YAML\cite{kubeguard_icws2025}}\label{fig:k8s-rbac-yaml}
+  \bicaption{K8S RBAC 权限配置YAML文件示意\cite{kubeguard_icws2025}}{Example of Kubernetes RBAC permission configuration in YAML\cite{kubeguard_icws2025}}\label{fig:k8s-rbac-yaml}
 \end{figure}
 
 \subsection{Kubernetes 权限提升漏洞}
@@ -79,7 +79,7 @@ spec:                    # 期望状态声明（字段因 kind 而异）
 \begin{figure}[htb]
     \centering
     \includegraphics[width=1\textwidth]{images/cve_example.png}
-    \bicaption{CVE-2024-33522 节点侧权限提升漏洞 Issue 报告}{Issue report of node-side privilege escalation vulnerability CVE-2024-33522 in Calico}\label{fig:cve-2024-33522}
+  \bicaption{CVE-2024-33522 节点侧权限提升漏洞 Issue 报告}{Issue report on the node-side privilege escalation vulnerability CVE-2024-33522 in Calico}\label{fig:cve-2024-33522}
 \end{figure}
 
 
@@ -130,7 +130,7 @@ deny[msg] {
     \end{BVerbatim}
     \end{tcolorbox}
     \end{minipage}
-    \bicaption{Falco 运行时监控规则与 OPA/Gatekeeper 准入控制策略示例}{Examples of Falco runtime monitoring rule and OPA/Gatekeeper admission control policy}\label{fig:falco-opa-examples}
+    \bicaption{Falco 运行时监控规则与 OPA/Gatekeeper 准入控制策略示例}{Examples of a Falco runtime monitoring rule and an OPA/Gatekeeper admission control policy}\label{fig:falco-opa-examples}
 \end{figure}
 
 \section{国内外研究现状}
@@ -172,24 +172,19 @@ Helm Chart 是用于管理 K8S 应用的部署模板配置文件，其中也存�
 
 \textbf{（2）智能化漏洞检测与修复。}软件缺陷管理可借助大语言模型智能。Ghosh 等\cite{ghosh2025cve}提出以安全领域本体辅助 LLM 完成 CVE 漏洞评估，通过引入漏洞类型、攻击向量和影响范围等结构化知识约束模型推理，提升了漏洞语义理解与风险评估的准确性。在云原生误配置修复方向，Malul 等\cite{malul2024genkubesec}提出 GenKubeSec，将 LLM 引入 K8S 误配置的检测、定位、推理与修复建议生成，构建了面向云原生配置安全的全流程自动化处理框架；Minna 等\cite{minna2025analyzing}进一步评估了 LLM 修复 Helm Chart 配置异味的效果，指出仅以局部 YAML 片段为输入往往难以生成完整修复方案，且模型存在误删无关配置的风险，说明上下文完整性与输出可靠性是当前方法的关键约束。除修复建议之外，LLM 也被用于检测规则生成。Konstantaras 等\cite{konstantaras2026edrrules}探索了由模型从威胁描述中自动归纳生成静态检测规则的方法，为将自然语言形式的攻击知识转化为可部署规则提供了初步路径。总体而言，这类研究展示了从漏洞描述到防控措施生成的自动化潜力，但已有工作多聚焦于通用误配置或孤立漏洞场景，输出也多停留在修复建议或单条规则层面，尚未形成面向云原生权限提升漏洞的多策略协同生成与部署验证闭环。
 
-\textbf{（3）多智能体驱动的安全任务自动化。}当安全任务具有多阶段依赖、高上下文需求和反馈迭代特征时，单一模型往往难以稳定完成整条任务链条，因此多智能体驱动的安全任务自动化成为新的研究方向。Alsabbagh 等\cite{alsabbagh2026autosecagent}提出 AutoSecAgent，通过智能体编排、递归记忆与检索增强生成，使系统能够在多步骤安全任务中跨轮次积累上下文并稳定执行，从而缓解单模型在长链路任务中的信息遗忘问题。Yang 等\cite{yang2026autoegexploitingknownthirdparty}则针对云原生生态中已知第三方组件漏洞的利用验证问题，设计了多智能体协同与迭代反馈机制，通过多轮自主探索实现从漏洞信息到可验证利用策略的端到端自动化。
+\textbf{（3）多智能体驱动的安全任务自动化。}当安全任务具有多阶段依赖、高上下文需求和反馈迭代特征时，单一模型往往难以稳定完成整条任务链条，因此多智能体驱动的安全任务自动化成为新的研究方向。Alsabbagh 等\cite{alsabbagh2026autosecagent}提出 AutoSecAgent，通过智能体编排、递归记忆与检索增强生成，使系统能够在多步骤安全任务中跨轮次积累上下文并稳定执行，从而缓解单模型在长链路任务中的信息遗忘问题。Yang 等\cite{yang2026autoegexploitingknownthirdparty}则针对Web应用中已知第三方组件漏洞的利用验证问题，设计了多智能体协同与迭代反馈机制，通过多轮自主探索实现从漏洞信息到可验证利用策略的端到端自动化。Zhu 等\cite{zhu2025teamsllmagentsexploit}关注高危零日漏洞的利用场景，通过一个计划智能体管理多个子智能体的方法解决单智能体难以探索多种漏洞并进行进行长期规划的短板。多智能体框架已在渗透测试和漏洞利用生成等攻击侧任务中显示出较强潜力，可以探索大预言模型自动生成安全防控工具特定代码的安全能力边界，以解决复杂权限提升漏洞的防控问题。
 
-综上，多智能体框架已在渗透测试和漏洞利用生成等攻击侧任务中显示出较强潜力，可以探索大预言模型自动生成安全防控工具特定代码的安全能力边界，以解决复杂权限提升漏洞的防控问题。
+现有研究已在大语言模型安全能力评测、漏洞检测修复及多智能体安全任务自动化等方向取得显著进展，但在云原生安全管理方面仍缺乏体系性研究，可针对云原生领域多智能体的安全应用进行进一步探索。
 
+% \subsection{本课题组前期研究}
+% 本课题组围绕 K8S 权限风险检测已形成较为系统的前期积累，其中代表性成果为系统性权限风险检测方法 KubeGuard\cite{kubeguard_icws2025}，如图\ref{fig:kgf}所示。该方法面向过度权限、权限提升和敏感信息泄露三类风险，分别设计了最小权限集构建、规则化审计以及敏感词监测机制。,KubeGuard 的核心贡献在于验证了从权限视角开展风险建模与检测的可行性。一方面，该工作利用 NLP 技术识别应用所需的最小权限集，以判断权限配置是否存在过度授权；另一方面，通过动态规则审计识别多类权限提升风险。具体而言，该框架将权限提升场景归纳为凭证窃取、账户冒用、RBAC 操纵和间接执行四类，并分别提出相应的检测思路。此外，系统还通过监测 Pod 间消息传输并结合关键词匹配，对涉及敏感资源的内容进行告警，以覆盖敏感信息泄露风险。在系统实现与效果验证方面，课题组进一步实现了支持工具 KubeGuarder，并在开源 K8S 应用与模拟场景中开展实验评估。实验结果表明，该系统在过度权限检测方面较静态基线方法具有更高的有效性与准确性，同时能够识别多类型权限提升与敏感信息泄露风险。
 
-\subsection{本课题组前期研究}
-
-本课题组围绕 K8S 权限风险检测已形成较为系统的前期积累，其中代表性成果为系统性权限风险检测框架 KubeGuard\cite{kubeguard_icws2025}。该框架面向过度权限、权限提升和敏感信息泄露三类风险，分别设计了最小权限集构建、规则化审计以及敏感词监测机制。如图\ref{fig:kgf}所示,KubeGuard 的核心贡献在于验证了从权限视角开展风险建模与检测的可行性。一方面，该工作利用 NLP 技术识别应用所需的最小权限集，以判断权限配置是否存在过度授权；另一方面，通过动态规则审计识别多类权限提升风险。具体而言，该框架将权限提升场景归纳为凭证窃取、账户冒用、RBAC 操纵和间接执行四类，并分别提出相应的检测思路。此外，系统还通过监测 Pod 间消息传输并结合关键词匹配，对涉及敏感资源的内容进行告警，以覆盖敏感信息泄露风险。在系统实现与效果验证方面，课题组进一步实现了支持工具 KubeGuarder，并在开源 K8S 应用与模拟场景中开展实验评估。实验结果表明，该系统在过度权限检测方面较静态基线方法具有更高的有效性与准确性，同时能够识别多类型权限提升与敏感信息泄露风险。
-
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=0.95\textwidth]{images/KGF.png}
-    \bicaption{KubeGuard 方法框架图\cite{kubeguard_icws2025}}{Framework of the KubeGuard method\cite{kubeguard_icws2025}}\label{fig:kgf}
-\end{figure}
-
-针对权限提升问题，现有工作在真实生产环境中存在三方面局限:1）规则化。基于规则化的权限提升动态检测方法难以覆盖新型复杂的提权漏洞；2）误报率。针对本身具有高权限的敏感应用易产生误报信息；3）动态性。无法动态监控工作节点内部的运行时特征，只能在攻击后检测，无法在事前或事中进行阻断防护。
-
+% \begin{figure}[htb]
+%     \centering
+%     \includegraphics[width=0.95\textwidth]{images/KGF.png}
+%     \bicaption{KubeGuard 方法框架图\cite{kubeguard_icws2025}}{Framework of the KubeGuard method\cite{kubeguard_icws2025}}\label{fig:kgf}
+% \end{figure}
+% 针对权限提升问题，现有工作在真实生产环境中存在三方面局限:1）规则化。基于规则化的权限提升动态检测方法难以覆盖新型复杂的提权漏洞；2）误报率。针对本身具有高权限的敏感应用易产生误报信息；3）动态性。无法动态监控工作节点内部的运行时特征，只能在攻击后检测，无法在事前或事中进行阻断防护。
 \section{小结}
-
-本章围绕云原生权限提升漏洞智能化防控问题，介绍了容器、Kubernetes 及其权限模型等基础概念与云原生安全技术，并从权限提升风险与防控、云原生权限安全以及智能化漏洞防控三个方向梳理了国内外研究现状，此外还详细介绍了前期研究成果并阐述本工作的不同之处。
-
+本章围绕云原生权限提升漏洞智能化防控问题，介绍了容器、Kubernetes 及其权限模型等基础概念与云原生安全技术，并从权限提升风险与防控、云原生权限安全以及智能化漏洞防控三个方向梳理了国内外研究现状。
+%此外还详细介绍了前期研究成果并阐述本工作的不同之处
