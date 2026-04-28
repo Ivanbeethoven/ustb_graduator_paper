@@ -1,0 +1,6 @@
+面向云原生应用权限提升漏洞的智能化防控技术研究
+Research on Intelligent Protection and Monitoring Technologies for Privilege Escalation Vulnerabilities in Cloud-Native Applications
+
+云原生安全；权限提升漏洞；策略代码生成；补丁窗口期防控；多智能体协同
+
+Cloud-native security；Privilege escalation vulnerabilities；Strategy code generation；Patch-window mitigation；Multi-agent collaboration

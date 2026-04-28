@@ -9,7 +9,7 @@ Kubernetes 是由云原生计算基金会托管的容器集群编排系统，广
 
 \textbf{（2）开发支持工具}：设计并开发 KPEDefense 方法支持工具，集成知识库管理、策略生成工作流、专家评审排序与策略部署验证等功能模块，实现面向云原生权限提升漏洞的智能化自动防控流程。
 
-\textbf{（3）实验评估}：以近5年权限提升漏洞样本作为实验对象，对DPEDefense方法生成安全策略的质量和效率进行评估并进行案例分析。实验结果表明，相较现有的规则化风险扫描方法，DPEDefense能够针对真实云原生权限提升漏洞提出更实际的防控方案，方法不同部分对安全策略有效性均有正向贡献，且时间与经济成本开销较低。
+\textbf{（3）实验评估}：以近5年权限提升漏洞样本作为实验对象，对KPEDefense方法生成安全策略的质量和效率进行评估并进行案例分析。实验结果表明，相较现有的规则化风险扫描方法，KPEDefense能够针对真实云原生权限提升漏洞提出更实际的防控方案，方法不同部分对安全策略有效性均有正向贡献，且时间与经济成本开销较低。
 
 KPEDefense通过生成智能化漏洞防控安全策略，能够有效缓解Kubernetes第三方开源应用带来的权限提升等高危风险，从而保障Kubernetes集群的安全性。
 
@@ -22,7 +22,7 @@ Kubernetes is a container cluster orchestration system hosted by the Cloud Nativ
 
 This thesis leverages the vulnerability analysis and code generation capabilities of large language models to propose an intelligent security strategy generation method for privilege escalation vulnerabilities. By automatically generating and managing domain-specific language configurations for multiple security tools—including runtime monitors, policy admission engines, and network policies—the method implements dynamic protection and monitoring of attack chain nodes associated with privilege escalation vulnerabilities in cloud-native applications. The main contributions are as follows.
 
-\textbf{(1) KPEDefense, an intelligent security strategy generation method for privilege escalation vulnerability prevention and control:} First, a root-cause classification framework for privilege escalation vulnerabilities is systematically proposed based on root causes observed in historical vulnerabilities, and a security knowledge base is constructed from multi-source information in the open-source repositories where the vulnerabilities originate. Then, based on retrieval from the security knowledge base, a multi-agent workflow comprising security context construction, chain-of-thought reasoning, and feedback optimization is built to generate security strategy code for protecting against and monitoring specific privilege escalation vulnerabilities. Finally, a quantitative quality evaluation method is designed for the generated strategies, covering three dimensions: effectiveness, non-interference, and deployability.
+\textbf{(1) An intelligent security strategy generation method for privilege escalation vulnerability prevention and control named KPEDefense:} First, a root-cause classification framework for privilege escalation vulnerabilities is systematically proposed based on root causes observed in historical vulnerabilities, and a security knowledge base is constructed from multi-source information in the open-source repositories where the vulnerabilities originate. Then, based on retrieval from the security knowledge base, a multi-agent workflow comprising security context construction, chain-of-thought reasoning, and feedback optimization is built to generate security strategy code for protecting against and monitoring specific privilege escalation vulnerabilities. Finally, a quantitative quality evaluation method is designed for the generated strategies, covering three dimensions: effectiveness, non-interference, and deployability.
 
 \textbf{(2) Supporting tool:} A KPEDefense support tool is designed and developed, integrating modules for knowledge-base management, strategy-generation workflow, expert review and ranking, and strategy-deployment verification, thereby realizing an intelligent and automated prevention and control pipeline for cloud-native privilege escalation vulnerabilities.
 

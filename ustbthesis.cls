@@ -436,7 +436,7 @@
 \vfill
 
 \begin{center}
-Doctor Degree Candidate： \ustb@EnglishAuthor
+Master Degree Candidate： \ustb@EnglishAuthor
 
 Supervisor: \ustb@EnglishSupervisor
 

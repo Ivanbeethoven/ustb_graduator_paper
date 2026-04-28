@@ -1,30 +1,27 @@
 ﻿
-\subsubsection{漏洞复现}
+\subsubsection{（1）漏洞复现}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
 
-CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Container Storage Interface）插件与 Kubernetes 集成。在 Kubernetes 中，CSI 节点插件通常以 DaemonSet 形式在每个节点上运行（例如 \texttt{cfs-csi-node}），控制器组件以 Deployment 形式运行（例如 \texttt{cfs-csi-controller}）。这类组件需要与 Kubernetes API 交互，但其权限应遵循最小权限原则。
+CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI 插件与 Kubernetes 集成。在 Kubernetes 中，CSI 节点插件通常以 DaemonSet 形式在每个节点上运行，例如 \texttt{cfs-csi-node}；控制器组件以 Deployment 形式运行，例如 \texttt{cfs-csi-controller}。这类组件需要与 Kubernetes API 交互，但其权限应遵循最小权限原则。
 
-\textbf{CVE 描述}：CVE-2023-30512 的核心问题是 CubeFS CSI 插件的服务账号（如 \texttt{cfs-csi-service-account}）被绑定到了包含\textbf{过度权限}的集群级角色（\texttt{ClusterRole}），从而具备对集群范围 \texttt{Secret} 的读取能力（如 \texttt{get/list}）。一旦攻击者在某节点获得对 CSI 节点插件 Pod 的控制，例如通过节点被入侵、容器逃逸或对系统命名空间特权工作负载的执行能力，便可能滥用该服务账号的权限边界，读取全局敏感信息并进一步演化为集群级权限提升。
+\textbf{CVE 描述}：CVE-2023-30512 的核心问题是 CubeFS CSI 插件的服务账号，如 \texttt{cfs-csi-service-account}，被绑定到了包含\textbf{过度权限}的集群级角色 \texttt{ClusterRole}，从而具备对集群范围 \texttt{Secret} 的读取能力，如 \texttt{get/list}。一旦攻击者在某节点获得对 CSI 节点插件 Pod 的控制，例如通过节点被入侵、容器逃逸或对系统命名空间特权工作负载的执行能力，便可能滥用该服务账号的权限边界，读取全局敏感信息并进一步演化为集群级权限提升。
 
-\textbf{主要成因分类}：配置缺陷 / 过度授权（Over-privileged RBAC）。
+\textbf{主要成因分类}：配置缺陷 / 过度授权。
 
 \textbf{攻击链条描述}：攻击链可概括为系统组件身份被过度授权，且在被攻陷后可枚举集群秘密：
 \begin{enumerate}
 	\item \textbf{身份前置阶段}：CSI 组件使用默认或被误配置的 ServiceAccount 运行；
 	\item \textbf{权限放大阶段}：ServiceAccount 被绑定到含 \texttt{secrets} 读取能力的 ClusterRole；
-	\item \textbf{控制获取阶段}：攻击者控制某节点上的 CSI Pod（例如 \texttt{cfs-csi-node}）并获得其运行时上下文；
-	\item \textbf{数据获取阶段}：攻击者以该 ServiceAccount 身份读取集群 Secret，从而获取高价值凭据（管理员 Token、云凭据等），实现从节点或 Pod 控制向集群控制的升级。
+	\item \textbf{控制获取阶段}：攻击者控制某节点上的 CSI Pod，例如 \texttt{cfs-csi-node}，并获得其运行时上下文；
+	\item \textbf{数据获取阶段}：攻击者以该 ServiceAccount 身份读取集群 Secret，从而获取高价值凭据，如管理员 Token、云凭据等，实现从节点或 Pod 控制向集群控制的升级。
 \end{enumerate}
 
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image.png}
-	\bicaption{CVE-2023-30512：攻击成功证据}{CVE-2023-30512: evidence of a successful attack}
+	\bicaption{CVE-2023-30512：漏洞复现结果示意（一）}{CVE-2023-30512: results of vulnerability reproduction (I)}
 	\label{fig:cve-2023-30512-overview}
 \end{figure}
-
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
 实验在 Kubernetes 测试集群中部署受影响版本的 CubeFS CSI，明确节点插件与控制器组件使用的 \texttt{cfs-csi-service-account}，并导出其对应的 ClusterRole 与 ClusterRoleBinding。权限证据显示，该服务账号关联的 ClusterRole 含有 \texttt{secrets} 资源的 \texttt{get/list/watch} 动词，完整命令与策略清单见附录\ref{app:cve-2023-30512}。
 
@@ -33,16 +30,16 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI（Contai
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image2.png}
-	\bicaption{CVE-2023-30512：攻击成功证据}{CVE-2023-30512: evidence of a successful attack}
+	\bicaption{CVE-2023-30512：漏洞复现结果示意（二）}{CVE-2023-30512: results of vulnerability reproduction (II)}
 	\label{fig:cve-2023-30512-verify}
 \end{figure}
 
 
-\subsubsection{安全策略生成}
+\subsubsection{（2）安全策略生成}
 
 KPEDefense 针对该漏洞筛选出的最优策略以 RBAC 最小化与准入防回归为核心：移除 CSI ServiceAccount 对集群范围 \texttt{Secret} 的读取权限，并通过准入规则阻断包含高危动词的 ClusterRole 变更，防止过度授权在修复后重新引入。详细配置见附录\ref{app:cve-2023-30512}。
 
-\subsubsection{安全策略验证}
+\subsubsection{（3）安全策略验证}
 
 将最优策略集合部署至实验集群后，重新以 \texttt{cfs-csi-service-account} 身份执行漏洞复现中的权限验证，对有效性、无干扰性与可部署性三个维度逐项验证。
 

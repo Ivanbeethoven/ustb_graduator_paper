@@ -1,17 +1,15 @@
 ﻿
-\subsubsection{漏洞复现}
-
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
+\subsubsection{（1）漏洞复现}
 
 Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（ACM）中的集群生命周期管理组件，常用于在多集群场景下自动化创建与托管 OpenShift/Kubernetes 集群。在 vSphere 场景中，Hive 需要使用 vCenter 凭据完成集群的基础设施供应与后续管理。
 
-\textbf{CVE 描述}：CVE-2025-2241 指出 Hive 在完成 vSphere 集群供应（provisioning）后，会将 vCenter 凭据暴露在 \texttt{ClusterProvision} 对象中。由于 \texttt{ClusterProvision} 属于自定义资源（CR），拥有其\textbf{读取权限}的用户可直接从该对象中提取敏感凭据，即使该用户并不具备对 Kubernetes \texttt{Secret} 的访问权限。该问题会导致未授权 vCenter 访问、基础设施与集群管理风险，并可能进一步演化为权限提升。
+\textbf{CVE 描述}：CVE-2025-2241 指出 Hive 在完成 vSphere 集群供应后，会将 vCenter 凭据暴露在 \texttt{ClusterProvision} 对象中。由于 \texttt{ClusterProvision} 属于自定义资源，拥有其\textbf{读取权限}的用户可直接从该对象中提取敏感凭据，即使该用户并不具备对 Kubernetes \texttt{Secret} 的访问权限。该问题会导致未授权 vCenter 访问、基础设施与集群管理风险，并可能进一步演化为权限提升。
 
 \textbf{主要成因分类}：敏感信息泄露 / 配置与对象生命周期缺陷，即敏感数据出现在可读的 CR 状态字段中，形成对 \texttt{Secret} 隔离边界的旁路。
 
 \textbf{攻击链条描述}：攻击链可概括为 \texttt{Secret} 隔离被 CR 可读性绕过：
 \begin{enumerate}
-	\item \textbf{权限前置阶段}：攻击者拥有对 \texttt{ClusterProvision} 的 \texttt{get/list/watch} 权限（通常来自聚合角色 \texttt{view/edit} 或错误的绑定）；
+	\item \textbf{权限前置阶段}：攻击者拥有对 \texttt{ClusterProvision} 的 \texttt{get/list/watch} 权限，通常来自聚合角色 \texttt{view/edit} 或错误的绑定；
 	\item \textbf{数据旁路阶段}：Hive 将 vCenter 凭据写入 \texttt{ClusterProvision},位于 \texttt{status} 字段；
 	\item \textbf{凭据提取阶段}：攻击者通过读取 CR YAML/JSON 直接获得凭据；
 	\item \textbf{后续风险阶段}：利用 vCenter 凭据对虚拟化平台执行未授权操作，进而影响集群节点与工作负载，造成横向移动或权限提升。
@@ -20,22 +18,21 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve2/image.png}
-	\bicaption{CVE-2025-2241：vCenter 凭据通过 \texttt{ClusterProvision} 暴露的风险示意}{CVE-2025-2241: illustration of vCenter credential exposure through \texttt{ClusterProvision}}
+	\bicaption{CVE-2025-2241：漏洞复现结果示意}{CVE-2025-2241: results of vulnerability reproduction}
 	\label{fig:cve-2025-2241-overview}
 \end{figure}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
 实验在部署 ACM/MCE 与 Hive 的 OpenShift 测试集群中进行，以具备 \texttt{ClusterProvision} 读取权限、但无 \texttt{Secret} 访问权限的低权身份接入。vSphere 测试专用 vCenter 账号采用最小权限配置，详细 YAML 与命令序列见附录\ref{app:cve-2025-2241}。
 
 触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
 
 
-\subsubsection{安全策略生成}
+\subsubsection{（2）安全策略生成}
 
 KPEDefense 针对该漏洞筛选出的最优策略以 \texttt{ClusterProvision} 读取权限收敛与对象生命周期治理为核心：通过 RBAC 限制对该对象的访问权限，并在供应完成后自动清理 \texttt{status} 字段中的明文凭据，从访问控制与数据留存两个维度阻断敏感凭据旁路路径。详细配置见附录\ref{app:cve-2025-2241}。
 
-\subsubsection{安全策略验证}
+\subsubsection{（3）安全策略验证}
 
 将最优策略集合部署至实验集群后，以低权身份重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
 

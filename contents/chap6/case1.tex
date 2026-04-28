@@ -1,14 +1,12 @@
 ﻿
-\subsubsection{漏洞复现}
-
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
+\subsubsection{（1）漏洞复现}
 
 Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工具。其典型部署形态是由 Argo CD 控制平面以相对高权限身份持续对齐 Git 仓库中的期望状态，即对集群资源拥有创建、更新与删除能力。该架构提升交付一致性的同时，也引入了新的安全风险：一旦普通用户能够影响 Argo CD 的控制决策，便可能借助控制平面权限放大自身权限边界。
 
-\textbf{CVE 描述}：CVE-2022-24768 为 Argo CD 的不当访问控制（Improper Access Control）漏洞。\textbf{所有未修复版本}（自 1.0.0 起）均存在风险，0.5.x 与 0.8.x 系列中也包含该问题的受限版本。攻击者需要满足以下前置条件之一：
+\textbf{CVE 描述}：CVE-2022-24768 为 Argo CD 的不当访问控制漏洞。自 1.0.0 起所有未修复版本均存在风险，0.5.x 与 0.8.x 系列中也包含该问题的受限版本。攻击者需要满足以下前置条件之一：
 （i）对某个 Application 的源 Git/Helm 仓库具备 push 权限；或（ii）在 Argo CD 中对该 Application 具备 \texttt{sync} 与 \texttt{override} 权限。满足条件后，攻击者可通过构造/修改仓库内容或应用配置，诱导 Argo CD 以其控制平面权限执行超出攻击者原始 RBAC 边界的操作，进而可获得管理员权限。官方已在 Argo CD \textbf{2.1.14、2.2.8、2.3.2} 中发布补丁。
 
-\textbf{主要成因分类}：安全逻辑缺陷 / 访问控制缺陷（已授权用户的权限放大）。
+\textbf{主要成因分类}：安全逻辑缺陷 / 访问控制缺陷，表现为已授权用户的权限被放大。
 \textbf{攻击链条描述}：攻击链可概括为：
 \begin{enumerate}
         \item \textbf{合法身份阶段}：攻击者以普通 Argo CD 用户身份登录；
@@ -17,36 +15,35 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
         \item \textbf{权限提升阶段}：借助被创建的高权限 RBAC 绑定获得集群级管理员能力。
 \end{enumerate}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
-实验部署 Argo CD v2.3.1（受影响版本），配置 Kubernetes 测试集群（\texttt{kind} 或 \texttt{minikube}），以低权用户 bob 身份接入；bob 仅在特定项目范围内持有 \texttt{sync} 与 \texttt{override} 权限，对集群级资源无直接写入能力。测试仓库（\url{https://github.com/Ivanbeethoven/bad_repo}）中含正常业务资源 \texttt{app.yaml} 与恶意 ClusterRoleBinding \texttt{hack-admin.yaml}，二者均处于 Argo CD 同步路径下。关键命令与清单见附录\ref{app:cve-2022-24768}。
+实验部署受影响版本 Argo CD v2.3.1，并配置 Kubernetes 测试集群，以低权用户 bob 身份接入；bob 仅在特定项目范围内持有 \texttt{sync} 与 \texttt{override} 权限，对集群级资源无直接写入能力。测试仓库 \url{https://github.com/Ivanbeethoven/bad_repo} 中含正常业务资源 \texttt{app.yaml} 与恶意 ClusterRoleBinding \texttt{hack-admin.yaml}，二者均处于 Argo CD 同步路径下。关键命令与清单见附录\ref{app:cve-2022-24768}。
 
 bob 账户触发 Application 同步后，Argo CD 控制平面将恶意 ClusterRoleBinding 一并应用至集群，以 \texttt{--as bob} 执行 \texttt{kubectl auth can-i '*' '*'} 返回 \texttt{yes}，低权身份提升至集群管理员级别，权限边界放大经实验证实。
 
 \begin{figure}[htb]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image2.png}
-        \bicaption{漏洞复现实验结果示意}{Results of vulnerability reproduction}
+        \bicaption{CVE-2022-24768：漏洞复现结果示意（一）}{CVE-2022-24768: results of vulnerability reproduction (I)}
         \label{fig:cve-2022-24768-poc}
 \end{figure}
 
 \begin{figure}[htb]
         \centering
         \includegraphics[width=1\textwidth]{images/cve1/image1.png}
-        \bicaption{漏洞复现实验结果示意}{Results of vulnerability reproduction}
+        \bicaption{CVE-2022-24768：漏洞复现结果示意（二）}{CVE-2022-24768: results of vulnerability reproduction (II)}
         \label{fig:cve-2022-24768-chain}
 \end{figure}
 
-\subsubsection{安全策略生成}
+\subsubsection{（2）安全策略生成}
 
 KPEDefense 针对该漏洞筛选出的最优策略以 RBAC 权限收敛与准入控制为核心，覆盖 Kubernetes 集群侧与 Argo CD 应用侧两个层面：在集群侧收紧低权限主体对高危资源绑定操作的访问，在应用侧限制 AppProject 写入，防止攻击者借助 \texttt{sync\allowbreak+\allowbreak override} 操作创建集群级高权限绑定。详细配置见附录\ref{app:cve-2022-24768}。
 
-\subsubsection{安全策略验证}
+\subsubsection{（3）安全策略验证}
 
 将最优策略集合部署至实验集群后，以 bob 账户重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
 
 \noindent\textbf{有效性：}
-策略部署后，触发对恶意 RBAC 绑定的同步请求被准入控制拒绝；执行 \texttt{kubectl auth can-i '*' '*' --as bob} 返回 \texttt{no}，权限提升路径关闭。Kubernetes RBAC 收敛后 bob 对 \texttt{AppProject} 的写入同样被拒绝，韵从限制了通过修改项目策略绕过准入规则的路径。
+策略部署后，触发对恶意 RBAC 绑定的同步请求被准入控制拒绝；执行 \texttt{kubectl auth can-i '*' '*' --as bob} 返回 \texttt{no}，权限提升路径关闭。Kubernetes RBAC 收敛后 bob 对 \texttt{AppProject} 的写入同样被拒绝，进而限制了通过修改项目策略绕过准入规则的路径。
 
 \noindent\textbf{无干扰性：}
 策略收紧范围限于高危操作（\texttt{override}、\texttt{exec} 等）及 AppProject 写入，项目内合规同步操作未受影响。准入控制规则先以审计模式运行，确认无合规清单误拦截后切换至强制模式。
@@ -54,6 +51,6 @@ KPEDefense 针对该漏洞筛选出的最优策略以 RBAC 权限收敛与准入
 \noindent\textbf{可部署性：}
 RBAC 策略与 Argo CD 配置均以 YAML 形式纳入 Git 基线，通过 \texttt{kubectl apply} 一步部署，实验集群中无冲突落地。Gatekeeper 规则可模板化复用于多集群场景。
 
-就 CVE-2022-24768 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。Kubernetes RBAC 收敛与准入控制协同后，低权用户借助 \texttt{sync\allowbreak+\allowbreak override} 诱导控制平面创建集群级高权限绑定的路径被关闭。该方案可作为版本升级前的补充缓解措施，最终修复仍需升级至官方补丁版本（2.1.14、2.2.8 或 2.3.2）。
+就 CVE-2022-24768 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。Kubernetes RBAC 收敛与准入控制协同后，低权用户借助 \texttt{sync\allowbreak+\allowbreak override} 诱导控制平面创建集群级高权限绑定的路径被关闭。该方案可作为版本升级前的补充缓解措施，最终仍需升级至官方补丁版本 2.1.14、2.2.8 或 2.3.2。
 
 

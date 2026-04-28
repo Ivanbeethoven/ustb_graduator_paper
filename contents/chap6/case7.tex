@@ -1,17 +1,14 @@
 ﻿
-\subsubsection{漏洞复现}
+\subsubsection{（1）漏洞复现}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
-
-Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，提供 Web 与 API 接口供用户进行应用同步、回滚与差异审计等操作。在企业环境中，Argo CD 常通过 OIDC 与统一身份提供方对接，由身份提供方向 Argo CD 签发包含用户身份与组信息的令牌。在 OIDC 令牌中，\texttt{aud}（audience）声明用于标识该令牌的预期接收方。通常情况下，服务端除验证签名与发行者外，还需要校验 \texttt{aud} 是否包含本服务的受众标识，以避免将为其他服务签发的令牌误用到本服务上。
+Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，提供 Web 与 API 接口供用户进行应用同步、回滚与差异审计等操作。在企业环境中，Argo CD 常通过 OIDC 与统一身份提供方对接，由身份提供方向 Argo CD 签发包含用户身份与组信息的令牌。在 OIDC 令牌中，\texttt{aud} 声明用于标识该令牌的预期接收方。通常情况下，服务端除验证签名与发行者外，还需要校验 \texttt{aud} 是否包含本服务的受众标识，以避免将为其他服务签发的令牌误用到本服务上。
 
 \textbf{CVE 描述}：CVE-2023-22482 指出 Argo CD 在部分版本中存在不恰当授权缺陷。其能够验证令牌由已配置的 OIDC 提供方签名，但未对令牌的 \texttt{aud} 声明进行校验，从而可能接受并非面向 Argo CD 的有效令牌。若同一身份提供方还为其他系统签发令牌，攻击者一旦获得其他系统的有效令牌，就可能将其用于访问 Argo CD。Argo CD 将基于令牌中的 \texttt{groups} 声明授予权限，即使这些组信息并非为 Argo CD 的授权场景设计。该问题在 \texttt{2.6.0-rc3}、\texttt{2.5.6}、\texttt{2.4.19} 与 \texttt{2.3.13} 及以上版本修复；受影响范围包含 \texttt{>= 1.8.2} 且低于上述修复版本的版本分支。
 
-\textbf{主要成因分类}：安全逻辑缺陷 / 身份与授权校验缺失（令牌受众 \texttt{aud} 未校验导致跨受众令牌复用）。
+\textbf{主要成因分类}：安全逻辑缺陷 / 身份与授权校验缺失，表现为令牌受众 \texttt{aud} 未校验，导致跨受众令牌复用。
 
 \textbf{攻击链条描述}：攻击链可概括为多受众身份提供、跨受众令牌复用以及基于组声明的越权访问。攻击者获得同一 OIDC 提供方为其他受众签发的有效令牌；将其提交给 Argo CD 的接口；若 Argo CD 未校验 \texttt{aud}，则会接受该令牌并根据 \texttt{groups} 映射授予权限，进而造成对应用资源与交付流程的非预期访问。该缺陷同时放大了令牌泄露事件的影响范围。
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
 实验在接入 OIDC 身份提供方的 Argo CD 测试环境中进行，重点验证 \texttt{aud} 不匹配令牌是否仍会被受影响版本接受。正文仅保留配置证据、令牌声明与接口返回结果，不展开可直接复用的令牌获取与请求构造细节。完整环境准备、验证判据与回归检查步骤见附录\ref{app:cve-2023-22482}。
 
@@ -20,15 +17,15 @@ Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，�
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.8\textwidth]{images/cve7/image.png}
-	\bicaption{验证性复现证据示意}{Validation-oriented evidence of reproduction}
+	\bicaption{CVE-2023-22482：漏洞复现结果示意}{CVE-2023-22482: results of vulnerability reproduction}
 	\label{fig:cve-2023-22482-evidence}
 \end{figure}
 
-\subsubsection{安全策略生成}
+\subsubsection{（2）安全策略生成}
 
 KPEDefense 针对该漏洞筛选出的最优策略以身份提供方客户端隔离、前置入口 \texttt{aud} 校验与 Argo CD RBAC 收敛为核心：在应用入口处强制校验令牌受众声明，阻断跨受众令牌复用路径，并通过 RBAC 收敛压缩误用令牌进入授权面后的影响范围。详细配置见附录\ref{app:cve-2023-22482}。
 
-\subsubsection{安全策略验证}
+\subsubsection{（3）安全策略验证}
 
 将最优策略集合部署至测试环境后，重新执行漏洞复现中的令牌访问流程，对有效性、无干扰性与可部署性三个维度逐项验证。
 

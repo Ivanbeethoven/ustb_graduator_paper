@@ -1,27 +1,24 @@
 ﻿
-\subsubsection{漏洞复现}
-
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
+\subsubsection{（1）漏洞复现}
 
 Sourcegraph 是面向大规模代码仓库的搜索与导航平台，其典型部署包含负责仓库拉取与 Git 操作的 \texttt{gitserver} 服务。在企业集成场景中，Sourcegraph 可接入多种代码托管与协作系统。为获得额外元数据，部分集成允许管理员在系统中配置外部命令，由后端服务在特定路径下执行并返回结果。此类机制天然具有较高风险：若命令可被高权限用户任意改写，且执行环境与网络边界缺少隔离，则可能形成配置驱动的命令执行入口。
 
-\textbf{CVE 描述}：CVE-2022-29171 指出 Sourcegraph \texttt{gitserver} 在 Gitolite 与 Phabricator 联动集成中存在远程代码执行风险。在受影响版本（\texttt{< 3.38.0}）中，站点管理员可配置用于获取 Phabricator 元数据的 \texttt{callsignCommand}；若攻击者同时具备对 Sourcegraph 实例的站点管理员权限，以及对其内置 Grafana 监控实例的管理员权限，则可进一步获取内部服务地址信息，并将上述命令改写为任意系统命令，从而在 \texttt{gitserver} 上触发远程执行。该问题已在 \texttt{3.38.0} 版本修复，官方仍建议即使采取临时缓解也应尽快升级。
+\textbf{CVE 描述}：CVE-2022-29171 指出 Sourcegraph \texttt{gitserver} 在 Gitolite 与 Phabricator 联动集成中存在远程代码执行风险。在受影响版本 \texttt{< 3.38.0} 中，站点管理员可配置用于获取 Phabricator 元数据的 \texttt{callsignCommand}；若攻击者同时具备对 Sourcegraph 实例的站点管理员权限，以及对其内置 Grafana 监控实例的管理员权限，则可进一步获取内部服务地址信息，并将上述命令改写为任意系统命令，从而在 \texttt{gitserver} 上触发远程执行。该问题已在 \texttt{3.38.0} 版本修复，官方仍建议即使采取临时缓解也应尽快升级。
 
-\textbf{主要成因分类}：安全逻辑缺陷 / 命令注入（配置驱动的命令执行缺乏约束）与权限边界缺陷（高敏感配置权限与观测面权限向执行面耦合）。
+\textbf{主要成因分类}：安全逻辑缺陷 / 命令注入，表现为配置驱动的命令执行缺乏约束，同时伴随权限边界缺陷，即高敏感配置权限与观测面权限向执行面耦合。
 
 \textbf{攻击链条描述}：攻击链可概括为高权限配置、执行面触达以及基础设施控制。攻击者首先获得可编辑或新增 Gitolite code host 的管理权限；随后借助 Grafana 管理权限获取 \texttt{gitserver} 的内部寻址信息；最终改写 \texttt{callsignCommand} 并触发执行。风险的核心在于管理面配置、观测面信息与执行面能力发生了耦合。
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
 实验在隔离环境中部署受影响版本的 Sourcegraph，并保留 Gitolite 与 Phabricator 联动集成。正文仅保留配置变更后 \texttt{gitserver} 的可观测执行证据，不展开可直接复用的命令载荷与内部寻址细节。完整环境准备、验证判据与回归检查步骤见附录\ref{app:cve-2022-29171}。
 
 在修改 \texttt{callsignCommand} 相关配置后，\texttt{gitserver} 的任务执行记录与审计证据中出现外部命令被触发的迹象，说明管理面配置已可影响执行面行为。禁用相关集成或切换至修复版本后，同类迹象不再出现，命令执行风险得到验证。
 
-\subsubsection{安全策略生成}
+\subsubsection{（2）安全策略生成}
 
 KPEDefense 针对该漏洞筛选出的最优策略以切断命令执行入口与隔离执行面为核心：通过禁用 Gitolite 集成移除 \texttt{callsignCommand} 对应的注入入口，对 \texttt{gitserver} 实施网络隔离，并收紧外部服务配置与 Grafana 管理权限，防止管理面配置变更影响执行面行为。详细配置见附录\ref{app:cve-2022-29171}。
 
-\subsubsection{安全策略验证}
+\subsubsection{（3）安全策略验证}
 
 将最优策略集合部署至实验环境后，重新执行漏洞复现中的配置变更与观测流程，对有效性、无干扰性与可部署性三个维度逐项验证。
 

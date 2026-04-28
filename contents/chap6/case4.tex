@@ -1,7 +1,7 @@
 ﻿
-\subsubsection{漏洞复现}
+\subsubsection{（1）漏洞复现}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞背景}
+
 
 Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Management 系统。在典型部署中，Conjur Server 负责鉴权与策略校验，后端数据库 PostgreSQL 用于持久化存储策略、审计与机密相关数据。Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平互通状态，Pod 间通信默认允许。因此，对于数据库等敏感组件，需要显式配置 NetworkPolicy 等隔离策略，并建立默认拒绝策略 Default Deny，以控制最小暴露面。
 
@@ -17,18 +17,17 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
     \item \textbf{影响扩展}：若获取数据库凭据或数据密钥（来源可能包括过宽 RBAC、配置泄露或备份泄露），风险可进一步扩展为机密窃取、权限篡改与审计删除。
 \end{enumerate}
 
-\noindent\hangindent=2em\hangafter=1 \textbf{漏洞复现}
 
 实验在支持 NetworkPolicy 的 Kubernetes 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的网络策略配置后，未发现针对 Postgres 入站访问的限制规则。完整环境准备与策略清单见附录\ref{app:cve-2020-4062}。
 
 在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。
 
 
-\subsubsection{安全策略生成}
+\subsubsection{（2）安全策略生成}
 
 KPEDefense 针对该漏洞筛选出的最优策略以 NetworkPolicy 为核心，对 Postgres 服务实施默认拒绝策略，仅保留 Conjur Server 到 5432 端口的必要通信路径，并引入基线检查防止隔离策略回退。详细配置见附录\ref{app:cve-2020-4062}。
 
-\subsubsection{安全策略验证}
+\subsubsection{（3）安全策略验证}
 
 将最优策略集合部署至实验集群后，重复漏洞复现中的连通性探测，对有效性、无干扰性与可部署性三个维度逐项验证。
 
