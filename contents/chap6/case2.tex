@@ -1,5 +1,5 @@
 ﻿
-\subsubsection{（1）漏洞复现}
+\subsubsection{漏洞复现}
 
 Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（ACM）中的集群生命周期管理组件，常用于在多集群场景下自动化创建与托管 OpenShift/Kubernetes 集群。在 vSphere 场景中，Hive 需要使用 vCenter 凭据完成集群的基础设施供应与后续管理。
 
@@ -23,28 +23,153 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 \end{figure}
 
 
-实验在部署 ACM/MCE 与 Hive 的 OpenShift 测试集群中进行，以具备 \texttt{ClusterProvision} 读取权限、但无 \texttt{Secret} 访问权限的低权身份接入。vSphere 测试专用 vCenter 账号采用最小权限配置，详细 YAML 与命令序列见附录\ref{app:cve-2025-2241}。
 
-触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
+实验在部署 ACM/MCE 与 Hive 的 OpenShift 测试集群中进行，以具备 \texttt{ClusterProvision} 读取权限、但无 \texttt{Secret} 访问权限的低权身份接入。vSphere 测试专用 vCenter 账号采用最小权限配置，详细 YAML 与命令序列如下。触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
+\textbf{前提条件}
+\begin{itemize}
+		\item 已部署 ACM/MCE 与 Hive，并启用 vSphere 集群供应能力（具体版本与安装方式依赖环境，以厂商公告与实验环境为准）；
+		\item 至少存在一个"只读身份"。该身份\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions\allowbreak.\allowbreak hive\allowbreak.\allowbreak openshift\allowbreak.\allowbreak io} 的 \texttt{get/list/watch} 权限（该条件用于验证旁路泄露）。
+\end{itemize}
+\textbf{步骤 1：触发供应后，用低权身份读取 \texttt{ClusterProvision} 对象}
+\begin{AppendixCode}
+# 低权用户自检（Kubernetes 通用）
+kubectl auth can-i get clusterprovision --as=<user> --all-namespaces
+kubectl auth can-i get secrets --as=<user> --all-namespaces
+
+# 导出对象（名称可能带随机后缀，按实际替换）
+kubectl get clusterprovision -n your-namespace
+kubectl get clusterprovision <name> -n your-namespace -o yaml
+\end{AppendixCode}
 
 
-\subsubsection{（2）安全策略生成}
+\subsubsection{安全策略生成}
 
-KPEDefense 针对该漏洞筛选出的最优策略以 \texttt{ClusterProvision} 读取权限收敛与对象生命周期治理为核心：通过 RBAC 限制对该对象的访问权限，并在供应完成后自动清理 \texttt{status} 字段中的明文凭据，从访问控制与数据留存两个维度阻断敏感凭据旁路路径。详细配置见附录\ref{app:cve-2025-2241}。
+KPEDefense 筛选出的最优策略从访问控制与数据留存两个维度切断旁路泄露。一方面，通过 RBAC 收紧 \texttt{ClusterProvision} 的读取权限，将对该对象的访问改为按需、限时授权；另一方面，在供应完成后自动清理 \texttt{status} 字段中的明文凭据，缩短敏感信息的暴露窗口。详细配置见附录\ref{app:cve-2025-2241}。
 
-\subsubsection{（3）安全策略验证}
+\subsubsection{安全策略验证}
 
-将最优策略集合部署至实验集群后，以低权身份重执行漏洞复现步骤，对有效性、无干扰性与可部署性三个维度逐项验证。
+策略部署后，以低权身份重新执行漏洞复现流程，验证有效性、无干扰性与可部署性。
 
-\noindent\textbf{有效性：}
+\textbf{有效性：}
 RBAC 收敛后，低权身份对 \texttt{ClusterProvision} 的 \texttt{get/list} 请求被拒绝，无法再导出 YAML。供应完成后再次复查对象，\texttt{status} 字段中不再保留明文 vCenter 凭据，凭据旁路路径被阻断。
 
-\noindent\textbf{无干扰性：}
+\textbf{无干扰性：}
 RBAC 收紧后，高权限访问改为按需、限时、可审计授权，正常供应流程未受影响。自动清理任务在预生产环境验证后确认不影响 Hive 对账流程，再推广至生产。审计与告警不影响业务主链路。
 
-\noindent\textbf{可部署性：}
+\textbf{可部署性：}
 RBAC 为平台原生能力，可模板化发布至多集群。自动清理任务可通过 GitOps 流水线或定时任务实现，无需人工介入。
 
-就 CVE-2025-2241 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。RBAC 收敛与供应完成后的对象清理协同后，敏感凭据可读窗口进一步缩短。该方案可作为平台防御基线的一部分持续管理，最终修复仍依赖厂商补丁，根因在于 Hive 控制器将凭据写入 CR 状态字段的设计缺陷。
+三维验证均通过。RBAC 收敛与对象清理协同后，敏感凭据的可读窗口显著缩短，旁路路径被有效阻断。该方案可纳入平台防御基线持续管理，最终修复仍依赖厂商补丁，根因在于 Hive 控制器将凭据写入 CR 状态字段的设计缺陷。
 
 
+
+
+\textbf{1）立刻收敛 \texttt{ClusterProvision} 的读取权限（RBAC）}
+\begin{AppendixCode}
+oc adm policy who-can get clusterprovision
+oc adm policy who-can list clusterprovision
+oc adm policy who-can watch clusterprovision
+\end{AppendixCode}
+
+\textbf{2）对读取行为启用审计并联动告警}
+\begin{AppendixCode}
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+	verbs: ["get","list","watch"]
+	resources:
+	- group: "hive.openshift.io"
+		resources: ["clusterprovisions"]
+	omitStages: ["RequestReceived"]
+\end{AppendixCode}
+
+\textbf{3）缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
+\begin{AppendixCode}
+oc get clusterprovision -n <ns>
+oc delete clusterprovision -n <ns> <name>
+\end{AppendixCode}
+
+\textbf{4）"敏感字段守护"检测（Gatekeeper，建议审计模式）}
+\begin{AppendixCode}
+sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "password")
+			}
+			sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "token")
+			}
+			sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "secret")
+			}
+			sensitive_key(k) {
+				lk := lower(k)
+				contains(lk, "credential")
+			}
+
+			walk(obj, path, val) {
+				is_object(obj)
+				some k
+				v := obj[k]
+				walk(v, array.concat(path, [k]), val)
+			}
+			walk(obj, path, val) {
+				is_array(obj)
+				some i
+				v := obj[i]
+				walk(v, array.concat(path, [sprintf("%v", [i])]), val)
+			}
+			walk(obj, path, obj) {
+				not is_object(obj)
+				not is_array(obj)
+			}
+
+			deny[msg] {
+				input.review.kind.group == "hive.openshift.io"
+				input.review.kind.kind == "ClusterProvision"
+				walk(input.review.object, [], _)
+				some k
+				_ = input.review.object[k]
+				sensitive_key(k)
+				msg := sprintf("ClusterProvision contains sensitive key at top-level: %s", [k])
+			}
+
+			deny[msg] {
+				input.review.kind.group == "hive.openshift.io"
+				input.review.kind.kind == "ClusterProvision"
+				walk(input.review.object, path, _)
+				some i
+				k := path[i]
+				sensitive_key(k)
+				msg := sprintf("ClusterProvision contains sensitive key on path %v", [path])
+			}
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sClustProvKeySensitive
+metadata:
+	name: audit-clusterprovision-sensitive-keys
+spec:
+	enforcementAction: dryrun
+	match:
+		kinds:
+		- apiGroups: ["hive.openshift.io"]
+			kinds: ["ClusterProvision"]
+\end{AppendixCode}
+
+
+\subsubsection{安全策略验证}
+
+策略部署至实验集群后，以 bob 账户重新执行漏洞复现步骤，从有效性、无干扰性与可部署性三个维度验证防护效果。
+
+\textbf{有效性：}
+策略部署后，触发对恶意 RBAC 绑定的同步请求被准入控制拒绝；执行 \texttt{kubectl auth can-i '*' '*' --as bob} 返回 \texttt{no}，权限提升路径关闭。Kubernetes RBAC 收敛后 bob 对 \texttt{AppProject} 的写入同样被拒绝，进而限制了通过修改项目策略绕过准入规则的路径。Falco 在攻击尝试时产生 CRITICAL 级别告警，记录了创建 ClusterRoleBinding 的用户与目标资源信息，为事件溯源提供了实时证据。
+
+\textbf{无干扰性：}
+策略收紧范围限于高危操作（\texttt{override}、\texttt{exec} 等）及 AppProject 写入，项目内合规同步操作未受影响。准入控制规则先以审计模式运行，确认无合规清单误拦截后切换至强制模式。
+
+\textbf{可部署性：}
+RBAC 策略与 Argo CD 配置均以 YAML 形式纳入 Git 基线，通过 \texttt{kubectl apply} 一步部署，实验集群中无冲突落地。Gatekeeper 规则可模板化复用于多集群场景。
+
+综合来看，RBAC 收敛与准入控制协同后，低权用户诱导控制平面创建集群级高权限绑定的路径被关闭，三维验证均通过。该方案可作为版本升级窗口期的补充缓解措施，最终仍需升级至官方补丁版本 2.1.14、2.2.8 或 2.3.2。

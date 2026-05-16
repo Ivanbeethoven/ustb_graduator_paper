@@ -1,5 +1,5 @@
 ﻿
-\subsubsection{（1）漏洞复现}
+\subsubsection{漏洞复现}
 
 Sourcegraph 是面向大规模代码仓库的搜索与导航平台，其典型部署包含负责仓库拉取与 Git 操作的 \texttt{gitserver} 服务。在企业集成场景中，Sourcegraph 可接入多种代码托管与协作系统。为获得额外元数据，部分集成允许管理员在系统中配置外部命令，由后端服务在特定路径下执行并返回结果。此类机制天然具有较高风险：若命令可被高权限用户任意改写，且执行环境与网络边界缺少隔离，则可能形成配置驱动的命令执行入口。
 
@@ -10,26 +10,181 @@ Sourcegraph 是面向大规模代码仓库的搜索与导航平台，其典型�
 \textbf{攻击链条描述}：攻击链可概括为高权限配置、执行面触达以及基础设施控制。攻击者首先获得可编辑或新增 Gitolite code host 的管理权限；随后借助 Grafana 管理权限获取 \texttt{gitserver} 的内部寻址信息；最终改写 \texttt{callsignCommand} 并触发执行。风险的核心在于管理面配置、观测面信息与执行面能力发生了耦合。
 
 
-实验在隔离环境中部署受影响版本的 Sourcegraph，并保留 Gitolite 与 Phabricator 联动集成。正文仅保留配置变更后 \texttt{gitserver} 的可观测执行证据，不展开可直接复用的命令载荷与内部寻址细节。完整环境准备、验证判据与回归检查步骤见附录\ref{app:cve-2022-29171}。
+实验在隔离环境中部署受影响版本的 Sourcegraph，并保留 Gitolite 与 Phabricator 联动集成。正文仅保留配置变更后 \texttt{gitserver} 的可观测执行证据，不展开可直接复用的命令载荷与内部寻址细节。完整环境准备、验证判据与回归检查步骤见附录如下。
+
+\textbf{参考命令（用于日志与工作负载证据采集）}
+\begin{AppendixCode}
+NAMESPACE=sourcegraph
+
+kubectl -n $NAMESPACE get deploy,pod,svc | findstr /i "gitserver"
+kubectl -n $NAMESPACE logs deploy/gitserver --tail=200
+kubectl -n $NAMESPACE get events --sort-by=.lastTimestamp | findstr /i "gitserver"
+
+# 在管理面触发一次元数据获取/同步后，重复采集日志并与禁用集成后的结果对比
+kubectl -n $NAMESPACE logs deploy/gitserver --since=10m | findstr /i "gitolite phabricator callsign"
+\end{AppendixCode}
 
 在修改 \texttt{callsignCommand} 相关配置后，\texttt{gitserver} 的任务执行记录与审计证据中出现外部命令被触发的迹象，说明管理面配置已可影响执行面行为。禁用相关集成或切换至修复版本后，同类迹象不再出现，命令执行风险得到验证。
 
-\subsubsection{（2）安全策略生成}
+\subsubsection{安全策略生成}
 
-KPEDefense 针对该漏洞筛选出的最优策略以切断命令执行入口与隔离执行面为核心：通过禁用 Gitolite 集成移除 \texttt{callsignCommand} 对应的注入入口，对 \texttt{gitserver} 实施网络隔离，并收紧外部服务配置与 Grafana 管理权限，防止管理面配置变更影响执行面行为。详细配置见附录\ref{app:cve-2022-29171}。
+KPEDefense 筛选出的最优策略从三个层面切断攻击链：禁用 Gitolite 集成以移除 \texttt{callsignCommand} 对应的命令执行入口；对 \texttt{gitserver} 实施 NetworkPolicy 网络隔离；收紧外部服务配置与 Grafana 管理权限，防止管理面配置变更影响执行面。详细配置见附录\ref{app:cve-2022-29171}。
 
-\subsubsection{（3）安全策略验证}
+\textbf{1）禁用 Gitolite 集成：移除 \texttt{callsignCommand} 对应的命令执行入口}
+\begin{AppendixCode}
+# 通过站点配置禁用 Gitolite code host 集成
+# 在 Sourcegraph 站点配置 JSON 中移除或注释 gitolite 相关条目
 
-将最优策略集合部署至实验环境后，重新执行漏洞复现中的配置变更与观测流程，对有效性、无干扰性与可部署性三个维度逐项验证。
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+	name: sourcegraph-site-config
+	namespace: sourcegraph
+data:
+	site.json: |
+		{
+			"externalServices": [
+				// 移除所有 kind: "GITOLITE" 的条目
+				// 若需保留仓库同步，改用不含 callsignCommand 的 GIT 类型
+			],
+			"experimentalFeatures": {
+				"enableGitoliteCallsignLookup": false
+			}
+		}
+EOF
 
-\noindent\textbf{有效性：}
+# 重启相关组件使配置生效
+kubectl -n sourcegraph rollout restart deploy/sourcegraph-frontend
+kubectl -n sourcegraph rollout restart deploy/gitserver
+
+# 验证：确认 Gitolite 集成已禁用
+kubectl -n sourcegraph logs deploy/gitserver --since=5m | findstr /i "gitolite callsign"
+\end{AppendixCode}
+
+\textbf{2）收紧 Grafana 管理权限与外部服务配置权限}
+\begin{AppendixCode}
+# 限制 Grafana 管理员访问，防止通过观测面获取内部服务地址
+# 方案：将 Grafana 的 admin 角色限制为只读，或通过 RBAC 限制对 Grafana Pod 的访问
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: grafana-ingress-restrict
+	namespace: sourcegraph
+spec:
+	podSelector:
+		matchLabels:
+			app: grafana
+	policyTypes: ["Ingress"]
+	ingress:
+	- from:
+		- podSelector:
+				matchLabels:
+					app: sourcegraph-frontend
+		ports:
+		- protocol: TCP
+			port: 3000
+EOF
+
+# 同时通过 Grafana 配置收紧默认管理员权限
+cat <<'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+	name: grafana-config
+	namespace: sourcegraph
+data:
+	grafana.ini: |
+		[security]
+		admin_user = admin
+		disable_gravatar = true
+
+		[users]
+		default_theme = dark
+		auto_assign_org_role = Viewer
+
+		[auth]
+		disable_login_form = false
+EOF
+
+kubectl -n sourcegraph rollout restart deploy/grafana
+\end{AppendixCode}
+
+\textbf{3）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
+\begin{AppendixCode}
+NAMESPACE=sourcegraph
+
+# 1) 入站收敛：仅允许 Sourcegraph 内部组件访问 gitserver
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: gitserver-ingress-allow-internal
+	namespace: sourcegraph
+spec:
+	podSelector:
+		matchLabels:
+			app: gitserver
+	policyTypes: ["Ingress"]
+	ingress:
+	- from:
+		- podSelector:
+				matchLabels:
+					app: sourcegraph-frontend
+		- podSelector:
+				matchLabels:
+					app: repo-updater
+		ports:
+		- protocol: TCP
+			port: 3178
+EOF
+
+# 2) 出站收敛：仅放通 DNS；代码托管出口按需另行放通
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: gitserver-egress-dns-only
+	namespace: sourcegraph
+spec:
+	podSelector:
+		matchLabels:
+			app: gitserver
+	policyTypes: ["Egress"]
+	egress:
+	- to:
+		- namespaceSelector:
+				matchLabels:
+					kubernetes.io/metadata.name: kube-system
+			podSelector:
+				matchLabels:
+					k8s-app: kube-dns
+		ports:
+		- protocol: UDP
+			port: 53
+		- protocol: TCP
+			port: 53
+EOF
+
+# 验证：策略已创建，且 gitserver 的出站/入站符合预期
+kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
+\end{AppendixCode}
+
+
+\subsubsection{安全策略验证}
+
+策略部署后，重新执行配置变更与观测流程，验证防护效果。
+
+\textbf{有效性：}
 禁用 Gitolite 集成后，\texttt{callsignCommand} 对应的输入面被移除，相关外部命令触发迹象不再出现。网络隔离与权限分离同时生效后，即使管理面存在误授权限，配置变化也难以继续进入 \texttt{gitserver} 执行面。
 
-\noindent\textbf{无干扰性：}
-策略收紧范围集中在高风险集成与管理权限，未依赖 Gitolite 的仓库搜索与浏览流程保持正常。网络隔离规则上线前经预生产环境核对入站与出站依赖，未出现合法通信误拦截。
+\textbf{无干扰性：}
+策略直接禁用了 Gitolite 集成，对依赖该集成获取 Phabricator 元数据的工作流会产生一定影响，干扰性为中等。未依赖 Gitolite 的仓库搜索与浏览流程保持正常。网络隔离规则上线前经预生产环境核对入站与出站依赖，未出现合法通信误拦截。
 
-\noindent\textbf{可部署性：}
+\textbf{可部署性：}
 集成功能开关、NetworkPolicy 与权限配置均可声明式管理，并纳入 GitOps 基线持续维护。该方案依赖 Kubernetes 常用网络隔离能力与平台权限治理机制，适合在同类部署环境中复用。
 
-就 CVE-2022-29171 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。命令执行入口被切断后，管理面配置继续影响 \texttt{gitserver} 执行面的路径被阻断。该方案可作为版本升级前的补充缓解措施，最终仍建议升级至修复版本。
+三维验证通过。命令执行入口被切断后，管理面配置继续影响 \texttt{gitserver} 执行面的路径被关闭。该方案可作为版本升级前的补充缓解措施，最终仍建议升级至修复版本。
 

@@ -99,7 +99,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 	\label{tab:static-tools}
 	\renewcommand{\arraystretch}{0.9}
 	\setlength{\tabcolsep}{4pt}
-	\begin{tabularx}{0.85\linewidth}{>{\ttfamily\raggedright\arraybackslash}p{0.18\linewidth} >{\raggedright\arraybackslash}X}
+	\begin{tabularx}{0.85\linewidth}{>{\raggedright\arraybackslash}p{0.18\linewidth} >{\raggedright\arraybackslash}X}
 	\toprule
 		\textbf{方法} & \textbf{来源} \\
 	\midrule
@@ -203,7 +203,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 	\label{tab:ablation-scores}
 	\renewcommand{\arraystretch}{0.9}
 	\setlength{\tabcolsep}{6pt}
-	\begin{tabularx}{0.85\linewidth}{>{\ttfamily\raggedright\arraybackslash}p{0.37\linewidth} *{3}{>{\centering\arraybackslash}X}}
+	\begin{tabularx}{0.85\linewidth}{>{\raggedright\arraybackslash}p{0.37\linewidth} *{3}{>{\centering\arraybackslash}X}}
 	\toprule
 	\textbf{方法配置} & \textbf{有效性($E$)} & \textbf{无干扰性($I$)} & \textbf{可部署性($D$)} \\
 	\midrule
@@ -214,45 +214,42 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 	\bottomrule
 	\end{tabularx}
 \end{table}
-为进一步回答策略生成有效性问题，选取 7 个典型 CVE进行案例分析。在隔离 Kubernetes 集群中开展漏洞复现、策略生成与部署验证，以考察 KPEDefense 在真实场景中的防控效果。对每个权限提升CVE，均依据如下步骤进行：
 
-\textbf{（1）漏洞复现}：根据CVE描述部署受影响版本的目标组件，创建模拟业务负载与低权限身份；依据公开 PoC 模拟权限提升攻击，记录攻击步骤与异常行为，并验证是否成功实现权限提升。
+为进一步回答策略生成有效性问题，选取 7 个典型 CVE 进行案例分析。在隔离 Kubernetes 集群中，对每个 CVE 依次完成漏洞复现、安全策略生成与策略部署验证，以考察 KPEDefense 在真实场景中的防控效果。各案例的验证结果汇总见表~\ref{tab:case-validation-summary}，所有案例详细的漏洞复现过程、策略生成与验证分析见附录~\ref{app:case-analysis}。
 
-\textbf{（2）安全策略生成}：基于 KPEDefense 系统，使用至少三个大模型生成候选安全策略，并从有效性 $E$、无干扰性 $I$、可部署性 $D$ 三个维度进行静态评估，筛选出最优策略集合。
+\begin{table}[htb!]
+	\centering
+	\bicaption{典型 CVE 案例验证结果汇总}{Summary of validation results for representative CVE cases}
+	\label{tab:case-validation-summary}
+	\renewcommand{\arraystretch}{1.12}
+	\setlength{\tabcolsep}{4pt}
+	\small
+	\begin{tabularx}{\linewidth}{
+	>{\raggedright\arraybackslash}p{2.8cm}
+	>{\centering\arraybackslash}p{2.4cm}
+	>{\centering\arraybackslash}p{2.4cm}
+	>{\centering\arraybackslash}X
+	>{\centering\arraybackslash}X}
+	\toprule
+	\textbf{CVE 编号} &
+	\textbf{一级分类} &
+	\textbf{二级分类} &
+	\textbf{有效防控} &
+	\textbf{干扰性} \\
+	\midrule
 
-\textbf{（3）策略验证}：部署生成的安全策略，并重放漏洞复现过程，验证策略能否有效监控和防护漏洞，再结合三维质量评价体系分析结果。
+	CVE-2022-24768 & 安全逻辑缺陷 & 访问控制缺陷 & $\checkmark$ & 低 \\
+	CVE-2025-2241  & 敏感信息泄露 & API端口暴露   & $\checkmark$ & 低 \\
+	CVE-2023-30512 & 配置缺陷     & 冗余权限       & $\checkmark$ & 低 \\
+	CVE-2020-4062  & 配置缺陷     & 网络隔离不足   & $\checkmark$ & 低 \\
+	CVE-2022-24877 & 代码注入     & 路径遍历       & $\checkmark$ & 低 \\
+	CVE-2022-29171 & 代码注入     & 命令注入       & $\checkmark$ & 中 \\
+	CVE-2023-22482 & 安全逻辑缺陷 & 身份验证绕过   & $\checkmark$ & 低 \\
 
-
-\subsubsection{案例一：CVE-2022-24768内部权限问题}
-
-\input{contents/chap6/case1.tex}
-
-\subsubsection{案例二：CVE-2025-2241 敏感信息泄露}
-
-\input{contents/chap6/case2.tex}
-
-\subsubsection{案例三：CVE-2023-30512 过度权限配置}
-
-\input{contents/chap6/case3.tex}
-
-\subsubsection{案例四：CVE-2020-4062 网络隔离不足}
-
-\input{contents/chap6/case4.tex}
-
-\subsubsection{案例五：CVE-2022-24877 路径遍历}
-
-\input{contents/chap6/case5.tex}
-
-\subsubsection{案例六：CVE-2022-29171 命令注入}
-
-\input{contents/chap6/case6.tex}
-
-\subsubsection{案例七：CVE-2023-22482 身份验证绕过}
-
-\input{contents/chap6/case7.tex}
-
-
-综上，不同成因类型的案例分析中策略部署验证了方法的有效性、无干扰性和可部署性。生成策略在有效性维度上均能阻断或显著缓解攻击路径；在无干扰性维度上，多数策略对业务影响可控；在可部署性维度上，策略主要依赖 Kubernetes 原生能力与成熟准入控制组件，具备模板化推广的条件。
+	\bottomrule
+	\end{tabularx}
+\end{table}
+案例分析表明，KPEDefense 生成的最有安全策略可以成功部署到K8S集群，并对权限提升攻击提供有效的监控或防护手段。七个案例覆盖了访问控制缺陷、敏感信息泄露、冗余权限、网络隔离不足等不同成因类型。验证结果表明，KPEDefense 生成的最优策略在所有案例中均能阻断或显著缓解攻击路径，且对业务的干扰性为中低水平。在可部署性方面，所有安全策略成功自动化部署，并可通过声明式文件复用于其他多集群环境。
 
 
 \subsection{不同生成模型能力评估}

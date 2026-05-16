@@ -1,5 +1,5 @@
 ﻿
-\subsubsection{（1）漏洞复现}
+\subsubsection{漏洞复现}
 
 Flux 是云原生 GitOps 交付体系中的常用组件，典型部署包含 \texttt{kustomize\allowbreak-controller} 等控制器，用于在集群中持续对齐 Git 仓库的期望状态。在该工作流中，控制器会拉取仓库内容并调用 Kustomize 解析 \texttt{kustomization\allowbreak.yaml}，进而生成并应用资源清单。由于 \texttt{kustomization\allowbreak.yaml} 以文件路径为核心配置对象，控制器必须将其中指定的资源、补丁与组件路径解析为实际文件系统访问。若路径规范化与边界检查不足，则恶意构造的 \texttt{kustomization\allowbreak.yaml} 可能触发路径穿越，使控制器读取超出预期工作目录的文件，从而造成敏感信息暴露，并在多租户部署中形成隔离边界破坏的风险。
 
@@ -10,26 +10,189 @@ Flux 是云原生 GitOps 交付体系中的常用组件，典型部署包含 \te
 \textbf{攻击链条描述}：攻击链可概括为仓库内容被信任、路径解析越界以及敏感数据外泄。攻击者将恶意 \texttt{kustomization\allowbreak.yaml} 提交至可被控制器同步的仓库；控制器在构建阶段解析并访问其中指定的路径；若路径可越界访问控制器容器文件系统，则非预期文件内容可能被注入到构建产物、事件输出或后续流程中，造成敏感信息暴露，并在多租户环境中破坏隔离边界。
 
 
-实验在部署受影响版本 \texttt{kustomize-controller} 的 Flux 测试环境中进行，将包含异常路径引用的 \texttt{kustomization\allowbreak.yaml} 提交至受控仓库并触发同步。正文仅保留控制器构建阶段的可观测证据，不展开可直接复用的敏感文件读取细节。完整环境准备、验证步骤与证据判据见附录\ref{app:cve-2022-24877}。
+实验在部署受影响版本 \texttt{kustomize-controller} 的 Flux 测试环境中进行，将包含异常路径引用的 \texttt{kustomization\allowbreak.yaml} 提交至受控仓库并触发同步。正文仅保留控制器构建阶段的可观测证据，不展开可直接复用的敏感文件读取细节。完整环境准备、验证步骤与证据判据如下。
+
+
+\textbf{参考命令（用于采集受控证据）}
+\begin{AppendixCode}
+FLUX_NS=flux-system
+APP_NS=<kustomization-namespace>
+KS_NAME=<kustomization-name>
+
+kubectl -n $FLUX_NS get deploy kustomize-controller -o wide
+kubectl -n $APP_NS get kustomization $KS_NAME -o yaml
+
+# 在隔离仓库中准备异常路径测试样例后，触发一次受控重调和
+flux reconcile kustomization $KS_NAME -n $APP_NS --with-source
+
+# 采集控制器日志与事件作为证据
+kubectl -n $FLUX_NS logs deploy/kustomize-controller --tail=200
+kubectl -n $APP_NS get events --sort-by=.lastTimestamp | findstr /i "Kustomization Reconciliation"
+\end{AppendixCode}
+
 
 触发同步后，控制器在构建日志中出现与越界路径解析相关的异常信息，构建产物同时表现出非预期文件访问迹象，说明恶意 \texttt{kustomization\allowbreak.yaml} 已进入控制器构建流程，路径穿越风险得到验证。
 
-\subsubsection{（2）安全策略生成}
+\subsubsection{安全策略生成}
 
-KPEDefense 针对该漏洞筛选出的最优策略以前置校验与 GitOps 变更治理为核心：在提交阶段对 \texttt{kustomization\allowbreak.yaml} 中的路径引用进行异常检测，并收紧仓库写入权限与控制器运行权限，将路径穿越风险阻断在进入同步链路之前。详细配置见附录\ref{app:cve-2022-24877}。
+KPEDefense 筛选出的最优策略将防线前移至提交阶段：在 CI 流水线中对 \texttt{kustomization\allowbreak.yaml} 的路径引用进行异常检测，同时收紧仓库写入权限与控制器运行权限，将路径穿越风险阻断在进入同步链路之前。详细配置见附录如下。
 
-\subsubsection{（3）安全策略验证}
 
-将最优策略集合部署至实验环境后，重新执行漏洞复现中的仓库提交与同步流程，对有效性、无干扰性与可部署性三个维度逐项验证。
+\textbf{1）前置校验：CI 流水线拦截异常路径引用}
+\begin{AppendixCode}
+# CI 阶段对 kustomization.yaml 进行路径穿越检查
+# 以下脚本可嵌入 GitHub Actions / GitLab CI 等流水线
+#!/usr/bin/env bash
+set -euo pipefail
 
-\noindent\textbf{有效性：}
+REPO_ROOT=$(git rev-parse --show-toplevel)
+VIOLATIONS=0
+
+# 扫描所有 kustomization.yaml 中的路径字段
+for f in $(find "$REPO_ROOT" -name "kustomization.yaml" \
+           -o -name "kustomization.yml"); do
+  # 检测 resources / patches / components 中的 .. 穿越
+  if grep -Pn '^\s*(- |path:\s*).*\.\.' "$f"; then
+    echo "[BLOCK] 路径穿越检测: $f"
+    VIOLATIONS=$((VIOLATIONS + 1))
+  fi
+done
+
+if [ "$VIOLATIONS" -gt 0 ]; then
+  echo "共发现 $VIOLATIONS 处异常路径引用，提交被拦截"
+  exit 1
+fi
+echo "路径校验通过"
+\end{AppendixCode}
+
+\textbf{2）权限收敛：限制 Flux 源仓库写入与 Kustomization 同步范围}
+\begin{AppendixCode}
+# 收紧 Flux GitRepository 与 Kustomization 的 ServiceAccount 权限
+cat <<'EOF' | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flux-kustomize-restricted
+  namespace: flux-system
+rules:
+- apiGroups: ["kustomize.toolkit.fluxcd.io"]
+  resources: ["kustomizations"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["source.toolkit.fluxcd.io"]
+  resources: ["gitrepositories"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux-kustomize-restricted-binding
+  namespace: flux-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: flux-kustomize-restricted
+subjects:
+- kind: ServiceAccount
+  name: flux-restricted-sa
+  namespace: flux-system
+EOF
+
+kubectl -n flux-system get role,rolebinding | \
+  findstr /i "flux-kustomize-restricted"
+\end{AppendixCode}
+
+\textbf{3）运行时加固：收紧 kustomize-controller 容器安全上下文}
+\begin{AppendixCode}
+# 为 kustomize-controller 添加只读根文件系统与非特权约束
+kubectl -n flux-system patch deploy kustomize-controller \
+  --type=strategic -p '
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
+'
+
+# 验证安全上下文已生效
+kubectl -n flux-system get deploy kustomize-controller \
+  -o jsonpath='{.spec.template.spec.containers[0].securityContext}' | \
+  python -m json.tool
+\end{AppendixCode}
+
+\textbf{4）网络隔离：限制 kustomize-controller 出站访问}
+\begin{AppendixCode}
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kustomize-controller-egress
+  namespace: flux-system
+spec:
+  podSelector:
+    matchLabels:
+      app: kustomize-controller
+  policyTypes: ["Egress"]
+  egress:
+  # 仅允许 DNS 解析
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # 仅允许访问 source-controller 拉取制品
+  - to:
+    - podSelector:
+        matchLabels:
+          app: source-controller
+    ports:
+    - protocol: TCP
+      port: 9090
+  # 允许访问 Kubernetes API Server
+  - to:
+    - ipBlock:
+        cidr: <API-SERVER-CIDR>/32
+    ports:
+    - protocol: TCP
+      port: 443
+EOF
+
+kubectl -n flux-system get networkpolicy | \
+  findstr /i "kustomize-controller"
+\end{AppendixCode}
+
+
+\subsubsection{安全策略验证}
+
+策略部署后，重新执行仓库提交与同步流程，验证防护效果。
+
+\textbf{有效性：}
 CI 校验生效后，包含异常路径引用的K8S配置文件在提交阶段即被拦截，相关变更无法进入同步链路。即使在受控环境中绕过提交流程直接触发同步，控制器运行权限收紧后，异常路径访问范围仍被限制。
 
-\noindent\textbf{无干扰性：}
+\textbf{无干扰性：}
 策略收紧范围限于异常路径引用与高风险变更权限，合规K8S配置文件的构建与同步流程保持正常。校验规则先以告警模式运行，用于识别历史仓库中的不规范写法，再切换至强制模式。
 
-\noindent\textbf{可部署性：}
+\textbf{可部署性：}
 CI 校验规则与权限配置均采用声明式文件管理，可直接纳入现有流水线与 GitOps 基线。该方案主要依赖仓库准入检查和 Kubernetes 原生权限配置，适合在多租户环境中复用。
 
-就 CVE-2022-24877 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。异常路径引用被前移拦截后，恶意 \texttt{kustomization\allowbreak.yaml} 进入控制器构建流程的机会明显下降。该方案可作为补丁发布前的补充缓解措施，最终修复仍依赖升级至 \texttt{kustomize-controller v0.24.0} 及以上版本。
+三维验证均通过。异常路径引用被前移拦截后，恶意 \texttt{kustomization\allowbreak.yaml} 进入控制器构建流程的机会明显下降。该方案可作为补丁发布前的补充缓解措施，最终修复仍依赖升级至 \texttt{kustomize-controller v0.24.0} 及以上版本。
 

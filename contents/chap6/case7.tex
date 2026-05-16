@@ -1,5 +1,5 @@
 ﻿
-\subsubsection{（1）漏洞复现}
+\subsubsection{漏洞复现}
 
 Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，提供 Web 与 API 接口供用户进行应用同步、回滚与差异审计等操作。在企业环境中，Argo CD 常通过 OIDC 与统一身份提供方对接，由身份提供方向 Argo CD 签发包含用户身份与组信息的令牌。在 OIDC 令牌中，\texttt{aud} 声明用于标识该令牌的预期接收方。通常情况下，服务端除验证签名与发行者外，还需要校验 \texttt{aud} 是否包含本服务的受众标识，以避免将为其他服务签发的令牌误用到本服务上。
 
@@ -10,7 +10,25 @@ Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，�
 \textbf{攻击链条描述}：攻击链可概括为多受众身份提供、跨受众令牌复用以及基于组声明的越权访问。攻击者获得同一 OIDC 提供方为其他受众签发的有效令牌；将其提交给 Argo CD 的接口；若 Argo CD 未校验 \texttt{aud}，则会接受该令牌并根据 \texttt{groups} 映射授予权限，进而造成对应用资源与交付流程的非预期访问。该缺陷同时放大了令牌泄露事件的影响范围。
 
 
-实验在接入 OIDC 身份提供方的 Argo CD 测试环境中进行，重点验证 \texttt{aud} 不匹配令牌是否仍会被受影响版本接受。正文仅保留配置证据、令牌声明与接口返回结果，不展开可直接复用的令牌获取与请求构造细节。完整环境准备、验证判据与回归检查步骤见附录\ref{app:cve-2023-22482}。
+实验在接入 OIDC 身份提供方的 Argo CD 测试环境中进行，重点验证 \texttt{aud} 不匹配令牌是否仍会被受影响版本接受。正文仅保留配置证据、令牌声明与接口返回结果，不展开可直接复用的令牌获取与请求构造细节。完整环境准备、验证判据与回归检查步骤如下。
+
+
+\textbf{参考命令（用于配置、令牌与响应证据采集）}
+\begin{AppendixCode}
+ARGO_NS=argocd
+ARGOCD_URL=https://argocd.example.com
+TOKEN=<oidc-token-with-wrong-aud>
+
+kubectl -n $ARGO_NS get cm argocd-cm -o yaml
+kubectl -n $ARGO_NS get deploy argocd-server -o wide
+
+# 保留令牌 payload 作为 aud/iss 证据（必要时补齐 base64 padding）
+printf '%s' "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d
+
+# 选择只读接口作为验证点
+curl -k -H "Authorization: Bearer $TOKEN" "$ARGOCD_URL/api/v1/applications"
+kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc token aud"
+\end{AppendixCode}
 
 在受影响版本中，将签名有效但 \texttt{aud} 不匹配的令牌提交至 Argo CD 接口后，系统仍返回受 RBAC 控制的资源内容，说明该令牌已被错误接受。切换至修复版本或在前置入口增加受众校验后，同类请求在校验阶段被拒绝，跨受众令牌复用风险得到验证。
 
@@ -21,22 +39,137 @@ Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，�
 	\label{fig:cve-2023-22482-evidence}
 \end{figure}
 
-\subsubsection{（2）安全策略生成}
+\subsubsection{安全策略生成}
 
-KPEDefense 针对该漏洞筛选出的最优策略以身份提供方客户端隔离、前置入口 \texttt{aud} 校验与 Argo CD RBAC 收敛为核心：在应用入口处强制校验令牌受众声明，阻断跨受众令牌复用路径，并通过 RBAC 收敛压缩误用令牌进入授权面后的影响范围。详细配置见附录\ref{app:cve-2023-22482}。
+KPEDefense 筛选出的最优策略从令牌签发、入口校验与授权收敛三个环节封堵攻击链：为 Argo CD 分配独立的 OIDC 客户端，实现身份提供方层面的受众隔离；在应用入口处强制校验 \texttt{aud} 声明，阻断跨受众令牌复用；同时通过 RBAC 收敛压缩误用令牌进入授权面后的影响范围。详细配置如下。
 
-\subsubsection{（3）安全策略验证}
+\textbf{1）身份提供方客户端隔离：为 Argo CD 分配独立 OIDC 客户端}
+\begin{AppendixCode}
+# 在 OIDC 提供方（如 Keycloak / Dex / Okta）中为 Argo CD 创建独立客户端
+# 确保 client_id 与 allowed_audiences 仅包含 argocd 专用标识
+# 以下以 argocd-cm ConfigMap 中的 OIDC 配置为例
 
-将最优策略集合部署至测试环境后，重新执行漏洞复现中的令牌访问流程，对有效性、无干扰性与可部署性三个维度逐项验证。
+apiVersion: v1
+kind: ConfigMap
+metadata:
+	name: argocd-cm
+	namespace: argocd
+data:
+	url: https://argocd.example.com
+	oidc.config: |
+		name: SSO
+		issuer: https://idp.example.com/realms/my-org
+		clientID: argocd-dedicated          # 独立客户端 ID
+		clientSecret: $oidc.clientSecret
+		requestedScopes:
+		- openid
+		- profile
+		- email
+		- groups
+		requestedIDTokenClaims:
+			groups:
+				essential: true
+\end{AppendixCode}
 
-\noindent\textbf{有效性：}
+\textbf{2）前置入口 \texttt{aud} 强制校验：在网关层拦截受众不匹配的令牌}
+\begin{AppendixCode}
+# 方案 A：Nginx Ingress + OAuth2 Proxy（推荐）
+# OAuth2 Proxy 部署时配置 --oidc-issuer-url 与 --client-id，
+# 令牌的 aud 必须包含该 client-id 才能通过校验
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: oauth2-proxy
+	namespace: argocd
+spec:
+	replicas: 1
+	selector:
+		matchLabels:
+			app: oauth2-proxy
+	template:
+		metadata:
+			labels:
+				app: oauth2-proxy
+		spec:
+			containers:
+			- name: oauth2-proxy
+				image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+				args:
+				- --provider=oidc
+				- --oidc-issuer-url=https://idp.example.com/realms/my-org
+				- --client-id=argocd-dedicated
+				- --client-secret-file=/etc/oauth2-proxy/client-secret
+				- --email-domain=*
+				- --upstream=http://argocd-server.argocd.svc:80
+				- --http-address=0.0.0.0:4180
+				- --oidc-audience-claim=aud
+				- --allowed-group=argo:admin,argo:readonly
+				ports:
+				- containerPort: 4180
+\end{AppendixCode}
+
+\begin{AppendixCode}
+# Ingress 配置：将流量先导向 OAuth2 Proxy 进行 aud 校验
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+	name: argocd-server
+	namespace: argocd
+	annotations:
+		nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.argocd.svc:4180/oauth2/auth"
+		nginx.ingress.kubernetes.io/auth-signin: "https://argocd.example.com/oauth2/start?rd=$escaped_request_uri"
+spec:
+	rules:
+	- host: argocd.example.com
+		http:
+			paths:
+			- path: /
+				pathType: Prefix
+				backend:
+					service:
+						name: argocd-server
+						port:
+							number: 80
+\end{AppendixCode}
+
+\textbf{3）权限收敛：RBAC 最小化与项目边界约束}
+\begin{AppendixCode}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+	name: argocd-rbac-cm
+	namespace: argocd
+data:
+	policy.default: role:readonly
+	policy.csv: |
+		p, role:admin, applications, *, */*, allow
+		p, role:admin, projects, *, *, allow
+		p, role:admin, repositories, *, *, allow
+		p, role:admin, clusters, *, *, allow
+
+		p, role:readonly, applications, get, */*, allow
+		p, role:readonly, projects, get, *, allow
+		p, role:readonly, repositories, get, *, allow
+
+		p, role:deployer, applications, get, my-project/*, allow
+		p, role:deployer, applications, sync, my-project/*, allow
+		p, role:deployer, applications, action/*, my-project/*, deny
+\end{AppendixCode}
+
+
+\subsubsection{安全策略验证}
+
+策略部署后，重新执行令牌访问流程，验证防护效果。
+
+\textbf{有效性：}
 前置入口启用 \texttt{aud} 强制校验后，签名有效但受众不匹配的令牌在进入 Argo CD 前即被拒绝，受影响版本中出现的越权访问结果不再复现。RBAC 与项目边界收敛同时生效后，即使异常令牌进入授权链路，可触达资源范围也被明显压缩。
 
-\noindent\textbf{无干扰性：}
+\textbf{无干扰性：}
 策略收紧范围集中在受众校验与高权限组映射收敛，合法令牌的 CLI、Web 与自动化访问流程保持正常。身份提供方客户端隔离上线前完成组映射核对与回滚预案准备，未出现既有授权关系异常中断。
 
-\noindent\textbf{可部署性：}
+\textbf{可部署性：}
 身份提供方配置、前置网关校验规则与 RBAC 策略均可声明式管理，并纳入 GitOps 基线持续维护。该方案依赖常见身份网关与 Kubernetes 权限治理能力，适合在多集群环境中复用。
 
-就 CVE-2023-22482 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。跨受众令牌在应用入口前被拦截后，令牌误用扩展至 Argo CD 授权面的路径被阻断。该方案可作为补丁窗口期的补充缓解措施，最终修复仍需升级至官方修复版本。
+三维验证均通过。跨受众令牌在应用入口前被拦截，令牌误用扩展至 Argo CD 授权面的路径被关闭。该方案可作为补丁窗口期的缓解措施，最终修复仍需升级至官方修复版本。
 

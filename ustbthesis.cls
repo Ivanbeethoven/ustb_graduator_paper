@@ -131,11 +131,20 @@
 
 \makeatletter
 \renewcommand\listoftables{%
-        \@starttoc{lot}%
+    \begingroup
+    \let\addvspace\@gobble  % 读取清单时禁用章节间额外间距
+    \@starttoc{lot}%
+    \endgroup
 }
 \renewcommand\listoffigures{%
-        \@starttoc{lof}%
+    \begingroup
+    \let\addvspace\@gobble
+    \@starttoc{lof}%
+    \endgroup
 }
+% 同时阻止 \@chapter 继续写入 addvspace（双重保险）
+\patchcmd{\@chapter}{\addtocontents{lof}{\protect\addvspace{10\p@}}}{}{}{}
+\patchcmd{\@chapter}{\addtocontents{lot}{\protect\addvspace{10\p@}}}{}{}{}
 \makeatother
 
 
@@ -168,6 +177,8 @@
 
 
 \RequirePackage{enumitem}
+% 消除列表环境前后间距与正文段落间距不一致问题
+\setlist{topsep=0.1em, partopsep=0pt, itemsep=0pt, parsep=0.1em}
 \newlist{abbrv}{itemize}{1}
 \setlist[abbrv,1]{label=,labelwidth=1in,align=parleft,itemsep=0.1\baselineskip,leftmargin=!}
 
@@ -480,7 +491,7 @@ University of Science and Technology Beijing
     \begin{center}\zihao{4}\linespread{2}
     \bfseries
 \noindent \begin{CJKfilltwosides}{8em}指导教师：\end{CJKfilltwosides}\ 
-\wideunderline[4em]{本论文导师}\hfill
+\wideunderline[4em]{孙昌爱}\hfill
 单位：\wideunderline[6em]{北京科技大学}\hfill
 职称：\wideunderline[3em]{教授}
 

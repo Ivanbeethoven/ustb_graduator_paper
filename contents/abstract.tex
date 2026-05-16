@@ -1,7 +1,7 @@
 %% 中文摘要页
 \begin{ChineseAbstract}
     
-Kubernetes 是由云原生计算基金会托管的容器集群编排系统，广泛用于微服务系统的大规模容器化部署与运维。Kubernetes第三方云原生应用内可能存在导致权限提升的高危漏洞，该类漏洞在披露至补丁落地的窗口期内，权限提升攻击风险可威胁集群内所有节点安全。现有研究侧重对配置文件的静态风险分析，难以围绕具体漏洞快速生成可用于临时防控的安全策略；现有安全工具则依赖专家经验进行策略制定，无法针对特定漏洞进行有效防控。
+Kubernetes 是由云原生计算基金会托管的容器集群编排系统，广泛用于微服务系统的大规模容器化部署与运维。Kubernetes第三方云原生应用内可能存在导致权限提升的高危漏洞，该类漏洞在披露至补丁落地的窗口期内，权限提升攻击风险可威胁集群内所有节点安全。现有研究提出的Kubernetes风险扫描方法依赖人工归纳风险历史，不能对新披露权限提升漏洞进行有效防护与监控；现有动态安全监控工具的策略制定依赖专家经验，难以就具体漏洞实现精准防控。
 
 本文基于大语言模型漏洞分析与代码生成能力，提出一种针对权限提升漏洞的智能化安全策略生成方法。该方法通过对运行时监控、策略准入引擎、网络策略等多种安全工具的领域特定语言自动化生成与管理，对云原生应用权限提升漏洞中攻击链条节点实施动态防护与监控。主要工作如下。
 
@@ -18,7 +18,7 @@ KPEDefense通过生成智能化漏洞防控安全策略，能够有效缓解Kube
 
 %% 英文摘要页
 \begin{EnglishAbstract}
-Kubernetes is a container cluster orchestration system hosted by the Cloud Native Computing Foundation, widely used for large-scale containerized deployment and operation of microservice systems. Third-party cloud-native applications in the Kubernetes ecosystem may contain high-risk vulnerabilities capable of enabling privilege escalation; during the window period between vulnerability disclosure and patch deployment, the risk of privilege escalation attacks can threaten the security of all nodes in a Kubernetes cluster. Existing research focuses primarily on static risk analysis of configuration files and is poorly suited to rapidly generating actionable interim security strategies for specific vulnerabilities; existing security tools rely on expert experience for policy formulation and are unable to mount targeted defenses against particular vulnerabilities.
+Kubernetes is a container cluster orchestration system hosted by the Cloud Native Computing Foundation, widely used for large-scale containerized deployment and operation of microservice systems. Third-party cloud-native applications in the Kubernetes ecosystem may contain high-risk vulnerabilities capable of enabling privilege escalation; during the window period between vulnerability disclosure and patch deployment, the risk of privilege escalation attacks can threaten the security of all nodes in a Kubernetes cluster. Existing research focuses primarily on static risk scanning of configuration files and lacks the capability to automatically generate interim security strategies for newly-disclosed privilege escalation vulnerabilities; existing security tools rely on expert experience for policy formulation and are unable to mount precise defenses targeting the attack-chain behaviors of specific vulnerabilities.
 
 This thesis leverages the vulnerability analysis and code generation capabilities of large language models to propose an intelligent security strategy generation method for privilege escalation vulnerabilities. By automatically generating and managing domain-specific language configurations for multiple security tools—including runtime monitors, policy admission engines, and network policies—the method implements dynamic protection and monitoring of attack chain nodes associated with privilege escalation vulnerabilities in cloud-native applications. The main contributions are as follows.
 

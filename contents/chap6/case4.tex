@@ -1,5 +1,5 @@
 ﻿
-\subsubsection{（1）漏洞复现}
+\subsubsection{漏洞复现}
 
 
 
@@ -7,7 +7,7 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
 
 \textbf{CVE 描述}：CVE-2020-4062 影响 Conjur OSS Helm Chart 2.0.0 之前版本。旧版 Chart 默认\textbf{未提供对 Postgres 的访问控制策略}，例如缺失 NetworkPolicy，导致数据库服务在集群内对任意 Pod 可达。即使数据库未通过 NodePort 或 LoadBalancer 暴露到公网，攻击者一旦获得集群内任意工作负载的执行上下文，仍可能横向移动并直连数据库，绕过应用层安全控制，从而造成机密数据泄露、策略被篡改与审计记录被破坏等后果。
 
-\textbf{主要成因分类}：配置缺陷 / 网络访问控制缺失 Missing NetworkPolicy。
+\textbf{主要成因分类}：配置缺陷 / 网络访问控制缺失。
 
 \textbf{攻击链条描述}：该漏洞可抽象为集群内横向移动与直连数据库绕过应用层安全控制的攻击链：
 \begin{enumerate}
@@ -18,27 +18,110 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
 \end{enumerate}
 
 
-实验在支持 NetworkPolicy 的 Kubernetes 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的网络策略配置后，未发现针对 Postgres 入站访问的限制规则。完整环境准备与策略清单见附录\ref{app:cve-2020-4062}。
+实验在支持 NetworkPolicy 的 Kubernetes 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的网络策略配置后，未发现针对 Postgres 入站访问的限制规则。在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。完整复现步骤如下。
+\textbf{前提条件}
+\begin{itemize}
+	\item 集群 CNI 支持 NetworkPolicy，例如 Calico。
+	\item Helm v3 可用。
+	\item 受影响的 Conjur OSS Helm Chart 版本为 \texttt{< 2.0.0}。
+\end{itemize}
 
-在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。
+\textbf{步骤 1：在隔离命名空间部署旧版 Chart，并进行必要的兼容性适配}
+\begin{AppendixCode}
+helm repo add cyberark https://cyberark.github.io/helm-charts
+helm repo update
+helm search repo cyberark/conjur-oss --versions
+
+helm install conjur-oss cyberark/conjur-oss \
+	--namespace $NAMESPACE \
+	--create-namespace \
+	--version <2.0.0>
+
+kubectl -n $NAMESPACE get pods
+\end{AppendixCode}
+
+\textbf{步骤 2：确认 Postgres Service 与 5432 端口暴露}
+\begin{AppendixCode}
+NAMESPACE=conjur-vuln
+
+kubectl get ns $NAMESPACE
+kubectl -n $NAMESPACE get svc
+
+# 重点确认 Postgres Service（名称以实际为准）与 5432 端口存在
+kubectl -n $NAMESPACE get svc | findstr /i "postgres 5432 conjur"
+\end{AppendixCode}
+
+\textbf{步骤 3：确认未配置 NetworkPolicy}
+\begin{AppendixCode}
+kubectl -n $NAMESPACE get networkpolicy
+\end{AppendixCode}
+
+\textbf{步骤 4：连通性验证}
+\begin{AppendixCode}
+kubectl -n $NAMESPACE run netcheck \
+	--image=busybox:1.36 \
+	--restart=Never \
+	--rm -i -- sh -c "nc -vz $POSTGRES_SVC 5432"
+\end{AppendixCode}
 
 
-\subsubsection{（2）安全策略生成}
 
-KPEDefense 针对该漏洞筛选出的最优策略以 NetworkPolicy 为核心，对 Postgres 服务实施默认拒绝策略，仅保留 Conjur Server 到 5432 端口的必要通信路径，并引入基线检查防止隔离策略回退。详细配置见附录\ref{app:cve-2020-4062}。
+\subsubsection{安全策略生成}
 
-\subsubsection{（3）安全策略验证}
+该漏洞的核心风险在于缺少网络隔离，KPEDefense 筛选出的最优策略直接针对这一根因：对 Postgres 服务实施默认拒绝策略，仅保留 Conjur Server 到 5432 端口的必要通信路径，并引入基线检查防止隔离策略回退。详细配置如下。
 
-将最优策略集合部署至实验集群后，重复漏洞复现中的连通性探测，对有效性、无干扰性与可部署性三个维度逐项验证。
+\textbf{1）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
-\noindent\textbf{有效性：}
+\begin{AppendixCode}
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: conjur-postgres-default-deny
+	namespace: conjur-vuln
+spec:
+	podSelector:
+		matchLabels:
+			app: conjur-oss-postgres
+	policyTypes:
+	- Ingress
+	ingress: []
+EOF
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+	name: conjur-postgres-allow-conjur
+	namespace: conjur-vuln
+spec:
+	podSelector:
+		matchLabels:
+			app: conjur-oss-postgres
+	policyTypes:
+	- Ingress
+	ingress:
+	- from:
+		- podSelector:
+			matchLabels:
+				app: conjur-oss
+		ports:
+		- protocol: TCP
+			port: 5432
+EOF
+\end{AppendixCode}
+\subsubsection{安全策略验证}
+
+策略部署后重复连通性探测，验证防护效果。
+
+\textbf{有效性：}
 NetworkPolicy 部署前，非 Conjur 工作负载可连通 Postgres 5432 端口；部署后，同一路径探测结果变为不可达，说明业务 Pod 已无法直连数据库。基线检查同时覆盖策略缺失与规则弱化场景，可降低配置回退带来的风险。
 
-\noindent\textbf{无干扰性：}
+\textbf{无干扰性：}
 Conjur Server 到 Postgres 的合法通信保持正常，Conjur 组件启动与机密访问流程未受影响。策略上线前完成标签匹配核对与预生产回归验证，未出现因选择器偏差导致的误拦截。
 
-\noindent\textbf{可部署性：}
+\textbf{可部署性：}
 NetworkPolicy 为 Kubernetes 原生资源，可直接纳入 Git 基线并通过 Helm 或 \texttt{kubectl apply} 发布。数据库服务与端口固定，规则结构简单，适合在同类部署环境中模板化复用。
 
-就 CVE-2020-4062 而言，KPEDefense 筛选的最优策略组合在三维验证中通过。默认拒绝与精确放通生效后，业务 Pod 直连 Postgres 的路径被阻断，数据库暴露面明显下降。该方案依赖集群 CNI 对 NetworkPolicy 的支持，不支持时仍需借助命名空间隔离等替代措施降低风险。
+三维验证均通过。默认拒绝与精确放通生效后，业务 Pod 直连 Postgres 的路径被阻断，数据库暴露面明显下降。该方案依赖集群 CNI 对 NetworkPolicy 的支持，不支持时仍需借助命名空间隔离等替代措施。
 
