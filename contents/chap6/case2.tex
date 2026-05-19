@@ -1,7 +1,7 @@
 ﻿
 \subsubsection{漏洞复现}
 
-Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（ACM）中的集群生命周期管理组件，常用于在多集群场景下自动化创建与托管 OpenShift/Kubernetes 集群。在 vSphere 场景中，Hive 需要使用 vCenter 凭据完成集群的基础设施供应与后续管理。
+Hive 是 Red Hat Multicluster Engine(MCE)与 Advanced Cluster Management(ACM)中的集群生命周期管理组件，常用于在多集群场景下自动化创建与托管 OpenShift/Kubernetes 集群。在 vSphere 场景中，Hive 需要使用 vCenter 凭据完成集群的基础设施供应与后续管理。
 
 \textbf{CVE 描述}：CVE-2025-2241 指出 Hive 在完成 vSphere 集群供应后，会将 vCenter 凭据暴露在 \texttt{ClusterProvision} 对象中。由于 \texttt{ClusterProvision} 属于自定义资源，拥有其\textbf{读取权限}的用户可直接从该对象中提取敏感凭据，即使该用户并不具备对 Kubernetes \texttt{Secret} 的访问权限。该问题会导致未授权 vCenter 访问、基础设施与集群管理风险，并可能进一步演化为权限提升。
 
@@ -27,16 +27,16 @@ Hive 是 Red Hat Multicluster Engine（MCE）与 Advanced Cluster Management（A
 实验在部署 ACM/MCE 与 Hive 的 OpenShift 测试集群中进行，以具备 \texttt{ClusterProvision} 读取权限、但无 \texttt{Secret} 访问权限的低权身份接入。vSphere 测试专用 vCenter 账号采用最小权限配置，详细 YAML 与命令序列如下。触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
 \textbf{前提条件}
 \begin{itemize}
-		\item 已部署 ACM/MCE 与 Hive，并启用 vSphere 集群供应能力（具体版本与安装方式依赖环境，以厂商公告与实验环境为准）；
-		\item 至少存在一个"只读身份"。该身份\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions\allowbreak.\allowbreak hive\allowbreak.\allowbreak openshift\allowbreak.\allowbreak io} 的 \texttt{get/list/watch} 权限（该条件用于验证旁路泄露）。
+		\item 已部署 ACM/MCE 与 Hive，并启用 vSphere 集群供应能力(具体版本与安装方式依赖环境，以厂商公告与实验环境为准)；
+		\item 至少存在一个"只读身份"。该身份\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions\allowbreak.\allowbreak hive\allowbreak.\allowbreak openshift\allowbreak.\allowbreak io} 的 \texttt{get/list/watch} 权限(该条件用于验证旁路泄露)。
 \end{itemize}
 \textbf{步骤 1：触发供应后，用低权身份读取 \texttt{ClusterProvision} 对象}
 \begin{AppendixCode}
-# 低权用户自检（Kubernetes 通用）
+# 低权用户自检(Kubernetes 通用)
 kubectl auth can-i get clusterprovision --as=<user> --all-namespaces
 kubectl auth can-i get secrets --as=<user> --all-namespaces
 
-# 导出对象（名称可能带随机后缀，按实际替换）
+# 导出对象(名称可能带随机后缀，按实际替换)
 kubectl get clusterprovision -n your-namespace
 kubectl get clusterprovision <name> -n your-namespace -o yaml
 \end{AppendixCode}
@@ -64,14 +64,14 @@ RBAC 为平台原生能力，可模板化发布至多集群。自动清理任务
 
 
 
-\textbf{1）立刻收敛 \texttt{ClusterProvision} 的读取权限（RBAC）}
+\textbf{1)立刻收敛 \texttt{ClusterProvision} 的读取权限(RBAC)}
 \begin{AppendixCode}
 oc adm policy who-can get clusterprovision
 oc adm policy who-can list clusterprovision
 oc adm policy who-can watch clusterprovision
 \end{AppendixCode}
 
-\textbf{2）对读取行为启用审计并联动告警}
+\textbf{2)对读取行为启用审计并联动告警}
 \begin{AppendixCode}
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -84,13 +84,13 @@ rules:
 	omitStages: ["RequestReceived"]
 \end{AppendixCode}
 
-\textbf{3）缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
+\textbf{3)缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
 \begin{AppendixCode}
 oc get clusterprovision -n <ns>
 oc delete clusterprovision -n <ns> <name>
 \end{AppendixCode}
 
-\textbf{4）"敏感字段守护"检测（Gatekeeper，建议审计模式）}
+\textbf{4)"敏感字段守护"检测(Gatekeeper，建议审计模式)}
 \begin{AppendixCode}
 sensitive_key(k) {
 				lk := lower(k)
@@ -167,7 +167,7 @@ spec:
 策略部署后，触发对恶意 RBAC 绑定的同步请求被准入控制拒绝；执行 \texttt{kubectl auth can-i '*' '*' --as bob} 返回 \texttt{no}，权限提升路径关闭。Kubernetes RBAC 收敛后 bob 对 \texttt{AppProject} 的写入同样被拒绝，进而限制了通过修改项目策略绕过准入规则的路径。Falco 在攻击尝试时产生 CRITICAL 级别告警，记录了创建 ClusterRoleBinding 的用户与目标资源信息，为事件溯源提供了实时证据。
 
 \textbf{无干扰性：}
-策略收紧范围限于高危操作（\texttt{override}、\texttt{exec} 等）及 AppProject 写入，项目内合规同步操作未受影响。准入控制规则先以审计模式运行，确认无合规清单误拦截后切换至强制模式。
+策略收紧范围限于高危操作(\texttt{override}、\texttt{exec} 等)及 AppProject 写入，项目内合规同步操作未受影响。准入控制规则先以审计模式运行，确认无合规清单误拦截后切换至强制模式。
 
 \textbf{可部署性：}
 RBAC 策略与 Argo CD 配置均以 YAML 形式纳入 Git 基线，通过 \texttt{kubectl apply} 一步部署，实验集群中无冲突落地。Gatekeeper 规则可模板化复用于多集群场景。

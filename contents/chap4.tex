@@ -1,7 +1,7 @@
-
+﻿
 \chapter{KPEDefense支持工具}\label{chap:system}
 
-本章讨论 KPEDefense 支持工具的设计与实现，从需求分析、总体设计和详细设计三个层面展开说明。
+本章讨论 KPEDefense方法支持工具的设计与实现，从需求分析、总体设计和详细设计三个层面展开说明。
 
 \section{需求分析}
 
@@ -15,23 +15,23 @@ KPEDefense 系统围绕\textbf{安全工程师}与\textbf{专家评审员}两类
 
 \noindent\hangindent=2em\hangafter=1 (1) \textbf{知识库管理}：支持自动化构建向量化数据库，为后续构建安全上下文提供可追溯数据。知识库管理两个子用例具体描述如下：
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}1）开源信息抓取：从开源代码仓库自动抓取漏洞关联的代码变更、提交记录与问题讨论，支持CVE条目与证据片段的手动或批量导入。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}1)开源信息抓取：从开源代码仓库自动抓取漏洞关联的代码变更、提交记录与问题讨论，支持CVE条目与证据片段的手动或批量导入。
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}2）向量数据构建：提供基于关键词与语义的CVE及证据检索功能，并支持向量化知识库的增量更新与管理。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}2)向量数据构建：提供基于关键词与语义的CVE及证据检索功能，并支持向量化知识库的增量更新与管理。
 
 \noindent\hangindent=2em\hangafter=1 (2) \textbf{智能体调度}：围绕漏洞实例调度多智能体完成安全上下文构建、漏洞分析与候选安全策略生成，并将结果交由后续评估与部署模块处理。该能力包括两个子用例：
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}1）候选安全策略生成：按工作流依次调用安全知识、漏洞分析、策略生成与策略优化智能体，输出候选安全策略集合。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}1)候选安全策略生成：按工作流依次调用安全知识、漏洞分析、策略生成与策略优化智能体，输出候选安全策略集合。
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}2）智能体会话管理：为每次任务建立独立会话，维护模型配置、中间结果与任务状态。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}2)智能体会话管理：为每次任务建立独立会话，维护模型配置、中间结果与任务状态。
 
 \noindent\hangindent=2em\hangafter=1 (4) \textbf{策略管理}：保存所有生成的候选安全策略信息，并将通过评估检查的安全策略下发至目标环境进行部署验证，并记录执行状态、验证结果与审计信息。
 
 \noindent\hangindent=2em\hangafter=1 (3) \textbf{质量评审}：对专家人工评审意见进行统计，对同类型候选进行排序比较，并形成可审计的确认结果；同时支持多源大模型的排名式静态评估方案。具体用例如下：
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}1）人工评审：由专家评审员针对候选策略在有效性、无干扰性和可部署性三个维度进行排序评分与意见提交。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}1)人工评审：由专家评审员针对候选策略在有效性、无干扰性和可部署性三个维度进行排序评分与意见提交。
 
-\noindent\hangindent=4em\hangafter=1\hspace{2em}2）智能评审：调用多源大模型对候选策略执行排名式静态评估，生成可审计的质量排序结果，辅助策略筛选。
+\noindent\hangindent=4em\hangafter=1\hspace{2em}2)智能评审：调用多源大模型对候选策略执行排名式静态评估，生成可审计的质量排序结果，辅助策略筛选。
 
 
 
@@ -60,7 +60,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 本小节介绍 KPEDefense 系统详细设计，包括实体类设计、详细流程设计、交互时序设计。
 \subsection{实体类设计}
 
-实体类设计围绕四类核心实体展开，如图~\ref{fig:storage_schema}所示。\textbf{漏洞实体}（CVE）以 \texttt{status} 枚举字段驱动处置状态机，与会话呈一对多关系；\textbf{会话实体}（Session）记录模型配置与提示词模板，承载从证据检索到策略生成的完整上下文；\textbf{策略实体}（Strategy）保存生成内容、推理链快照与 RAG 召回片段，支持来源追溯与版本对比；\textbf{排序实体}（Ranking）存储评审员标识、时间戳与多维评分，同时关联会话与策略，记录专家决策的即时快照。
+实体类设计围绕四类核心实体展开，如图~\ref{fig:storage_schema}所示。\textbf{漏洞实体}(CVE)以 \texttt{status} 枚举字段驱动处置状态机，与会话呈一对多关系；\textbf{会话实体}(Session)记录模型配置与提示词模板，承载从证据检索到策略生成的完整上下文；\textbf{策略实体}(Strategy)保存生成内容、推理链快照与 RAG 召回片段，支持来源追溯与版本对比；\textbf{排序实体}(Ranking)存储评审员标识、时间戳与多维评分，同时关联会话与策略，记录专家决策的即时快照。
 
 \begin{figure}[htb]
     \centering
@@ -197,7 +197,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \subsection{策略管理}
 
-策略部署管理模块将通过评审的候选策略下发至目标环境，支持 Kubernetes（Python SDK 连接 API Server）与 SSH 两种部署方式。部署前需在目标设置页面（图~\ref{fig:ui_deploy_target}）配置连接参数：kubectl 类动作通过 Python SDK 直连 API Server，仅需 kubeconfig 文件路径；SSH 方式则用于执行非 kubectl 的 shell/helm 命令，需配置主机地址、用户名与密钥路径。如图~\ref{fig:ui_deploy_manage}所示，部署管理面板统一展示跨集群、跨主机的策略实例，记录策略名称、目标对象、部署时间与状态。
+策略部署管理模块将通过评审的候选策略下发至目标环境，支持 Kubernetes(Python SDK 连接 API Server)与 SSH 两种部署方式。部署前需在目标设置页面(图~\ref{fig:ui_deploy_target})配置连接参数：kubectl 类动作通过 Python SDK 直连 API Server，仅需 kubeconfig 文件路径；SSH 方式则用于执行非 kubectl 的 shell/helm 命令，需配置主机地址、用户名与密钥路径。如图~\ref{fig:ui_deploy_manage}所示，部署管理面板统一展示跨集群、跨主机的策略实例，记录策略名称、目标对象、部署时间与状态。
 
 \begin{figure}[htb!]
     \centering

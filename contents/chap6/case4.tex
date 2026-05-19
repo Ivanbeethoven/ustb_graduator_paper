@@ -14,7 +14,7 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
     \item \textbf{初始立足点}：攻击者控制集群内任意 Pod，例如通过业务漏洞或错误授权获得容器执行能力；
     \item \textbf{侦察发现}：在目标命名空间中发现 Postgres Service 与 5432 端口；
     \item \textbf{网络直连}：由于缺失 NetworkPolicy，攻击者可从任意 Pod 直连 Postgres；
-    \item \textbf{影响扩展}：若获取数据库凭据或数据密钥（来源可能包括过宽 RBAC、配置泄露或备份泄露），风险可进一步扩展为机密窃取、权限篡改与审计删除。
+    \item \textbf{影响扩展}：若获取数据库凭据或数据密钥(来源可能包括过宽 RBAC、配置泄露或备份泄露)，风险可进一步扩展为机密窃取、权限篡改与审计删除。
 \end{enumerate}
 
 
@@ -47,7 +47,7 @@ NAMESPACE=conjur-vuln
 kubectl get ns $NAMESPACE
 kubectl -n $NAMESPACE get svc
 
-# 重点确认 Postgres Service（名称以实际为准）与 5432 端口存在
+# 重点确认 Postgres Service(名称以实际为准)与 5432 端口存在
 kubectl -n $NAMESPACE get svc | findstr /i "postgres 5432 conjur"
 \end{AppendixCode}
 
@@ -70,7 +70,7 @@ kubectl -n $NAMESPACE run netcheck \
 
 该漏洞的核心风险在于缺少网络隔离，KPEDefense 筛选出的最优策略直接针对这一根因：对 Postgres 服务实施默认拒绝策略，仅保留 Conjur Server 到 5432 端口的必要通信路径，并引入基线检查防止隔离策略回退。详细配置如下。
 
-\textbf{1）缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
+\textbf{1)缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
 \begin{AppendixCode}
 cat <<'EOF' | kubectl apply -f -
@@ -124,4 +124,5 @@ Conjur Server 到 Postgres 的合法通信保持正常，Conjur 组件启动与�
 NetworkPolicy 为 Kubernetes 原生资源，可直接纳入 Git 基线并通过 Helm 或 \texttt{kubectl apply} 发布。数据库服务与端口固定，规则结构简单，适合在同类部署环境中模板化复用。
 
 三维验证均通过。默认拒绝与精确放通生效后，业务 Pod 直连 Postgres 的路径被阻断，数据库暴露面明显下降。该方案依赖集群 CNI 对 NetworkPolicy 的支持，不支持时仍需借助命名空间隔离等替代措施。
+
 

@@ -13,7 +13,7 @@ Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，�
 实验在接入 OIDC 身份提供方的 Argo CD 测试环境中进行，重点验证 \texttt{aud} 不匹配令牌是否仍会被受影响版本接受。正文仅保留配置证据、令牌声明与接口返回结果，不展开可直接复用的令牌获取与请求构造细节。完整环境准备、验证判据与回归检查步骤如下。
 
 
-\textbf{参考命令（用于配置、令牌与响应证据采集）}
+\textbf{参考命令(用于配置、令牌与响应证据采集)}
 \begin{AppendixCode}
 ARGO_NS=argocd
 ARGOCD_URL=https://argocd.example.com
@@ -22,7 +22,7 @@ TOKEN=<oidc-token-with-wrong-aud>
 kubectl -n $ARGO_NS get cm argocd-cm -o yaml
 kubectl -n $ARGO_NS get deploy argocd-server -o wide
 
-# 保留令牌 payload 作为 aud/iss 证据（必要时补齐 base64 padding）
+# 保留令牌 payload 作为 aud/iss 证据(必要时补齐 base64 padding)
 printf '%s' "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d
 
 # 选择只读接口作为验证点
@@ -43,9 +43,9 @@ kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc tok
 
 KPEDefense 筛选出的最优策略从令牌签发、入口校验与授权收敛三个环节封堵攻击链：为 Argo CD 分配独立的 OIDC 客户端，实现身份提供方层面的受众隔离；在应用入口处强制校验 \texttt{aud} 声明，阻断跨受众令牌复用；同时通过 RBAC 收敛压缩误用令牌进入授权面后的影响范围。详细配置如下。
 
-\textbf{1）身份提供方客户端隔离：为 Argo CD 分配独立 OIDC 客户端}
+\textbf{1)身份提供方客户端隔离：为 Argo CD 分配独立 OIDC 客户端}
 \begin{AppendixCode}
-# 在 OIDC 提供方（如 Keycloak / Dex / Okta）中为 Argo CD 创建独立客户端
+# 在 OIDC 提供方(如 Keycloak / Dex / Okta)中为 Argo CD 创建独立客户端
 # 确保 client_id 与 allowed_audiences 仅包含 argocd 专用标识
 # 以下以 argocd-cm ConfigMap 中的 OIDC 配置为例
 
@@ -71,9 +71,9 @@ data:
 				essential: true
 \end{AppendixCode}
 
-\textbf{2）前置入口 \texttt{aud} 强制校验：在网关层拦截受众不匹配的令牌}
+\textbf{2)前置入口 \texttt{aud} 强制校验：在网关层拦截受众不匹配的令牌}
 \begin{AppendixCode}
-# 方案 A：Nginx Ingress + OAuth2 Proxy（推荐）
+# 方案 A：Nginx Ingress + OAuth2 Proxy(推荐)
 # OAuth2 Proxy 部署时配置 --oidc-issuer-url 与 --client-id，
 # 令牌的 aud 必须包含该 client-id 才能通过校验
 
@@ -133,7 +133,7 @@ spec:
 							number: 80
 \end{AppendixCode}
 
-\textbf{3）权限收敛：RBAC 最小化与项目边界约束}
+\textbf{3)权限收敛：RBAC 最小化与项目边界约束}
 \begin{AppendixCode}
 apiVersion: v1
 kind: ConfigMap
@@ -172,4 +172,5 @@ data:
 身份提供方配置、前置网关校验规则与 RBAC 策略均可声明式管理，并纳入 GitOps 基线持续维护。该方案依赖常见身份网关与 Kubernetes 权限治理能力，适合在多集群环境中复用。
 
 三维验证均通过。跨受众令牌在应用入口前被拦截，令牌误用扩展至 Argo CD 授权面的路径被关闭。该方案可作为补丁窗口期的缓解措施，最终修复仍需升级至官方修复版本。
+
 

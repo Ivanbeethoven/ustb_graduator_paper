@@ -13,7 +13,7 @@ Flux 是云原生 GitOps 交付体系中的常用组件，典型部署包含 \te
 实验在部署受影响版本 \texttt{kustomize-controller} 的 Flux 测试环境中进行，将包含异常路径引用的 \texttt{kustomization\allowbreak.yaml} 提交至受控仓库并触发同步。正文仅保留控制器构建阶段的可观测证据，不展开可直接复用的敏感文件读取细节。完整环境准备、验证步骤与证据判据如下。
 
 
-\textbf{参考命令（用于采集受控证据）}
+\textbf{参考命令(用于采集受控证据)}
 \begin{AppendixCode}
 FLUX_NS=flux-system
 APP_NS=<kustomization-namespace>
@@ -38,7 +38,7 @@ kubectl -n $APP_NS get events --sort-by=.lastTimestamp | findstr /i "Kustomizati
 KPEDefense 筛选出的最优策略将防线前移至提交阶段：在 CI 流水线中对 \texttt{kustomization\allowbreak.yaml} 的路径引用进行异常检测，同时收紧仓库写入权限与控制器运行权限，将路径穿越风险阻断在进入同步链路之前。详细配置见附录如下。
 
 
-\textbf{1）前置校验：CI 流水线拦截异常路径引用}
+\textbf{1)前置校验：CI 流水线拦截异常路径引用}
 \begin{AppendixCode}
 # CI 阶段对 kustomization.yaml 进行路径穿越检查
 # 以下脚本可嵌入 GitHub Actions / GitLab CI 等流水线
@@ -65,7 +65,7 @@ fi
 echo "路径校验通过"
 \end{AppendixCode}
 
-\textbf{2）权限收敛：限制 Flux 源仓库写入与 Kustomization 同步范围}
+\textbf{2)权限收敛：限制 Flux 源仓库写入与 Kustomization 同步范围}
 \begin{AppendixCode}
 # 收紧 Flux GitRepository 与 Kustomization 的 ServiceAccount 权限
 cat <<'EOF' | kubectl apply -f -
@@ -101,7 +101,7 @@ kubectl -n flux-system get role,rolebinding | \
   findstr /i "flux-kustomize-restricted"
 \end{AppendixCode}
 
-\textbf{3）运行时加固：收紧 kustomize-controller 容器安全上下文}
+\textbf{3)运行时加固：收紧 kustomize-controller 容器安全上下文}
 \begin{AppendixCode}
 # 为 kustomize-controller 添加只读根文件系统与非特权约束
 kubectl -n flux-system patch deploy kustomize-controller \
@@ -132,7 +132,7 @@ kubectl -n flux-system get deploy kustomize-controller \
   python -m json.tool
 \end{AppendixCode}
 
-\textbf{4）网络隔离：限制 kustomize-controller 出站访问}
+\textbf{4)网络隔离：限制 kustomize-controller 出站访问}
 \begin{AppendixCode}
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -195,4 +195,5 @@ CI 校验生效后，包含异常路径引用的K8S配置文件在提交阶段�
 CI 校验规则与权限配置均采用声明式文件管理，可直接纳入现有流水线与 GitOps 基线。该方案主要依赖仓库准入检查和 Kubernetes 原生权限配置，适合在多租户环境中复用。
 
 三维验证均通过。异常路径引用被前移拦截后，恶意 \texttt{kustomization\allowbreak.yaml} 进入控制器构建流程的机会明显下降。该方案可作为补丁发布前的补充缓解措施，最终修复仍依赖升级至 \texttt{kustomize-controller v0.24.0} 及以上版本。
+
 

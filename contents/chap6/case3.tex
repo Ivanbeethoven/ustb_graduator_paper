@@ -19,13 +19,13 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI 插件�
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image.png}
-	\bicaption{CVE-2023-30512：漏洞复现结果示意（一）}{CVE-2023-30512: results of vulnerability reproduction (I)}
+	\bicaption{CVE-2023-30512：漏洞复现结果示意(一)}{CVE-2023-30512: results of vulnerability reproduction (I)}
 	\label{fig:cve-2023-30512-overview}
 \end{figure}
 
 实验在 Kubernetes 测试集群中部署受影响版本的 CubeFS CSI，明确节点插件与控制器组件使用的 \texttt{cfs-csi-service-account}，并导出其对应的 ClusterRole 与 ClusterRoleBinding。权限证据显示，该服务账号关联的 ClusterRole 含有 \texttt{secrets} 资源的 \texttt{get/list/watch} 动词。以 \texttt{cfs-csi-service-account} 身份执行 \texttt{kubectl auth can-i list secrets --all-namespaces}，结果返回 \texttt{yes}，表明该账号具备跨命名空间读取 \texttt{Secret} 的能力。攻击者一旦控制 CSI Pod 运行时上下文，即可沿该权限路径继续获取高价值凭据。完整命令与策略清单如下。
 
-\textbf{变量约定（按实际替换）}
+\textbf{变量约定(按实际替换)}
 \begin{AppendixCode}
 NAMESPACE=<cubefs-namespace>
 SA=cfs-csi-service-account
@@ -35,7 +35,7 @@ kubectl get sa -A | findstr /i "csi cfs cubefs"
 kubectl get clusterrole,clusterrolebinding -A | findstr /i "csi cfs cubefs"
 \end{AppendixCode}
 
-\textbf{步骤 1：导出 RBAC 证据（确认 secrets 权限存在）}
+\textbf{步骤 1：导出 RBAC 证据(确认 secrets 权限存在)}
 \begin{AppendixCode}
 kubectl get clusterrole $CLUSTERROLE -o yaml
 kubectl get clusterrolebinding -o yaml | findstr /i "cfs-csi cubefs"
@@ -45,7 +45,7 @@ kubectl get clusterrolebinding -o yaml | findstr /i "cfs-csi cubefs"
 \end{AppendixCode}
 
 
-\textbf{步骤 2：受控权限验证（不执行实际数据提取）}
+\textbf{步骤 2：受控权限验证(不执行实际数据提取)}
 \begin{AppendixCode}
 # 直接验证该 SA 是否具备跨命名空间读取 secrets 的能力
 kubectl auth can-i get secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
@@ -78,7 +78,7 @@ ClusterRole: cfs-csi-cluster-role
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.95\textwidth]{images/cve3/image2.png}
-	\bicaption{CVE-2023-30512：漏洞复现结果示意（二）}{CVE-2023-30512: results of vulnerability reproduction (II)}
+	\bicaption{CVE-2023-30512：漏洞复现结果示意(二)}{CVE-2023-30512: results of vulnerability reproduction (II)}
 	\label{fig:cve-2023-30512-verify}
 \end{figure}
 
@@ -87,7 +87,7 @@ ClusterRole: cfs-csi-cluster-role
 
 KPEDefense 筛选出的最优策略分为两层：先移除 CSI ServiceAccount 对集群范围 \texttt{Secret} 的读取权限，再通过 Gatekeeper 准入规则阻止包含高危动词的 ClusterRole 变更重新进入集群，从根源与回归两个方向封堵过度授权风险。详细配置如下。
 
-\textbf{1）RBAC 最小化：移除 ClusterRole 中的 \texttt{secrets} 权限}
+\textbf{1)RBAC 最小化：移除 ClusterRole 中的 \texttt{secrets} 权限}
 
 \begin{AppendixCode}
 cat <<'EOF' | kubectl apply -f -
@@ -107,11 +107,11 @@ rules:
 # 注意：不应包含 resources:["secrets"]
 EOF
 
-# 复测（期望输出 no）
+# 复测(期望输出 no)
 kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-namespaces
 \end{AppendixCode}
 
-\textbf{2）准入防回归（OPA Gatekeeper）：禁止创建包含 secrets 读取动词的 ClusterRole}
+\textbf{2)准入防回归(OPA Gatekeeper)：禁止创建包含 secrets 读取动词的 ClusterRole}
 \begin{AppendixCode}
 has_secrets_rule(rule) {
 				rule.resources[_] == "secrets"
@@ -149,7 +149,7 @@ spec:
 EOF
 \end{AppendixCode}
 
-\textbf{3）审计与检测：对 \texttt{secrets} 枚举行为进行可观测化}
+\textbf{3)审计与检测：对 \texttt{secrets} 枚举行为进行可观测化}
 \begin{AppendixCode}
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -177,5 +177,6 @@ RBAC 收敛后，\texttt{kubectl auth can-i list secrets --all-namespaces} 的�
 RBAC 规则与准入策略均采用 YAML 形式管理，可直接纳入 Git 基线并通过 \texttt{kubectl apply} 部署。该方案依赖 Kubernetes 原生权限机制与常用准入组件，适合在多集群场景中复用。
 
 三维验证均通过。CSI ServiceAccount 的 \texttt{Secret} 读取能力被移除后，节点或 Pod 被攻陷后继续触达集群敏感凭据的路径被关闭。该方案可作为版本修复前的补充缓解措施，最终仍需结合官方修复与安装清单更新完成根因处理。
+
 
 

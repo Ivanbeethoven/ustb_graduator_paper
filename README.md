@@ -104,3 +104,8 @@ uv run python images\analysis\plot.py
 - 缺少库（`ModuleNotFoundError`）：先执行依赖安装命令。
 - y 轴从 0 开始：脚本中 `_apply_y_padding` 已将 y 轴下界固定为 0。
 - 中文字体乱码：脚本运行时会优先加载 WenQuanYi / Noto CJK / Microsoft YaHei 等字体，确保系统已安装其中任意一款。
+
+
+
+
+

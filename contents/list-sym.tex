@@ -1,4 +1,4 @@
-
+﻿
 \begingroup
 \setlength{\parskip}{0.2em}
 
@@ -18,7 +18,7 @@
 \textbf{符号} & \textbf{含义说明} \\
 \midrule
 \endfirsthead
-\multicolumn{2}{l}{\small（续表）} \\[0.3ex]
+\multicolumn{2}{l}{\small(续表)} \\[0.3ex]
 \toprule
 \textbf{符号} & \textbf{含义说明} \\
 \midrule
@@ -36,7 +36,7 @@ $n_c$ & 安全上下文 $c$ 中的证据条数，即 $|c|$。 \\
 $\mathcal{K}_v$ & 针对漏洞 $v$ 构建的安全知识库，存放多源证据、向量索引与元数据。 \\
 $\Pi$ & 候选策略全集，表示所有候选监控策略与防护策略的总集合。 \\
 $\pi$ & 单个安全策略，三元组形式 $\langle \mathit{type},\mathit{method},\mathit{action} \rangle$，由策略类型、控制机理与执行表达组成。 \\
-$\mathit{type}$ & 策略类型，取值为 $\{\mathrm{mon},\mathrm{prot}\}$：$\mathrm{mon}$ 表示监控型（以观测告警为目标），$\mathrm{prot}$ 表示防护型（以阻断收敛为目标）。 \\
+$\mathit{type}$ & 策略类型，取值为 $\{\mathrm{mon},\mathrm{prot}\}$：$\mathrm{mon}$ 表示监控型(以观测告警为目标)，$\mathrm{prot}$ 表示防护型(以阻断收敛为目标)。 \\
 $\mathit{method}$ & 控制机理序列，形如 $(m_1,\ldots,m_k)$，每个 $m_i$ 描述一项控制手段的作用路径与机理，如 Falco 规则告警、Kyverno 准入审计、节点权限位收敛等。 \\
 $\mathit{action}$ & 执行表达序列，形如 $(a_1,\ldots,a_k)$，$a_i$ 是 $m_i$ 对应的可部署表达，可为规则片段、配置声明或可执行命令等形式。 \\
 $m_i$ & 第 $i$ 项控制机理，与 $a_i$ 一一对应，共同构成一个防控措施单元。 \\
@@ -44,7 +44,7 @@ $a_i$ & 第 $i$ 项执行表达，与 $m_i$ 一一对应，直接对应可部署
 $\mathcal{A}$ & 生成方法配置集合，用于刻画提示词组织、目标侧重或工作流设定等差异。 \\
 $\mathcal{M}$ & 底层大语言模型集合，表示参与候选策略生成的模型类型。 \\
 $\mathcal{G}_v$ & 漏洞 $v$ 的生成配置集合，满足 $\mathcal{G}_v\subseteq\mathcal{A}\times\mathcal{M}$。 \\
-$g=(a,h)$ & 生成配置，表示方法配置 $a$ 与底层大语言模型 $h$ 的组合（定义~\ref{def:gen-config}）。 \\
+$g=(a,h)$ & 生成配置，表示方法配置 $a$ 与底层大语言模型 $h$ 的组合(定义~\ref{def:gen-config})。 \\
 $\Pi_v^{(g)}$ & 漏洞 $v$ 在生成配置 $g$ 下输出的候选安全策略子集。 \\
 $\Pi_v$ & 漏洞 $v$ 的候选策略集合，包括多个不同生成配置输出的候选安全策略。 \\
 $\tau$ & 类型变量，表示某一给定策略类型。 \\
@@ -84,7 +84,7 @@ $\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排�
 \textbf{术语} & \textbf{英文/缩写} & \textbf{说明} \\
 \midrule
 \endfirsthead
-\multicolumn{3}{l}{\small（续表）} \\[0.3ex]
+\multicolumn{3}{l}{\small(续表)} \\[0.3ex]
 \toprule
 \textbf{术语} & \textbf{英文/缩写} & \textbf{说明} \\
 \midrule
@@ -123,7 +123,7 @@ Kubernetes & K8S & Google 开源的容器集群编排系统。 \\
 \textbf{缩写} & \textbf{英文全称} & \textbf{中文说明} \\
 \midrule
 \endfirsthead
-\multicolumn{3}{l}{\small（续表）} \\[0.3ex]
+\multicolumn{3}{l}{\small(续表)} \\[0.3ex]
 \toprule
 \textbf{缩写} & \textbf{英文全称} & \textbf{中文说明} \\
 \midrule
@@ -145,3 +145,4 @@ DSL & Domain Specific Language & 领域专用语言\\
 \endgroup
 
 \endgroup
+

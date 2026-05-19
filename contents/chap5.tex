@@ -70,7 +70,7 @@
 
 \subsection{度量指标}
 
-策略质量评估指标共识排序 $\hat{S}_\delta(\pi)$（式\eqref{eq:consensus-score}）计算的三维质量向量 $q(\pi)=\bigl(E(\pi),I(\pi),D(\pi)\bigr)$（定义~\ref{def:quality-vector}）。此外，为衡量评审模型之间的排序一致性，引入 Kendall's $W$ 协调系数\cite{kendall1939problem}（定义\ref{def:kendalls-w}）与 Spearman 等级相关系数\cite{spearman1961proof}（定义\ref{def:spearman-rho}）作为辅助度量；资源消耗则记录每次调用的输入与输出词元数及运行时间，按模型和方法配置分别聚合统计。
+策略质量评估指标共识排序 $\hat{S}_\delta(\pi)$(式\eqref{eq:consensus-score})计算的三维质量向量 $q(\pi)=\bigl(E(\pi),I(\pi),D(\pi)\bigr)$(定义~\ref{def:quality-vector})。此外，为衡量评审模型之间的排序一致性，引入 Kendall's $W$ 协调系数\cite{kendall1939problem}(定义\ref{def:kendalls-w})与 Spearman 等级相关系数\cite{spearman1961proof}(定义\ref{def:spearman-rho})作为辅助度量；资源消耗则记录每次调用的输入与输出词元数及运行时间，按模型和方法配置分别聚合统计。
 
 \begin{flatdefinition}{Kendall's $W$ 协调系数}
 \label{def:kendalls-w}
@@ -135,9 +135,9 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 \end{table}
 
 \subsection{实验流程设置}。
-首先针对权限提升漏洞相关的应用版本的配置文件进行风险扫描。采用四个不同静态工具（表\ref{tab:static-tools}）对配置文件进行静态扫描，并生成风险合规报告，再人工评估其对策略生成的实际帮助，包括能否定位与漏洞路径相关的高风险配置，以及是否给出可直接落地的修正建议。
+首先针对权限提升漏洞相关的应用版本的配置文件进行风险扫描。采用四个不同静态工具(表\ref{tab:static-tools})对配置文件进行静态扫描，并生成风险合规报告，再人工评估其对策略生成的实际帮助，包括能否定位与漏洞路径相关的高风险配置，以及是否给出可直接落地的修正建议。
 
-使用KPEDefense方法对55个权限提升CVE进行安全策略生成。首先，在统一的提示词模板、输入组织方式和输出结构约束下，分别使用五个大语言模型对 55 个漏洞实例生成候选策略集合 $\Pi_v$（定义~\ref{def:candidate-strategy-set}）。为评估各关键模块的作用，设置三项消融配置：移除安全上下文（\texttt{KPEDefense w/o RAG}）、移除思维链推理（\texttt{KPEDefense w/o COT}）和移除反馈优化（\texttt{KPEDefense w/o Feedback}），并与完整工作流生成方法（\texttt{KPEDefense}）进行对比。方法配置 $a$ 与底层模型 $h$ 的叉积共构成 20 种生成配置 $g=(a,h)$，如表~\ref{tab:generation-config}所示。
+使用KPEDefense方法对55个权限提升CVE进行安全策略生成。首先，在统一的提示词模板、输入组织方式和输出结构约束下，分别使用五个大语言模型对 55 个漏洞实例生成候选策略集合 $\Pi_v$(定义~\ref{def:candidate-strategy-set})。为评估各关键模块的作用，设置三项消融配置：移除安全上下文(\texttt{KPEDefense w/o RAG})、移除思维链推理(\texttt{KPEDefense w/o COT})和移除反馈优化(\texttt{KPEDefense w/o Feedback})，并与完整工作流生成方法(\texttt{KPEDefense})进行对比。方法配置 $a$ 与底层模型 $h$ 的叉积共构成 20 种生成配置 $g=(a,h)$，如表~\ref{tab:generation-config}所示。
 \begin{table}[htb]
 	\centering\bicaption{生成配置的完整枚举编号}{Summary of generation configurations}
 	\label{tab:generation-config}
@@ -156,7 +156,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 	\end{tabularx}
 \end{table}
 
-安全策略评估阶段，将上述五个模型（表\ref{tab:llm-models-info}）同时作为评审模型，对每个漏洞实例对应的候选策略在三个评价维度上分别进行独立排序，得到该漏洞实例上的共识排序 $\hat{S}_\delta(\pi)$（式\eqref{eq:consensus-score}），作为自动评审的最终结果。选择最佳策略用于案例分析。同时针对所有CVE生成的候选安全策略集合进行人工独立评审，以检验自动评审结果与人工判断的一致性。人工评审与自动评审采用相同的评价维度、排序规则和候选展示方式，从而保证两者具有可比性。
+安全策略评估阶段，将上述五个模型(表\ref{tab:llm-models-info})同时作为评审模型，对每个漏洞实例对应的候选策略在三个评价维度上分别进行独立排序，得到该漏洞实例上的共识排序 $\hat{S}_\delta(\pi)$(式\eqref{eq:consensus-score})，作为自动评审的最终结果。选择最佳策略用于案例分析。同时针对所有CVE生成的候选安全策略集合进行人工独立评审，以检验自动评审结果与人工判断的一致性。人工评审与自动评审采用相同的评价维度、排序规则和候选展示方式，从而保证两者具有可比性。
 
 
 案例分析阶段，基于安全策略评估阶段生成的安全策略，对7个典型CVE进行实际案例分析，包括漏洞复现，安全策略部署和安全策略验证，验证真实场景下KPEDefense生成的安全策略的有效性、无干扰性与可部署性。
@@ -196,7 +196,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 \end{table}
 
 
-消融实验表明，三个步骤均能提升策略质量，其中反馈优化的影响最为显著。完整工作流 KPEDefense与三种消融配置 KPEDefense w/o RAG、KPEDefense w/o COT、KPEDefense w/o Feedback的三维质量得分见表~\ref{tab:ablation-scores}，评价维度为有效性 $E$、无干扰性 $I$ 与可部署性 $D$。55 个漏洞样本先由五个生成模型产出候选策略，再交由五个评审模型独立排序，最后经等权聚合得到各维度共识得分。其中反馈优化（Feedback）移除后有效性降幅达 79\%，无干扰性与可部署性也同步出现最大下降。多轮反馈迭代对各维度质量的提升作用最为全面，然而代价是更高的词元消耗与时间开销。思维链推理（COT）的影响则呈现明显的维度分化：移除后有效性降至 0.234，但可部署性几乎不变（$D=0.403$ 降至 $D=0.398$）。安全上下文（RAG）的贡献度相对较小，移除后有效性降至 0.476，降幅约 18\%，无干扰性和可部署性也分别下降约 14\% 与 20\%。可能因为当前大语言模型的训练语料已大量涵盖开源仓库及相关 CVE 记录，使得去除检索模块后模型仍能在模型内感知漏洞相关知识。值得一提的是，部分本身进行思维链推理的模型中COT部分的提升较少。
+消融实验表明，三个步骤均能提升策略质量，其中反馈优化的影响最为显著。完整工作流 KPEDefense与三种消融配置 KPEDefense w/o RAG、KPEDefense w/o COT、KPEDefense w/o Feedback的三维质量得分见表~\ref{tab:ablation-scores}，评价维度为有效性 $E$、无干扰性 $I$ 与可部署性 $D$。55 个漏洞样本先由五个生成模型产出候选策略，再交由五个评审模型独立排序，最后经等权聚合得到各维度共识得分。其中反馈优化(Feedback)移除后有效性降幅达 79\%，无干扰性与可部署性也同步出现最大下降。多轮反馈迭代对各维度质量的提升作用最为全面，然而代价是更高的词元消耗与时间开销。思维链推理(COT)的影响则呈现明显的维度分化：移除后有效性降至 0.234，但可部署性几乎不变($D=0.403$ 降至 $D=0.398$)。安全上下文(RAG)的贡献度相对较小，移除后有效性降至 0.476，降幅约 18\%，无干扰性和可部署性也分别下降约 14\% 与 20\%。可能因为当前大语言模型的训练语料已大量涵盖开源仓库及相关 CVE 记录，使得去除检索模块后模型仍能在模型内感知漏洞相关知识。值得一提的是，部分本身进行思维链推理的模型中COT部分的提升较少。
 
 \begin{table}[htb!]
 	\centering\bicaption{不同方法配置的平均三维质量得分}{Average three-dimensional quality scores of ablation configurations}
@@ -274,7 +274,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 	\end{tabularx}
 \end{table}
 
-在输出稳定性方面，各模型在生成阶段触发重试概率如表~\ref{tab:model-retry-stats}所示。重试主要对应三类失败情形：结构化输出中的 JSON 结构错误，生成内容的语法错误，以及内容违规。各模型的输出稳定性差异显著。GPT-5 在三类错误上均未触发重试，输出最为稳定；Grok 4 和 DeepSeek 的总失误率也较低（0.99\% 和 1.59\%）。GLM-4.5 的总失误率最高（8.53\%），主要集中在 JSON 格式错误，且是唯一出现内容违规的模型。
+在输出稳定性方面，各模型在生成阶段触发重试概率如表~\ref{tab:model-retry-stats}所示。重试主要对应三类失败情形：结构化输出中的 JSON 结构错误，生成内容的语法错误，以及内容违规。各模型的输出稳定性差异显著。GPT-5 在三类错误上均未触发重试，输出最为稳定；Grok 4 和 DeepSeek 的总失误率也较低(0.99\% 和 1.59\%)。GLM-4.5 的总失误率最高(8.53\%)，主要集中在 JSON 格式错误，且是唯一出现内容违规的模型。
 
 
 \begin{table}[htb!]
@@ -300,7 +300,7 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 
 \subsection{安全策略评估方法可信性}
 
-前两节分别讨论了工作流差异和模型差异，但其结果均依赖评审结果可信性。基于多源模型的安全策略评估方法一致性统计见表~\ref{tab:judge-consistency-stats}。数据显示，五个大语言模型在有效性维度上的一致性最高，Kendall's $W$ 达 0.955，Spearman 均值为 0.944，说明有效性方面的评估十分有效。无干扰性维度一致性居中且可接受，然而可部署性上的一致性较低（$W=0.687$），这可能由于各模型对部署步骤复杂度的理解能力差异，而可部署性重要性较低，这种分歧在可接受范围内。
+前两节分别讨论了工作流差异和模型差异，但其结果均依赖评审结果可信性。基于多源模型的安全策略评估方法一致性统计见表~\ref{tab:judge-consistency-stats}。数据显示，五个大语言模型在有效性维度上的一致性最高，Kendall's $W$ 达 0.955，Spearman 均值为 0.944，说明有效性方面的评估十分有效。无干扰性维度一致性居中且可接受，然而可部署性上的一致性较低($W=0.687$)，这可能由于各模型对部署步骤复杂度的理解能力差异，而可部署性重要性较低，这种分歧在可接受范围内。
 \begin{table}[htb!]
 	\centering\bicaption{基于多源模型的安全策略评估方法一致性统计}{Consistency statistics of large-language-model judges across dimensions}
 	\label{tab:judge-consistency-stats}
@@ -376,5 +376,6 @@ KPEDefense 方法的资源消耗与时间开销在总成本与平均耗时均表
 
 \section{小结}
 本章围绕 KPEDefense 开展实验验证，从静态扫描方法对比与案例分析、消融实验、生成模型能力、评估方法可信度和资源消耗五个方面进行了分析。实验结果验证了 KPEDefense 在策略生成与评估中的有效性，7 个典型 CVE 案例的复现与部署验证进一步表明生成策略能够有效阻断或缓解攻击路径，并展示了不同模型与方法在质量和成本上的差异。
+
 
 

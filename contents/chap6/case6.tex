@@ -12,7 +12,7 @@ Sourcegraph 是面向大规模代码仓库的搜索与导航平台，其典型�
 
 实验在隔离环境中部署受影响版本的 Sourcegraph，并保留 Gitolite 与 Phabricator 联动集成。正文仅保留配置变更后 \texttt{gitserver} 的可观测执行证据，不展开可直接复用的命令载荷与内部寻址细节。完整环境准备、验证判据与回归检查步骤见附录如下。
 
-\textbf{参考命令（用于日志与工作负载证据采集）}
+\textbf{参考命令(用于日志与工作负载证据采集)}
 \begin{AppendixCode}
 NAMESPACE=sourcegraph
 
@@ -30,7 +30,7 @@ kubectl -n $NAMESPACE logs deploy/gitserver --since=10m | findstr /i "gitolite p
 
 KPEDefense 筛选出的最优策略从三个层面切断攻击链：禁用 Gitolite 集成以移除 \texttt{callsignCommand} 对应的命令执行入口；对 \texttt{gitserver} 实施 NetworkPolicy 网络隔离；收紧外部服务配置与 Grafana 管理权限，防止管理面配置变更影响执行面。详细配置见附录\ref{app:cve-2022-29171}。
 
-\textbf{1）禁用 Gitolite 集成：移除 \texttt{callsignCommand} 对应的命令执行入口}
+\textbf{1)禁用 Gitolite 集成：移除 \texttt{callsignCommand} 对应的命令执行入口}
 \begin{AppendixCode}
 # 通过站点配置禁用 Gitolite code host 集成
 # 在 Sourcegraph 站点配置 JSON 中移除或注释 gitolite 相关条目
@@ -62,7 +62,7 @@ kubectl -n sourcegraph rollout restart deploy/gitserver
 kubectl -n sourcegraph logs deploy/gitserver --since=5m | findstr /i "gitolite callsign"
 \end{AppendixCode}
 
-\textbf{2）收紧 Grafana 管理权限与外部服务配置权限}
+\textbf{2)收紧 Grafana 管理权限与外部服务配置权限}
 \begin{AppendixCode}
 # 限制 Grafana 管理员访问，防止通过观测面获取内部服务地址
 # 方案：将 Grafana 的 admin 角色限制为只读，或通过 RBAC 限制对 Grafana Pod 的访问
@@ -112,7 +112,7 @@ EOF
 kubectl -n sourcegraph rollout restart deploy/grafana
 \end{AppendixCode}
 
-\textbf{3）网络隔离：限制 \texttt{gitserver} 的可达面（默认拒绝并按需放通）}
+\textbf{3)网络隔离：限制 \texttt{gitserver} 的可达面(默认拒绝并按需放通)}
 \begin{AppendixCode}
 NAMESPACE=sourcegraph
 
@@ -187,4 +187,5 @@ kubectl -n $NAMESPACE get networkpolicy | findstr /i "gitserver"
 集成功能开关、NetworkPolicy 与权限配置均可声明式管理，并纳入 GitOps 基线持续维护。该方案依赖 Kubernetes 常用网络隔离能力与平台权限治理机制，适合在同类部署环境中复用。
 
 三维验证通过。命令执行入口被切断后，管理面配置继续影响 \texttt{gitserver} 执行面的路径被关闭。该方案可作为版本升级前的补充缓解措施，最终仍建议升级至修复版本。
+
 
