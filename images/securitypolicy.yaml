@@ -1,0 +1,27 @@
+policy:
+  name: cloud-native-security-policy
+  description: 一个由多个防控条目组成的安全策略集合
+  entries:
+    - id: e1
+      tau: monitor
+      m: Falco/Rules
+      a: |
+        - rule: Detect Shell in Container
+          desc: Detect an interactive shell started inside a container
+          condition: >
+            container.id != host and
+            proc.name in (bash, sh, zsh, dash)
+          output: >
+           ......
+
+    - id: e2
+      tau: protect
+      m: OPA/Rego
+      a: |
+        package kubernetes.admission
+        deny[msg] {
+          input.request.kind.kind == "Pod"
+          container := input.request.object.spec.containers[_]
+          container.securityContext.privileged == true
+          msg := "Privileged containers are not allowed"
+          .......

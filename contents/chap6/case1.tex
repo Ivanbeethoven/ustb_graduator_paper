@@ -121,6 +121,7 @@ kubectl auth can-i '*' '*' --as bob
 
 \textbf{Kubernetes RBAC：收敛 AppProject 的写权限}
 \begin{AppendixCode}
+# 可写角色：仅允许平台管理员增删改 AppProject
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -130,6 +131,7 @@ rules:
 	resources: ["appprojects"]
 	verbs: ["get","list","watch","create","update","patch","delete"]
 ---
+# 只读角色：租户默认权限，防止低权主体写入 AppProject
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -139,6 +141,7 @@ rules:
 	resources: ["appprojects"]
 	verbs: ["get","list","watch"]
 ---
+# 绑定：平台管理员组 -> 可写角色
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -152,6 +155,7 @@ subjects:
 	name: argo:platform-admin
 	apiGroup: rbac.authorization.k8s.io
 ---
+# 绑定：租户只读组 -> 只读角色
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -175,9 +179,11 @@ metadata:
 	namespace: argocd
 data:
 	policy.csv: |
+		# 组到角色映射
 		g, argo:platform-admin, role:admin
 		g, argo:tenant-readonly, role:readonly
 
+		# 管理员：允许所有操作，含 exec（远程执行）与 logs
 		p, role:admin, projects, *, *, allow
 		p, role:admin, repositories, *, *, allow
 		p, role:admin, clusters, *, *, allow
@@ -185,13 +191,14 @@ data:
 		p, role:admin, exec, *, *, allow
 		p, role:admin, logs, *, *, allow
 
+		# 只读角色：仅允许 get，显式拒绝 exec（防止借助控制平面执行任意命令）
 		p, role:readonly, applications, get, *, allow
 		p, role:readonly, repositories, get, *, allow
 		p, role:readonly, projects, get, *, allow
 		p, role:readonly, clusters, get, *, allow
 		p, role:readonly, logs, get, *, allow
 		p, role:readonly, exec, *, *, deny
-	policy.default: role:readonly
+	policy.default: role:readonly  # 未命中任何规则时默认只读
 \end{AppendixCode}
 
 \textbf{准入控制：Gatekeeper(推荐)}\label{app:cve-2022-24768-gatekeeper}
@@ -346,6 +353,8 @@ spec:
 
 \textbf{运行时检测：Falco 规则}
 \begin{AppendixCode}
+# 监控：检测将 ClusterRoleBinding 绑定至 cluster-admin 的高危操作
+# 触发条件：k8s 审计事件中创建了引用 cluster-admin 的 ClusterRoleBinding
 - rule: Detect ClusterRoleBinding to cluster-admin
   desc: >
     Detects creation of ClusterRoleBinding that references
@@ -359,7 +368,7 @@ spec:
     ClusterRoleBinding to cluster-admin created
     (user=%ka.user.name resource=%ka.target.name
     role=%ka.req.binding.role ns=%ka.target.namespace)
-  priority: CRITICAL
+  priority: CRITICAL   # 最高优先级，触发即需响应
   source: k8s_audit
   tags: [k8s, privilege_escalation, cve-2022-24768]
 \end{AppendixCode}

@@ -154,29 +154,29 @@ e = \langle \tau,\;m,\;a \rangle
 
 \textbf{1)配置缺陷}指应用或基础设施的配置不当导致的安全漏洞，主要包括两种情形：
 \begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
-    \item 冗余权限：Kubernetes RBAC 配置不当、Role/ClusterRole 规则范围过宽或绑定关系不合理等，使低权限主体获得超出其职责的资源访问与高危操作能力。该类问题在第三方应用接入场景中尤为常见，并已被证明可被用于接管集群关键资源\cite{o1995redundant,yang2023take}。
-    \item 网络隔离不足：容器、Pod或服务间缺乏网络隔离，导致攻击者可以横向移动获取其他权限。
+    \item 冗余权限：Kubernetes RBAC 配置不当、Role/ClusterRole 规则范围过宽或绑定关系不合理等，使低权限主体获得超出其职责的资源访问与高危操作能力。云原生应用在安装时申请了远超其功能需求的集群级权限，一旦被攻击者利用，即可借助已有 ServiceAccount 绑定关系直接接管集群关键资源\cite{o1995redundant,yang2023take}。
+    \item 网络隔离不足：容器、Pod 或服务间缺乏必要的网络隔离策略，导致攻击者在突破单一组件后可借助集群内部网络横向移动。
 \end{enumerate}
 
 \textbf{2)安全逻辑缺陷}指应用代码中的安全机制设计或实现不当，涵盖以下情形：
 \begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
-    \item 访问控制缺陷：应用的权限检查不完全或存在逻辑漏洞，允许绕过权限验证；
-    \item 身份验证绕过：认证机制设计缺陷，攻击者可以冒充他人身份或跳过认证步骤；
-    \item 输入验证不足：对请求参数、资源标识或边界条件的校验不充分，导致攻击者借由异常输入扩大权限边界或触发越权路径；
-    \item 授权验证不完善：权限检查在某些操作路径或边界条件下缺失。
+    \item 访问控制缺陷：应用的权限检查逻辑存在遗漏或条件判断不完整，允许攻击者通过构造特定请求绕过鉴权层，直接操作受保护资源；
+    \item 身份验证绕过：认证机制在特定调用路径下存在设计缺陷，攻击者可伪造令牌、利用过期凭证或跳过认证前置步骤，以合法身份的名义执行未授权操作；
+    \item 输入验证不足：对请求参数、资源标识或边界条件的校验不充分，导致攻击者借由畸形输入触发意料之外的执行分支，进而扩大权限边界或绕过越权检查路径；
+    \item 授权验证不完善：权限检查仅覆盖主流程，在某些操作路径、回调分支或边界条件下存在验证缺失，使攻击者得以通过非常规路径访问需要更高权限的功能。
 \end{enumerate}
 
-\textbf{3)敏感信息泄露}指重要的身份、密钥或权限信息意外暴露，常见形式包括：
+\textbf{3)敏感信息泄露}指重要的身份凭证、密钥或访问令牌在不应暴露的位置意外出现，攻击者可借此直接获取高权限访问能力，常见形式包括：
 \begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
-    \item API 端口暴露：管理接口、内部 API 或调试端口未受保护暴露在网络上；
-    \item 日志泄露：错误泄露的日志文件中包含密钥、命令历史等敏感信息；
-    \item 配置文件泄露：配置文件包含硬编码的凭证或密钥。
+    \item API 端口暴露：管理接口、内部 API 或调试端口未设访问控制地暴露在集群网络中，攻击者可直接调用高权限接口执行敏感操作；
+    \item 日志泄露：应用错误处理不当，将包含密钥、访问令牌或命令历史的原始信息写入日志，使具有日志读取权限的攻击者得以提取有效凭证；
+    \item 配置文件泄露：部署清单或环境变量中存在硬编码的凭证或密钥，一旦配置文件被读取即可直接复用高权限账户。
 \end{enumerate}
 
-\textbf{4)代码注入}指应用对用户输入的处理不当，使攻击者得以注入恶意代码，典型子类包括：
+\textbf{4)代码注入}指应用对外部输入的处理不当，使攻击者得以将恶意指令混入正常执行流，从而在目标系统上以当前进程权限执行任意操作。典型子类包括：
 \begin{enumerate}[label=\textcircled{\small\arabic*},leftmargin=*]
-    \item 命令注入：应用直接执行用户提供或可控的命令，攻击者可以执行任意系统命令；
-    \item 路径遍历：应用文件访问检查不完整，攻击者可以访问系统其他部分的文件。
+    \item 命令注入：应用将用户可控内容拼接进系统调用或 shell 命令，攻击者通过注入分隔符或控制字符劫持执行流，以容器或宿主机进程权限运行任意命令；
+    \item 路径遍历：应用在拼接文件路径时未做规范化处理，攻击者借助 \texttt{../} 序列突破预设目录边界，读取或写入系统敏感文件，进而获取凭证或修改关键配置。
 \end{enumerate}
 
 \subsubsection{(4)知识库构建}
@@ -420,12 +420,12 @@ Calico是一套开源的网络和网络安全方案，用于容器、虚拟机�
 
 \noindent\textbf{(1)安全知识库构建}
 
-在安全知识库构建阶段，首先以 \texttt{calico}开源仓库(\url{https://github.com/projectcalico/calico})中通过爬虫技术抓取代码文件、文档以及Issue,Pull Request等多源信息，入库时保留路径、提交哈希与时间戳等元数据。共计42篇md格式文档和 3476 条 Issue 与 8826 条 Pull Request 讨论记录。
+在安全知识库构建阶段，首先以 calico 开源仓库中通过爬虫技术抓取代码文件、文档以及Issue，Pull Request等多源信息，入库时保留路径、提交哈希与时间戳等元数据。共计42篇md格式文档和 3476 条 Issue 与 8826 条 Pull Request 讨论记录。
 
 \noindent\textbf{(2)安全策略生成与优化}
 
 依据 KPEDefense 和DeepSeek-V3.2模型进行单次候选安全策略的生成与优化。首先安全知识智能体基于步骤1构建的安全知识库检索到的信息构建出一个安全上下文 $c$如图\ref{fig:chap3-v-context}所示。
-\begin{figure}[htb]
+\begin{figure}[htb!]
     \centering
     \setlength{\abovecaptionskip}{3pt}
     \setlength{\belowcaptionskip}{0pt}
@@ -452,7 +452,7 @@ t3: "节点加固：find /opt/cni/bin -perm -4000 定期检查 SUID 文件..."
     \label{fig:chap3-v-context}
 \end{figure}
 
-漏洞分析智能体结合 $c$ 识别出三条主要威胁成因或攻击路径，其中直接根因是SUID 位权限滥用，针对CNI目录可疑写入是潜在的横向攻击，而宿主机路径暴露则是可能转为持久化高风险。策略代码生成智能体针对各路径生成一个安全策略$\pi_1$，其中防护策略 $e_1$通过 DaemonSet 批量移除 SUID 位的配置，监控策略$e_2$覆盖 \texttt{/opt/cni/bin} 异常写入与可疑执行，防护策略$e_3$ 限制普通工作负载挂载高风险宿主机目录。
+漏洞分析智能体结合 $c$ 识别出三条主要威胁成因或攻击路径，其中直接根因是SUID 位权限滥用，针对CNI目录可疑写入是潜在的横向攻击，而宿主机路径暴露则是可能转为持久化高风险。策略代码生成智能体针对各路径生成一个安全策略$\pi_1$，其中防护策略 $e_1$通过 DaemonSet 批量移除 SUID 位的配置，监控策略$e_2$覆盖指定目录异常写入与可疑执行，防护策略$e_3$ 限制普通工作负载挂载高风险宿主机目录。
 
 策略评审智能体从三个维度考察 $\Pi_v1$，并输出一个简单的评审报告，报告指出$\pi_1$ 的有效性较高但缺乏持续观测，$\pi_2$ 的无干扰性最佳但覆盖面不足，$\pi_3$ 可补齐路径约束但需配合其他措施。策略优化智能体据此对其进行了进一步优化,最终的安全策略中的代码展示如图~\ref{fig:chap3-falco-kyverno}。
 
@@ -462,57 +462,40 @@ t3: "节点加固：find /opt/cni/bin -perm -4000 定期检查 SUID 文件..."
     \setlength{\belowcaptionskip}{0pt}
     \begin{tcolorbox}[enhanced,colback=gray!3,colframe=gray!55,boxrule=0.4pt,arc=1mm,left=2mm,right=2mm,top=0.5mm,bottom=0.5mm]
     \begin{Verbatim}[fontsize=\scriptsize,baselinestretch=0.8,breaklines,breakanywhere]
+# [e1 防护] DaemonSet: 在全部节点批量移除 /opt/cni/bin 下的 SUID 位
 apiVersion: apps/v1
 kind: DaemonSet
-metadata:
-    name: calico-cni-suid-remediate
-    namespace: kube-system
+metadata: {name: calico-cni-suid-remediate, namespace: kube-system}
 spec:
-    template:
-        spec:
-            hostPID: true
-            tolerations:
-            - operator: Exists
-            containers:
-            - name: fixer
-                image: busybox:1.36
-                securityContext:
-                    privileged: true
-                command: ["/bin/sh","-c"]
-                args:
-                - |
-                    find /host/opt/cni/bin -maxdepth 1 -perm -4000 -exec chmod u-s {} \;
-                    find /host/opt/cni/bin -maxdepth 1 \( -perm -4000 -o -perm -2000 \) -ls
-                volumeMounts:
-                - name: host-cni
-                    mountPath: /host/opt/cni/bin
-            volumes:
-            - name: host-cni
-                hostPath:
-                    path: /opt/cni/bin
+  template:
+    spec:
+      hostPID: true
+      tolerations: [{operator: Exists}]
+      containers:
+      - name: fixer
+        image: busybox:1.36
+        securityContext: {privileged: true}
+        command: ["/bin/sh","-c"]
+        args: ["find /host/opt/cni/bin -maxdepth 1 -perm -4000 -exec chmod u-s {} \\;"]
+        volumeMounts: [{name: host-cni, mountPath: /host/opt/cni/bin}]
+      volumes: [{name: host-cni, hostPath: {path: /opt/cni/bin}}]
 
+# [e2 监控] Falco 规则: 检测对 /opt/cni/bin 的异常写入
 - rule: Write under CNI bin directory
-    desc: Detect unexpected writes or permission changes under /opt/cni/bin
-    condition: open_write and fd.name startswith /opt/cni/bin
-    output: "Unexpected write to CNI binaries (user=%user.name file=%fd.name proc=%proc.cmdline)"
-    priority: WARNING
+  condition: open_write and fd.name startswith /opt/cni/bin
+  output: "CNI binary write (user=%user.name file=%fd.name proc=%proc.cmdline)"
+  priority: WARNING
 
+# [e3 防护] Kyverno: 限制普通工作负载挂载 CNI 宿主机路径
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
-metadata:
-    name: restrict-cni-bin-hostpath
+metadata: {name: restrict-cni-bin-hostpath}
 spec:
-    validationFailureAction: Audit
-    rules:
-    - name: forbid-cni-bin-mount
-        match:
-            any:
-            - resources:
-                    kinds: ["Pod"]
-        exclude:
-            any:
-            - resources:
-                    namespaces: ["kube-system","calico-system"]
+  validationFailureAction: Audit
+  rules:
+  - name: forbid-cni-bin-mount
+    match: {any: [{resources: {kinds: ["Pod"]}}]}
+    exclude: {any: [{resources: {namespaces: ["kube-system","calico-system"]}}]}
     \end{Verbatim}
     \end{tcolorbox}
     \bicaption{针对CVE-2024-33522漏洞生成的安全策略代码}{Security strategy code generated for CVE-2024-33522}\label{fig:chap3-falco-kyverno}

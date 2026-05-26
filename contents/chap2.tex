@@ -19,14 +19,14 @@
 \end{figure}
 
 \subsection{容器集群系统Kubernetes}
-Kubernetes 是面向容器工作负载的容器集群编排系统，简称 K8S。K8S源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面通过循环控制持续驱动对象状态转变为期望状态\cite{kubernetes2024}。K8S 的基本架构如图\ref{fig:k8s-arch}所示，一个 K8S 集群由\textbf{控制平面(Control Plane)}和多个\textbf{工作节点(Worker Node)}构成。控制平面负责集群控制、调度与状态协调，由\textbf{API Server}、\textbf{调度器}、\textbf{控制器}组成。\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态。工作节点由"kubelet"与"kube-proxy"组成，\textbf{kubelet}负责与 API Server 通信并维护本节点工作负载运行，同时与容器运行时进行镜像拉取、容器创建和生命周期管理，\textbf{kube-proxy}负责服务转发与网络规则实现。用户可以使用"Kubectl"管理整个集群及其资源对象。
+Kubernetes 是面向容器工作负载的容器集群编排系统，简称 K8S。K8S源自谷歌内部的集群编排系统 Borg\cite{Verma_2015}，并于 2014 年正式开源。其核心思想是以\textbf{声明式 API}描述系统期望状态，再由控制平面通过循环控制持续驱动对象状态转变为期望状态\cite{kubernetes2024}。K8S 的基本架构如图\ref{fig:k8s-arch}所示，一个 K8S 集群由\textbf{控制平面}和多个\textbf{工作节点}构成。控制平面负责集群控制、调度与状态协调，由\textbf{API 服务器}、\textbf{调度器}、\textbf{控制器}组成。\textbf{API Server}是资源访问与状态变更的统一入口，并结合键值数据库 ETCD 完成认证、授权、准入和资源对象持久化；\textbf{调度器}根据资源请求、亲和性与反亲和性等约束为工作负载选择节点；\textbf{控制器}负责持续调节各类资源状态。工作节点由"kubelet"与"kube-proxy"组成，"kubelet"负责与 API 服务器通信并维护本节点工作负载运行，同时与容器运行时进行镜像拉取、容器创建和生命周期管理，"kube-proxy"负责服务转发与网络规则实现。用户可以使用"Kubectl"管理整个集群及其资源对象。
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.8\textwidth]{images/k8s.png}
   \bicaption{K8S 体系结构示意}{Overview of Kubernetes architecture}\label{fig:k8s-arch}
 \end{figure}
 
-K8S 通过一系列持久化\textbf{资源对象}描述集群中不同资源的编排与管理。这类对象通过结构化数据存储在etcd数据库中。例如，"Pod"是最小调度单元，包含一个或多个共享网络与存储的容器；"Deployment"、"StatefulSet" 与 "DaemonSet" 分别面向无状态、有状态和节点守护型工作负载提供副本控制与更新策略；"Service" 与 "Endpoint/EndpointSlice" 提供稳定的服务发现与负载均衡抽象；"Ingress" 面向南北向流量提供入口控制；"ConfigMap" 与 "Secret" 用于配置和敏感信息的声明式注入；"Volume"、"PV" 与 "PVC" 则提供存储生命周期与绑定关系的抽象。
+K8S 通过一系列持久化\textbf{资源对象}描述集群中不同资源的编排与管理。这类对象通过结构化数据存储在etcd数据库中。例如，"Pod"是最小调度单元，包含一个或多个共享网络与存储的容器；"Deployment"、"StatefulSet" 分别面向无状态、有状态工作负载提供副本控制与更新策略；"Service" 与 "Endpoint/EndpointSlice" 提供稳定的服务发现与负载均衡抽象；"Ingress" 面向南北向流量提供入口控制；"ConfigMap" 与 "Secret" 用于配置和敏感信息的声明式注入；"Volume"、"PV" 与 "PVC" 则提供存储生命周期与绑定关系的抽象。
 以一个典型的 "Deployment" 对象为例，图~\ref{fig:k8s-deployment-yaml} 展示了其声明格式及各字段含义。其中"apiVersion"与"kind"共同确定资源所属的 API 组、版本及对象类型；"metadata"包含对象的基本标识，其中"name"与"namespace"唯一确定对象在集群中的位置，"labels"为对象附加键值对标签以供选择器关联，"annotations"则用于存放不影响调度逻辑的补充说明信息；"spec"字段承载对象的期望状态声明，其具体字段因"kind"不同而差异显著，控制器将持续对比此声明与集群实际状态并自动进行调节。
 \begin{figure}[htb]
     \centering

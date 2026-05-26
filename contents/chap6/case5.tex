@@ -104,6 +104,7 @@ kubectl -n flux-system get role,rolebinding | \
 \textbf{3)运行时加固：收紧 kustomize-controller 容器安全上下文}
 \begin{AppendixCode}
 # 为 kustomize-controller 添加只读根文件系统与非特权约束
+# 路径穿越審读文件需要写入 /tmp，用 emptyDir 替代根目录写入
 kubectl -n flux-system patch deploy kustomize-controller \
   --type=strategic -p '
 spec:
@@ -112,18 +113,18 @@ spec:
       containers:
       - name: manager
         securityContext:
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true       # 封锁根文件系统，防止一次性写入文件
+          runAsNonRoot: true                 # 以非 root 身份运行容器
+          allowPrivilegeEscalation: false    # 禸止容器内部权限提升
           capabilities:
-            drop: ["ALL"]
+            drop: ["ALL"]                    # 删除所有 Linux 能力位
         volumeMounts:
         - name: tmp
           mountPath: /tmp
       volumes:
       - name: tmp
         emptyDir:
-          sizeLimit: 64Mi
+          sizeLimit: 64Mi  # 限制临时目录大小，防止磁盘填满
 '
 
 # 验证安全上下文已生效
@@ -146,7 +147,7 @@ spec:
       app: kustomize-controller
   policyTypes: ["Egress"]
   egress:
-  # 仅允许 DNS 解析
+  # 允许 DNS 解析，任何外部连接均依赖此前置
   - to:
     - namespaceSelector:
         matchLabels:
@@ -159,7 +160,7 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  # 仅允许访问 source-controller 拉取制品
+  # 允许访问 source-controller 拉取制品，不直连外网
   - to:
     - podSelector:
         matchLabels:
@@ -167,7 +168,7 @@ spec:
     ports:
     - protocol: TCP
       port: 9090
-  # 允许访问 Kubernetes API Server
+  # 允许访问 Kubernetes API Server 来应用资源清单
   - to:
     - ipBlock:
         cidr: <API-SERVER-CIDR>/32

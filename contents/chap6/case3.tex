@@ -113,6 +113,7 @@ kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-
 
 \textbf{2)准入防回归(OPA Gatekeeper)：禁止创建包含 secrets 读取动词的 ClusterRole}
 \begin{AppendixCode}
+# Rego 辅助谓词：匹配 rules 中包含 secrets 资源且带有读取动词的条目
 has_secrets_rule(rule) {
 				rule.resources[_] == "secrets"
 				rule.verbs[_] == "get"
@@ -126,6 +127,7 @@ has_secrets_rule(rule) {
 				rule.verbs[_] == "watch"
 			}
 
+			# 违规判断：ClusterRole 中包含任意 secrets 读取条目即触发违规
 			violation[{"msg": msg}] {
 				input.review.kind.kind == "ClusterRole"
 				some i
@@ -141,7 +143,7 @@ kind: K8sDenySecretsRBAC
 metadata:
 	name: deny-clusterrole-secrets-read
 spec:
-	enforcementAction: dryrun
+	enforcementAction: dryrun  # 先以审计模式运行，确认无误拦截后再切挃2enforce
 	match:
 		kinds:
 		- apiGroups: ["rbac.authorization.k8s.io"]
@@ -154,6 +156,7 @@ EOF
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
+# 记录所有对 secrets 的读取操作，Metadata 级别可避免指密内容写入日志
 - level: Metadata
 	verbs: ["get","list","watch"]
 	resources:

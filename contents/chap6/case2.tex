@@ -66,6 +66,7 @@ RBAC 为平台原生能力，可模板化发布至多集群。自动清理任务
 
 \textbf{1)立刻收敛 \texttt{ClusterProvision} 的读取权限(RBAC)}
 \begin{AppendixCode}
+# 查询当前哪些身份拥有 ClusterProvision 读取权限，确定收敛范围
 oc adm policy who-can get clusterprovision
 oc adm policy who-can list clusterprovision
 oc adm policy who-can watch clusterprovision
@@ -76,12 +77,14 @@ oc adm policy who-can watch clusterprovision
 apiVersion: audit.k8s.io/v1
 kind: Policy
 rules:
+# 记录所有对 ClusterProvision 的读取操作；
+# Metadata 级别仅记录请求元数据，不存储请求体，降低日志容量
 - level: Metadata
 	verbs: ["get","list","watch"]
 	resources:
 	- group: "hive.openshift.io"
 		resources: ["clusterprovisions"]
-	omitStages: ["RequestReceived"]
+	omitStages: ["RequestReceived"]  # 跳过请求接收阶段，只在响应阶段记录
 \end{AppendixCode}
 
 \textbf{3)缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
@@ -92,6 +95,8 @@ oc delete clusterprovision -n <ns> <name>
 
 \textbf{4)"敏感字段守护"检测(Gatekeeper，建议审计模式)}
 \begin{AppendixCode}
+# 辅助谓词：匹配包含敏感关键词的字段名
+# 匹配 password / token / secret / credential 四类敏感名称
 sensitive_key(k) {
 				lk := lower(k)
 				contains(lk, "password")

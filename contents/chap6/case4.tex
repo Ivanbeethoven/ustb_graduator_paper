@@ -73,6 +73,7 @@ kubectl -n $NAMESPACE run netcheck \
 \textbf{1)缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
 \begin{AppendixCode}
+# 第一条：默认拒绝所有入站流量，关闭 Postgres 对整个命名空间的暗默可达状态
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -85,9 +86,10 @@ spec:
 			app: conjur-oss-postgres
 	policyTypes:
 	- Ingress
-	ingress: []
+	ingress: []  # 空列表表示封山所有入站，还没有任何流量被放通
 EOF
 
+# 第二条：情况允许 Conjur Server -> Postgres 5432 的必要内部吉源
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -104,10 +106,10 @@ spec:
 	- from:
 		- podSelector:
 			matchLabels:
-				app: conjur-oss
+				app: conjur-oss  # 仅允许 Conjur Server 组件访问
 		ports:
 		- protocol: TCP
-			port: 5432
+			port: 5432  # 只放开数据库监听端口
 EOF
 \end{AppendixCode}
 \subsubsection{安全策略验证}

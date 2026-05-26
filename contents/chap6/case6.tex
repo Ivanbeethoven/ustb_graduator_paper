@@ -45,11 +45,11 @@ data:
 	site.json: |
 		{
 			"externalServices": [
-				// 移除所有 kind: "GITOLITE" 的条目
+				// 移除所有 kind: "GITOLITE" 的条目，从根源切断 callsignCommand 执行路径
 				// 若需保留仓库同步，改用不含 callsignCommand 的 GIT 类型
 			],
 			"experimentalFeatures": {
-				"enableGitoliteCallsignLookup": false
+				"enableGitoliteCallsignLookup": false  // 显式关闭元数据处理功能
 			}
 		}
 EOF
@@ -117,6 +117,7 @@ kubectl -n sourcegraph rollout restart deploy/grafana
 NAMESPACE=sourcegraph
 
 # 1) 入站收敛：仅允许 Sourcegraph 内部组件访问 gitserver
+#    封山来自外部的直接请求，防止其他命名空间工作负载触发 gitserver
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -142,6 +143,7 @@ spec:
 EOF
 
 # 2) 出站收敛：仅放通 DNS；代码托管出口按需另行放通
+#    防止 gitserver 主动外连不受信任的外部地址
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
