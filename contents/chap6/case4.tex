@@ -18,7 +18,7 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
 \end{enumerate}
 
 
-实验在支持 NetworkPolicy 的 K8s 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的网络策略配置后，未发现针对 Postgres 入站访问的限制规则。在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。完整复现步骤如下。
+实验在支持 NetworkPolicy 的 K8s 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的 NetworkPolicy 配置后，未发现针对 Postgres 入站访问的限制规则。在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。完整复现步骤如下。
 \textbf{前提条件}
 \begin{itemize}
 	\item 集群 CNI 支持 NetworkPolicy，例如 Calico。

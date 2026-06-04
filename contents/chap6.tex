@@ -1,6 +1,6 @@
 
 \chapter{案例分析}\label{chap:case}
-本章选取 7 个典型 CVE 案例，考察 KPEDefense 针对真实云原生权限提升漏洞进行安全防控的有效性。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{部署验证}三个阶段。
+本章选取 7 个典型 CVE 案例，考察 KPEDefense 针对真实云原生权限提升漏洞生成监控与防护策略的有效性。每个案例包括\textbf{漏洞复现}、\textbf{策略生成}与\textbf{部署验证}三个阶段。
 
 
 \section{案例分析实验设计}
@@ -48,7 +48,7 @@
         计算资源 & 本地虚拟机，96核CPU，96GB内存，200GB存储 \\
         集群组件与版本 & Minikube v1.18.1；K8s v1.18.3\\
         节点规模与规格 & 1个控制节点与2个工作节点；每节点4核CPU/8GB内存 \\
-        CNI/网络策略 & Calico v3.28.2, K8s-Network-Policy v1.5.5 \\
+        CNI/NetworkPolicy & Calico v3.28.2, K8s-Network-Policy v1.5.5 \\
         准入控制 & OPA/Gatekeeper v3.14.0；Kyverno v1.11.0\\
         运行时安全监控 & Falco v0.38.1\\
         包管理组件 & Helm v3\\
