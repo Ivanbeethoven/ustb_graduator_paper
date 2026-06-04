@@ -1,9 +1,9 @@
-﻿
+
 \subsubsection{漏洞复现}
 
 
 
-Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Management 系统。在典型部署中，Conjur Server 负责鉴权与策略校验，后端数据库 PostgreSQL 用于持久化存储策略、审计与机密相关数据。Kubernetes 默认网络模型在多数容器网络接口 CNI 配置下呈扁平互通状态，Pod 间通信默认允许。因此，对于数据库等敏感组件，需要显式配置 NetworkPolicy 等隔离策略，并建立默认拒绝策略 Default Deny，以控制最小暴露面。
+Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Management 系统。在典型部署中，Conjur Server 负责鉴权与策略校验，后端数据库 PostgreSQL 用于持久化存储策略、审计与机密相关数据。K8s 默认网络模型在多数容器网络接口 CNI 配置下呈扁平互通状态，Pod 间通信默认允许。因此，对于数据库等敏感组件，需要显式配置 NetworkPolicy 等隔离策略，并建立默认拒绝策略 Default Deny，以控制最小暴露面。
 
 \textbf{CVE 描述}：CVE-2020-4062 影响 Conjur OSS Helm Chart 2.0.0 之前版本。旧版 Chart 默认\textbf{未提供对 Postgres 的访问控制策略}，例如缺失 NetworkPolicy，导致数据库服务在集群内对任意 Pod 可达。即使数据库未通过 NodePort 或 LoadBalancer 暴露到公网，攻击者一旦获得集群内任意工作负载的执行上下文，仍可能横向移动并直连数据库，绕过应用层安全控制，从而造成机密数据泄露、策略被篡改与审计记录被破坏等后果。
 
@@ -18,7 +18,7 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
 \end{enumerate}
 
 
-实验在支持 NetworkPolicy 的 Kubernetes 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的网络策略配置后，未发现针对 Postgres 入站访问的限制规则。在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。完整复现步骤如下。
+实验在支持 NetworkPolicy 的 K8s 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的网络策略配置后，未发现针对 Postgres 入站访问的限制规则。在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。完整复现步骤如下。
 \textbf{前提条件}
 \begin{itemize}
 	\item 集群 CNI 支持 NetworkPolicy，例如 Calico。
@@ -73,7 +73,7 @@ kubectl -n $NAMESPACE run netcheck \
 \textbf{1)缓解措施：NetworkPolicy，默认拒绝并仅放通 Conjur Server 访问 Postgres 5432}
 
 \begin{AppendixCode}
-# 第一条：默认拒绝所有入站流量，关闭 Postgres 对整个命名空间的暗默可达状态
+# 第一条：默认拒绝所有入站流量，关闭 Postgres 对整个命名空间的默认可达状态
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -86,10 +86,10 @@ spec:
 			app: conjur-oss-postgres
 	policyTypes:
 	- Ingress
-	ingress: []  # 空列表表示封山所有入站，还没有任何流量被放通
+	ingress: []  # 空列表表示拒绝所有入站，还没有任何流量被放通
 EOF
 
-# 第二条：情况允许 Conjur Server -> Postgres 5432 的必要内部吉源
+# 第二条：仅允许 Conjur Server -> Postgres 5432 的必要内部流量
 cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -123,7 +123,7 @@ NetworkPolicy 部署前，非 Conjur 工作负载可连通 Postgres 5432 端口�
 Conjur Server 到 Postgres 的合法通信保持正常，Conjur 组件启动与机密访问流程未受影响。策略上线前完成标签匹配核对与预生产回归验证，未出现因选择器偏差导致的误拦截。
 
 \textbf{可部署性：}
-NetworkPolicy 为 Kubernetes 原生资源，可直接纳入 Git 基线并通过 Helm 或 \texttt{kubectl apply} 发布。数据库服务与端口固定，规则结构简单，适合在同类部署环境中模板化复用。
+NetworkPolicy 为 K8s 原生资源，可直接纳入 Git 基线并通过 Helm 或 \texttt{kubectl apply} 发布。数据库服务与端口固定，规则结构简单，适合在同类部署环境中模板化复用。
 
 三维验证均通过。默认拒绝与精确放通生效后，业务 Pod 直连 Postgres 的路径被阻断，数据库暴露面明显下降。该方案依赖集群 CNI 对 NetworkPolicy 的支持，不支持时仍需借助命名空间隔离等替代措施。
 

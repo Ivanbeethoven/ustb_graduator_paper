@@ -1,4 +1,4 @@
-﻿
+
 \begingroup
 \setlength{\parskip}{0.2em}
 
@@ -34,20 +34,19 @@ $t_i$ & 第 $i$ 条证据内容，如代码片段、公告文本或文档片段�
 $\mathit{src}_i$ & 第 $i$ 条证据来源，如文档路径、链接或代码位置。 \\
 $n_c$ & 安全上下文 $c$ 中的证据条数，即 $|c|$。 \\
 $\mathcal{K}_v$ & 针对漏洞 $v$ 构建的安全知识库，存放多源证据、向量索引与元数据。 \\
-$\Pi$ & 候选策略全集，表示所有候选监控策略与防护策略的总集合。 \\
-$\pi$ & 单个安全策略，三元组形式 $\langle \mathit{type},\mathit{method},\mathit{action} \rangle$，由策略类型、控制机理与执行表达组成。 \\
-$\mathit{type}$ & 策略类型，取值为 $\{\mathrm{mon},\mathrm{prot}\}$：$\mathrm{mon}$ 表示监控型(以观测告警为目标)，$\mathrm{prot}$ 表示防护型(以阻断收敛为目标)。 \\
-$\mathit{method}$ & 控制机理序列，形如 $(m_1,\ldots,m_k)$，每个 $m_i$ 描述一项控制手段的作用路径与机理，如 Falco 规则告警、Kyverno 准入审计、节点权限位收敛等。 \\
-$\mathit{action}$ & 执行表达序列，形如 $(a_1,\ldots,a_k)$，$a_i$ 是 $m_i$ 对应的可部署表达，可为规则片段、配置声明或可执行命令等形式。 \\
-$m_i$ & 第 $i$ 项控制机理，与 $a_i$ 一一对应，共同构成一个防控措施单元。 \\
-$a_i$ & 第 $i$ 项执行表达，与 $m_i$ 一一对应，直接对应可部署的规则、配置或命令。 \\
+$\mathcal{E}$ & 防控条目全集，由监控型与防护型防控条目共同构成。 \\
+$\Pi$ & 安全策略全集，满足 $\Pi=2^{\mathcal{E}}$。 \\
+$e$ & 防控条目，三元组形式 $\langle \tau,m,\mathbf{a} \rangle$，由控制类型、控制机理与执行表达序列组成。 \\
+$\pi$ & 单个安全策略，是防控条目的有限集合 $\{e_1,e_2,\ldots,e_n\}$。 \\
+$\tau$ & 控制类型，取值为 $\{\mathrm{mon},\mathrm{prot}\}$：$\mathrm{mon}$ 表示监控型(以观测告警为目标)，$\mathrm{prot}$ 表示防护型(以阻断收敛为目标)。 \\
+$m$ & 控制机理，描述一项控制手段的作用路径与机理，如 Falco 规则告警、Kyverno 准入审计、RBAC 权限收缩等。 \\
+$\mathbf{a}$ & 执行表达序列，表示与控制机理对应的可部署规则片段、配置声明或可执行命令。 \\
 $\mathcal{A}$ & 生成方法配置集合，用于刻画提示词组织、目标侧重或工作流设定等差异。 \\
 $\mathcal{M}$ & 底层大语言模型集合，表示参与候选策略生成的模型类型。 \\
 $\mathcal{G}_v$ & 漏洞 $v$ 的生成配置集合，满足 $\mathcal{G}_v\subseteq\mathcal{A}\times\mathcal{M}$。 \\
 $g=(a,h)$ & 生成配置，表示方法配置 $a$ 与底层大语言模型 $h$ 的组合(定义~\ref{def:gen-config})。 \\
 $\Pi_v^{(g)}$ & 漏洞 $v$ 在生成配置 $g$ 下输出的候选安全策略子集。 \\
 $\Pi_v$ & 漏洞 $v$ 的候选策略集合，包括多个不同生成配置输出的候选安全策略。 \\
-$\tau$ & 类型变量，表示某一给定策略类型。 \\
 $\Pi_v^{\tau}$ & 同类型候选子集，表示漏洞 $v$ 在类型 $\tau$ 下的候选安全策略集合。 \\
 $\Pi_v^{\mathrm{mon}},\Pi_v^{\mathrm{prot}}$ & 漏洞 $v$ 的监控型与防护型候选子集，是 $\Pi_v^{\tau}$ 的两种具体情形。 \\[0.4ex]
 % ---- 评价与聚合记号 ----
@@ -57,15 +56,13 @@ $E(\pi)$ & 有效性，用于衡量对主要攻击路径与关键风险面的覆
 $I(\pi)$ & 无干扰性，衡量对正常业务的扰动程度及误报风险。 \\
 $D(\pi)$ & 可部署性，衡量策略在现有环境中的落地难度。 \\
 $\mathcal{H}$ & 评价主体集合，表示多个评审主体构成的集合。 \\
-$w_h$ & 评审主体 $h$ 在聚合时的权重，满足 $\sum_{h}w_h=1$。 \\
-$n_{\tau}$ & 同类型候选集合 $\Pi_v^{\tau}$ 的规模，即 $|\Pi_v^{\tau}|$。 \\
+$n_v$ & 候选集合 $\Pi_v$ 的规模，即 $|\Pi_v|$。 \\
 $r_{\delta}^{(h)}$ & 秩函数，表示评价主体 $h$ 在维度 $\delta$ 上给出的排序位置。 \\
 $\hat S_{\delta}(\pi)$ & 共识得分，表示多个评价主体在维度 $\delta$ 上对策略 $\pi$ 的聚合质量分。 \\
 $\bar R_{\delta}$ & 维度 $\delta$ 上的共识排序，按 $\hat S_{\delta}$ 由高到低排列。 \\
-$U_{\delta}(\pi)$ & 分歧度量，用于刻画各评审主体归一化得分相对共识得分的离散程度。 \\
 $Q(\pi)$ & 总体质量函数，表示综合三维共识得分后的最终质量。 \\
 $\alpha_E,\alpha_I,\alpha_D$ & 维度权重，满足 $\alpha_E+\alpha_I+\alpha_D=1$，可按业务场景配置。 \\
-$\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排列得到。 \\
+$\bar R$ & 最终总排名，由 $Q(\pi)$ 降序排列得到。 \\
 \end{longtable}
 \endgroup
 
@@ -94,7 +91,7 @@ $\bar R^{\tau}$ & 类型 $\tau$ 下的最终总排名，由 $Q(\pi)$ 降序排�
 \bottomrule
 \endlastfoot
 云原生 & Cloud-native & 论文所讨论的应用与基础设施环境。 \\
-Kubernetes & K8S & Google 开源的容器集群编排系统。 \\
+Kubernetes & K8s & Google 开源的容器集群编排系统。 \\
 权限提升 & Privilege Escalation & 攻击者突破原有权限边界并获取更高权限。 \\
 补丁窗口期 & Patch-gap window & 漏洞披露至补丁可用或补丁完成部署的时间段。 \\
 临时防控 & Interim mitigation & 在补丁窗口期内用于降低风险的临时控制措施。 \\
@@ -137,7 +134,7 @@ CWE & Common Weakness Enumeration & 通用弱点枚举。 \\
 CVSS & Common Vulnerability Scoring System & 通用漏洞评分系统。 \\
 NVD & National Vulnerability Database & 美国国家漏洞数据库。 \\
 CNCF & Cloud Native Computing Foundation & 云原生计算基金会。 \\
-K8S & Kubernetes & Kubernetes 的常用缩写。 \\
+K8s & Kubernetes & Kubernetes 的常用缩写。 \\
 RBAC & Role-Based Access Control & 基于角色的访问控制。 \\
 LLM & Large Language Model & 大语言模型。 \\
 DSL & Domain Specific Language & 领域专用语言\\

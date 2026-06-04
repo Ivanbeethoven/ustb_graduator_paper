@@ -7,9 +7,14 @@
 统一绘制两张组合雷达图：
   (a) 生成模型对比：人工评审 | 多源模型评审（共享图例）
   (b) 方法配置对比：人工评审 | 多源模型评审（共享图例）
+
+用法：
+  python plot_all_radars.py          # 彩色版
+  python plot_all_radars.py --bw     # 黑白打印版
 """
 from __future__ import annotations
 from pathlib import Path
+import sys
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -28,6 +33,7 @@ plt.rcParams.update({
 })
 
 OUT_DIR = Path(__file__).parent / "images"
+BW = "--bw" in sys.argv
 
 # ============================================================
 # 硬编码数据
@@ -77,7 +83,7 @@ DIM_LABEL_SIZE = 20
 RING_LABEL_SIZE = 10
 LEGEND_SIZE = 15
 LINE_WIDTH = 2.8
-FILL_ALPHA = 0.15
+FILL_ALPHA = 0.08 if BW else 0.15
 
 LABEL_POSITIONS = {
     "有效性":   (0.50, 1.02),
@@ -85,11 +91,41 @@ LABEL_POSITIONS = {
     "可部署性": (0.00, 0.22),
 }
 
+# B&W: 线型 + 顶点标记 + 灰度色，按顺序分配给各方法
+# 格式: (linestyle, marker, gray_rgb)
+_BW_STYLE_POOL = [
+    ("solid",                 "o", (0.00, 0.00, 0.00)),   # 黑色    实线  ●
+    ((0, (5, 2)),             "s", (0.30, 0.30, 0.30)),   # 深灰    长虚线 ■
+    ("dotted",                "D", (0.50, 0.50, 0.50)),   # 中灰    点线  ◆
+    ("dashdot",               "^", (0.65, 0.65, 0.65)),   # 浅灰    点划线 ▲
+    ((0, (3, 1, 1, 1)),       "v", (0.78, 0.78, 0.78)),   # 更浅灰  密点划线 ▼
+]
+
+
+def _get_style_map(labels: list[str]) -> dict[str, dict]:
+    n = len(labels)
+    if BW:
+        return {
+            label: {
+                "color": _BW_STYLE_POOL[i][2],
+                "linestyle": _BW_STYLE_POOL[i][0],
+                "marker": _BW_STYLE_POOL[i][1],
+                "markersize": 8,
+            }
+            for i, label in enumerate(labels)
+        }
+    else:
+        palette = sns.color_palette("husl", n_colors=n)
+        return {
+            label: {"color": color, "linestyle": "solid", "marker": None}
+            for label, color in zip(labels, palette)
+        }
+
 
 def draw_radar_on_axis(
     ax,
     data: dict[str, list[float]],
-    color_map: dict[str, tuple[float, float, float]],
+    style_map: dict[str, dict],
     ylim_max: float = 0.7,
     yticks: list[float] | None = None,
 ) -> list:
@@ -112,14 +148,26 @@ def draw_radar_on_axis(
         yticks = [round(step * i, 1) for i in range(1, int(ylim_max / step) + 1)]
     ax.set_yticks(yticks)
     ax.set_yticklabels([str(t) for t in yticks], fontsize=RING_LABEL_SIZE)
-    ax.grid(color="#D0D0D0", linestyle="--", linewidth=0.6, alpha=0.9)
+    ax.grid(color="#C0C0C0" if BW else "#D0D0D0", linestyle="--",
+            linewidth=0.6, alpha=0.9)
 
     handles = []
     for name, values in data.items():
         vals = list(values) + [values[0]]
-        color = color_map[name]
-        line, = ax.plot(angles, vals, color=color, linewidth=LINE_WIDTH, label=name)
-        ax.fill(angles, vals, color=color, alpha=FILL_ALPHA)
+        style = style_map[name]
+        line, = ax.plot(
+            angles, vals,
+            color=style["color"],
+            linestyle=style["linestyle"],
+            linewidth=LINE_WIDTH,
+            marker=style.get("marker"),
+            markersize=style.get("markersize", 6),
+            markeredgewidth=1.0,
+            markeredgecolor=style["color"],
+            markerfacecolor="white" if BW else style["color"],
+            label=name,
+        )
+        ax.fill(angles, vals, color=style["color"], alpha=FILL_ALPHA)
         handles.append(line)
 
     ax.set_title("")
@@ -137,15 +185,14 @@ def draw_combined_radar_pair(
     legend_y: float = 0.03,
 ) -> None:
     labels = list(left_data.keys())
-    palette = sns.color_palette("husl", n_colors=len(labels))
-    color_map = {name: color for name, color in zip(labels, palette)}
+    style_map = _get_style_map(labels)
 
     fig, (ax_left, ax_right) = plt.subplots(
         1, 2, figsize=SUBPLOT_FIGSIZE, subplot_kw={"polar": True}
     )
 
-    handles = draw_radar_on_axis(ax_left, left_data, color_map, ylim_max=ylim_max)
-    draw_radar_on_axis(ax_right, right_data, color_map, ylim_max=ylim_max)
+    handles = draw_radar_on_axis(ax_left, left_data, style_map, ylim_max=ylim_max)
+    draw_radar_on_axis(ax_right, right_data, style_map, ylim_max=ylim_max)
 
     ax_left.text(
         0.02, 0.98, left_title,
@@ -159,8 +206,7 @@ def draw_combined_radar_pair(
     )
 
     fig.legend(
-        handles,
-        labels,
+        handles, labels,
         loc="lower center",
         bbox_to_anchor=(0.5, legend_y),
         frameon=False,
@@ -177,26 +223,20 @@ def draw_combined_radar_pair(
 
 
 if __name__ == "__main__":
+    suffix = "_bw" if BW else ""
+
     draw_combined_radar_pair(
-        HUMAN_GENERATOR,
-        LLM_GENERATOR,
-        "combined/generator_radar_combined.png",
-        left_title="人工评审",
-        right_title="多源模型评审",
-        ylim_max=0.7,
-        legend_ncol=3,
-        legend_y=0.01,
+        HUMAN_GENERATOR, LLM_GENERATOR,
+        f"combined/generator_radar_combined{suffix}.png",
+        left_title="人工评审", right_title="多源模型评审",
+        ylim_max=0.7, legend_ncol=3, legend_y=0.01,
     )
 
     draw_combined_radar_pair(
-        HUMAN_METHOD,
-        LLM_METHOD,
-        "combined/method_radar_combined.png",
-        left_title="人工评审",
-        right_title="多源模型评审",
-        ylim_max=0.7,
-        legend_ncol=2,
-        legend_y=0.01,
+        HUMAN_METHOD, LLM_METHOD,
+        f"combined/method_radar_combined{suffix}.png",
+        left_title="人工评审", right_title="多源模型评审",
+        ylim_max=0.7, legend_ncol=2, legend_y=0.01,
     )
 
-    print("\n全部完成！")
+    print(f"\n全部完成！({'B&W 灰度+线型' if BW else '彩色'}模式)")

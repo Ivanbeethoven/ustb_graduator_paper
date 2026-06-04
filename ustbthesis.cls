@@ -285,7 +285,7 @@
 \ProvideDocumentCommand{\Country}{m}{\gdef\ustb@Country{#1}}
 \gdef\ustb@Country{中国}
 \ProvideDocumentCommand{\EnglishCountry}{m}{\gdef\ustb@EnglishCountry{#1}}
-\gdef\ustb@EnglishCountry{P.R.CHINA}
+\gdef\ustb@EnglishCountry{P. R. China}
 
 % 专业名称中英文
 \ProvideDocumentCommand{\Major}{m}{\gdef\ustb@Major{#1}}
@@ -447,7 +447,7 @@
 \vfill
 
 \begin{center}
-Master Degree Candidate： \ustb@EnglishAuthor
+Master's Degree Candidate： \ustb@EnglishAuthor
 
 Supervisor: \ustb@EnglishSupervisor
 
@@ -457,7 +457,7 @@ University of Science and Technology Beijing
 
 \ustb@EnglishAddress
 
-\ustb@EnglishCity \ \ustb@Postcode ， \ustb@EnglishCountry
+    \ustb@EnglishCity \ \ustb@Postcode, \ustb@EnglishCountry
 \end{center}
 \vfill
 
@@ -614,7 +614,7 @@ ABSTRACT \addcontentsline{toc}{chapter}{ABSTRACT}
 \vskip17pt
 %\centerline{\bfseries\zihao{3}\linespread{2.41} 独创性说明}
 \chapter*{独创性声明}
-%\addcontentsline{toc}{chapter}{独创性说明}
+\addcontentsline{toc}{chapter}{独创性声明}
 \vskip16.5pt
 \pagestyle{empty}
 本人声明所呈交的论文是我个人在导师指导下进行的研究工作及取得的研究成果。尽我所知，除了文中特别加以标注和致谢的地方外，论文中不包含其他人已经发表或撰写过的研究成果，也不包含为获得北京科技大学或其它教育机构的学位或证书而使用过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并表示了谢意。
@@ -631,7 +631,7 @@ ABSTRACT \addcontentsline{toc}{chapter}{ABSTRACT}
 \vskip17pt
 %\centerline{\bfseries\zihao{3}\linespread{2.41} 关于论文使用授权的说明}
 \chapter*{关于论文使用授权的说明}
-%\addcontentsline{toc}{chapter}{关于论文使用授权的说明}
+\addcontentsline{toc}{chapter}{关于论文使用授权的说明}
 \vskip16.5pt
 \pagestyle{empty}
 %本人完全了解北京科技大学有关保留、使用学位论文的规定，即：学校有权保留送交论文的复印件，允许论文被查阅和借阅；学校可以公布论文的全部或部分内容，可以采用影印、缩印或其他复制手段保存论文。

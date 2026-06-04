@@ -1,9 +1,9 @@
-﻿
+
 \subsubsection{漏洞复现}
 
-Argo CD 是 Kubernetes 场景中常用的声明式 GitOps 持续交付工具，提供 Web 与 API 接口供用户进行应用同步、回滚与差异审计等操作。在企业环境中，Argo CD 常通过 OIDC 与统一身份提供方对接，由身份提供方向 Argo CD 签发包含用户身份与组信息的令牌。在 OIDC 令牌中，\texttt{aud} 声明用于标识该令牌的预期接收方。通常情况下，服务端除验证签名与发行者外，还需要校验 \texttt{aud} 是否包含本服务的受众标识，以避免将为其他服务签发的令牌误用到本服务上。
+Argo CD 是 K8s 场景中常用的声明式 GitOps 持续交付工具，提供 Web 与 API 接口供用户进行应用同步、回滚与差异审计等操作。在企业环境中，Argo CD 常通过 OIDC 与统一身份提供方对接，由身份提供方向 Argo CD 签发包含用户身份与组信息的令牌。在 OIDC 令牌中，aud 声明用于标识该令牌的预期接收方。通常情况下，服务端除验证签名与发行者外，还需要校验 aud 是否包含本服务的受众标识，以避免将为其他服务签发的令牌误用到本服务上。
 
-\textbf{CVE 描述}：CVE-2023-22482 指出 Argo CD 在部分版本中存在不恰当授权缺陷。其能够验证令牌由已配置的 OIDC 提供方签名，但未对令牌的 \texttt{aud} 声明进行校验，从而可能接受并非面向 Argo CD 的有效令牌。若同一身份提供方还为其他系统签发令牌，攻击者一旦获得其他系统的有效令牌，就可能将其用于访问 Argo CD。Argo CD 将基于令牌中的 \texttt{groups} 声明授予权限，即使这些组信息并非为 Argo CD 的授权场景设计。该问题在 \texttt{2.6.0-rc3}、\texttt{2.5.6}、\texttt{2.4.19} 与 \texttt{2.3.13} 及以上版本修复；受影响范围包含 \texttt{>= 1.8.2} 且低于上述修复版本的版本分支。
+\textbf{CVE 描述}：CVE-2023-22482 指出 Argo CD 在部分版本中存在不恰当授权缺陷。其能够验证令牌由已配置的 OIDC 提供方签名，但未对令牌的 aud 声明进行校验，从而可能接受并非面向 Argo CD 的有效令牌。若同一身份提供方还为其他系统签发令牌，攻击者一旦获得其他系统的有效令牌，就可能将其用于访问 Argo CD。Argo CD 将基于令牌中的 groups 声明授予权限，即使这些组信息并非为 Argo CD 的授权场景设计。该问题在 2.6.0-rc3、2.5.6、2.4.19 与 2.3.13 及以上版本修复；受影响范围包含 >= 1.8.2 且低于上述修复版本的版本分支。
 
 \textbf{主要成因分类}：安全逻辑缺陷 / 身份与授权校验缺失，表现为令牌受众 \texttt{aud} 未校验，导致跨受众令牌复用。
 
@@ -30,18 +30,18 @@ curl -k -H "Authorization: Bearer $TOKEN" "$ARGOCD_URL/api/v1/applications"
 kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc token aud"
 \end{AppendixCode}
 
-在受影响版本中，将签名有效但 \texttt{aud} 不匹配的令牌提交至 Argo CD 接口后，系统仍返回受 RBAC 控制的资源内容，说明该令牌已被错误接受。切换至修复版本或在前置入口增加受众校验后，同类请求在校验阶段被拒绝，跨受众令牌复用风险得到验证。
+在受影响版本中，将签名有效但 aud 不匹配的令牌提交至 Argo CD 接口后，系统仍返回受 RBAC 控制的资源内容，说明该令牌已被错误接受。切换至修复版本或在前置入口增加受众校验后，同类请求在校验阶段被拒绝，跨受众令牌复用风险得到验证。
 
 \begin{figure}[htb]
 	\centering
 	\includegraphics[width=0.8\textwidth]{images/cve7/image.png}
-	\bicaption{CVE-2023-22482：漏洞复现结果示意}{CVE-2023-22482: results of vulnerability reproduction}
+	\bicaption{CVE-2023-22482：漏洞复现结果示意}{CVE-2023-22482: Results of Vulnerability Reproduction}
 	\label{fig:cve-2023-22482-evidence}
 \end{figure}
 
 \subsubsection{安全策略生成}
 
-KPEDefense 筛选出的最优策略从令牌签发、入口校验与授权收敛三个环节封堵攻击链：为 Argo CD 分配独立的 OIDC 客户端，实现身份提供方层面的受众隔离；在应用入口处强制校验 \texttt{aud} 声明，阻断跨受众令牌复用；同时通过 RBAC 收敛压缩误用令牌进入授权面后的影响范围。详细配置如下。
+KPEDefense 筛选出的最优策略从令牌签发、入口校验与授权收敛三个环节封堵攻击链：为 Argo CD 分配独立的 OIDC 客户端，实现身份提供方层面的受众隔离；在应用入口处强制校验 aud 声明，阻断跨受众令牌复用；同时通过 RBAC 收敛压缩误用令牌进入授权面后的影响范围。详细配置如下。
 
 \textbf{1)身份提供方客户端隔离：为 Argo CD 分配独立 OIDC 客户端}
 \begin{AppendixCode}
@@ -154,7 +154,7 @@ data:
 		p, role:readonly, projects, get, *, allow
 		p, role:readonly, repositories, get, *, allow
 
-		# 投递角色：仅允许指定项目内的 get/sync，禁止任意 action效果范围包含左靠和 hook 等操作
+		# 投递角色：仅允许指定项目内的 get/sync，禁止任意 action 效果范围包含同步和 hook 等操作
 		p, role:deployer, applications, get, my-project/*, allow
 		p, role:deployer, applications, sync, my-project/*, allow
 		p, role:deployer, applications, action/*, my-project/*, deny
@@ -172,7 +172,7 @@ data:
 策略收紧范围集中在受众校验与高权限组映射收敛，合法令牌的 CLI、Web 与自动化访问流程保持正常。身份提供方客户端隔离上线前完成组映射核对与回滚预案准备，未出现既有授权关系异常中断。
 
 \textbf{可部署性：}
-身份提供方配置、前置网关校验规则与 RBAC 策略均可声明式管理，并纳入 GitOps 基线持续维护。该方案依赖常见身份网关与 Kubernetes 权限治理能力，适合在多集群环境中复用。
+身份提供方配置、前置网关校验规则与 RBAC 策略均可声明式管理，并纳入 GitOps 基线持续维护。该方案依赖常见身份网关与 K8s 权限治理能力，适合在多集群环境中复用。
 
 三维验证均通过。跨受众令牌在应用入口前被拦截，令牌误用扩展至 Argo CD 授权面的路径被关闭。该方案可作为补丁窗口期的缓解措施，最终修复仍需升级至官方修复版本。
 

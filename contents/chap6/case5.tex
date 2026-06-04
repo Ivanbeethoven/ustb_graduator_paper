@@ -1,4 +1,4 @@
-﻿
+
 \subsubsection{漏洞复现}
 
 Flux 是云原生 GitOps 交付体系中的常用组件，典型部署包含 \texttt{kustomize\allowbreak-controller} 等控制器，用于在集群中持续对齐 Git 仓库的期望状态。在该工作流中，控制器会拉取仓库内容并调用 Kustomize 解析 \texttt{kustomization\allowbreak.yaml}，进而生成并应用资源清单。由于 \texttt{kustomization\allowbreak.yaml} 以文件路径为核心配置对象，控制器必须将其中指定的资源、补丁与组件路径解析为实际文件系统访问。若路径规范化与边界检查不足，则恶意构造的 \texttt{kustomization\allowbreak.yaml} 可能触发路径穿越，使控制器读取超出预期工作目录的文件，从而造成敏感信息暴露，并在多租户部署中形成隔离边界破坏的风险。
@@ -35,7 +35,7 @@ kubectl -n $APP_NS get events --sort-by=.lastTimestamp | findstr /i "Kustomizati
 
 \subsubsection{安全策略生成}
 
-KPEDefense 筛选出的最优策略将防线前移至提交阶段：在 CI 流水线中对 \texttt{kustomization\allowbreak.yaml} 的路径引用进行异常检测，同时收紧仓库写入权限与控制器运行权限，将路径穿越风险阻断在进入同步链路之前。详细配置见附录如下。
+KPEDefense 筛选出的最优策略将防线前移至提交阶段：在 CI 流水线中对 \texttt{kustomization\allowbreak.yaml} 的路径引用进行异常检测，同时收紧仓库写入权限与控制器运行权限，将路径穿越风险阻断在进入同步链路之前。详细配置如下。
 
 
 \textbf{1)前置校验：CI 流水线拦截异常路径引用}
@@ -104,7 +104,7 @@ kubectl -n flux-system get role,rolebinding | \
 \textbf{3)运行时加固：收紧 kustomize-controller 容器安全上下文}
 \begin{AppendixCode}
 # 为 kustomize-controller 添加只读根文件系统与非特权约束
-# 路径穿越審读文件需要写入 /tmp，用 emptyDir 替代根目录写入
+# 路径穿越读取文件需要写入 /tmp，用 emptyDir 替代根目录写入
 kubectl -n flux-system patch deploy kustomize-controller \
   --type=strategic -p '
 spec:
@@ -115,7 +115,7 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true       # 封锁根文件系统，防止一次性写入文件
           runAsNonRoot: true                 # 以非 root 身份运行容器
-          allowPrivilegeEscalation: false    # 禸止容器内部权限提升
+          allowPrivilegeEscalation: false    # 防止容器内部权限提升
           capabilities:
             drop: ["ALL"]                    # 删除所有 Linux 能力位
         volumeMounts:
@@ -168,7 +168,7 @@ spec:
     ports:
     - protocol: TCP
       port: 9090
-  # 允许访问 Kubernetes API Server 来应用资源清单
+  # 允许访问 K8s API Server 来应用资源清单
   - to:
     - ipBlock:
         cidr: <API-SERVER-CIDR>/32
@@ -187,14 +187,12 @@ kubectl -n flux-system get networkpolicy | \
 策略部署后，重新执行仓库提交与同步流程，验证防护效果。
 
 \textbf{有效性：}
-CI 校验生效后，包含异常路径引用的K8S配置文件在提交阶段即被拦截，相关变更无法进入同步链路。即使在受控环境中绕过提交流程直接触发同步，控制器运行权限收紧后，异常路径访问范围仍被限制。
+CI 校验生效后，包含异常路径引用的 K8s 配置文件在提交阶段即被拦截，相关变更无法进入同步链路。即使在受控环境中绕过提交流程直接触发同步，控制器运行权限收紧后，异常路径访问范围仍被限制。
 
 \textbf{无干扰性：}
-策略收紧范围限于异常路径引用与高风险变更权限，合规K8S配置文件的构建与同步流程保持正常。校验规则先以告警模式运行，用于识别历史仓库中的不规范写法，再切换至强制模式。
+策略收紧范围限于异常路径引用与高风险变更权限，合规 K8s 配置文件的构建与同步流程保持正常。校验规则先以告警模式运行，用于识别历史仓库中的不规范写法，再切换至强制模式。
 
 \textbf{可部署性：}
-CI 校验规则与权限配置均采用声明式文件管理，可直接纳入现有流水线与 GitOps 基线。该方案主要依赖仓库准入检查和 Kubernetes 原生权限配置，适合在多租户环境中复用。
+CI 校验规则与权限配置均采用声明式文件管理，可直接纳入现有流水线与 GitOps 基线。该方案主要依赖仓库准入检查和 K8s 原生权限配置，适合在多租户环境中复用。
 
 三维验证均通过。异常路径引用被前移拦截后，恶意 \texttt{kustomization\allowbreak.yaml} 进入控制器构建流程的机会明显下降。该方案可作为补丁发布前的补充缓解措施，最终修复仍依赖升级至 \texttt{kustomize-controller v0.24.0} 及以上版本。
-
-

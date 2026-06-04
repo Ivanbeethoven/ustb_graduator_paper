@@ -5,12 +5,12 @@ Hive 是 Red Hat Multicluster Engine(MCE)与 Advanced Cluster Management(ACM)中
 
 \textbf{CVE 描述}：CVE-2025-2241 指出 Hive 在完成 vSphere 集群供应后，会将 vCenter 凭据暴露在 \texttt{ClusterProvision} 对象中。由于 \texttt{ClusterProvision} 属于自定义资源，拥有其\textbf{读取权限}的用户可直接从该对象中提取敏感凭据，即使该用户并不具备对 Kubernetes \texttt{Secret} 的访问权限。该问题会导致未授权 vCenter 访问、基础设施与集群管理风险，并可能进一步演化为权限提升。
 
-\textbf{主要成因分类}：敏感信息泄露 / 配置与对象生命周期缺陷，即敏感数据出现在可读的 CR 状态字段中，形成对 \texttt{Secret} 隔离边界的旁路。
+\textbf{主要成因分类}：敏感信息泄露 / API 端口暴露。该漏洞的直接表现是敏感数据出现在可读的 CR 状态字段中，形成对 \texttt{Secret} 隔离边界的旁路。
 
 \textbf{攻击链条描述}：攻击链可概括为 \texttt{Secret} 隔离被 CR 可读性绕过：
 \begin{enumerate}
 	\item \textbf{权限前置阶段}：攻击者拥有对 \texttt{ClusterProvision} 的 \texttt{get/list/watch} 权限，通常来自聚合角色 \texttt{view/edit} 或错误的绑定；
-	\item \textbf{数据旁路阶段}：Hive 将 vCenter 凭据写入 \texttt{ClusterProvision},位于 \texttt{status} 字段；
+	\item \textbf{数据旁路阶段}：Hive 将 vCenter 凭据写入 \texttt{ClusterProvision}，位于 \texttt{status} 字段；
 	\item \textbf{凭据提取阶段}：攻击者通过读取 CR YAML/JSON 直接获得凭据；
 	\item \textbf{后续风险阶段}：利用 vCenter 凭据对虚拟化平台执行未授权操作，进而影响集群节点与工作负载，造成横向移动或权限提升。
 \end{enumerate}
@@ -44,25 +44,7 @@ kubectl get clusterprovision <name> -n your-namespace -o yaml
 
 \subsubsection{安全策略生成}
 
-KPEDefense 筛选出的最优策略从访问控制与数据留存两个维度切断旁路泄露。一方面，通过 RBAC 收紧 \texttt{ClusterProvision} 的读取权限，将对该对象的访问改为按需、限时授权；另一方面，在供应完成后自动清理 \texttt{status} 字段中的明文凭据，缩短敏感信息的暴露窗口。详细配置见附录\ref{app:cve-2025-2241}。
-
-\subsubsection{安全策略验证}
-
-策略部署后，以低权身份重新执行漏洞复现流程，验证有效性、无干扰性与可部署性。
-
-\textbf{有效性：}
-RBAC 收敛后，低权身份对 \texttt{ClusterProvision} 的 \texttt{get/list} 请求被拒绝，无法再导出 YAML。供应完成后再次复查对象，\texttt{status} 字段中不再保留明文 vCenter 凭据，凭据旁路路径被阻断。
-
-\textbf{无干扰性：}
-RBAC 收紧后，高权限访问改为按需、限时、可审计授权，正常供应流程未受影响。自动清理任务在预生产环境验证后确认不影响 Hive 对账流程，再推广至生产。审计与告警不影响业务主链路。
-
-\textbf{可部署性：}
-RBAC 为平台原生能力，可模板化发布至多集群。自动清理任务可通过 GitOps 流水线或定时任务实现，无需人工介入。
-
-三维验证均通过。RBAC 收敛与对象清理协同后，敏感凭据的可读窗口显著缩短，旁路路径被有效阻断。该方案可纳入平台防御基线持续管理，最终修复仍依赖厂商补丁，根因在于 Hive 控制器将凭据写入 CR 状态字段的设计缺陷。
-
-
-
+KPEDefense 筛选出的最优策略从访问控制与数据留存两个维度切断旁路泄露。一方面，通过 RBAC 收紧 \texttt{ClusterProvision} 的读取权限，将对该对象的访问改为按需、限时授权；另一方面，在供应完成后自动清理 \texttt{status} 字段中的明文凭据，缩短敏感信息的暴露窗口。
 
 \textbf{1)立刻收敛 \texttt{ClusterProvision} 的读取权限(RBAC)}
 \begin{AppendixCode}
@@ -166,15 +148,15 @@ spec:
 
 \subsubsection{安全策略验证}
 
-策略部署至实验集群后，以 bob 账户重新执行漏洞复现步骤，从有效性、无干扰性与可部署性三个维度验证防护效果。
+策略部署后，以低权身份重新执行漏洞复现流程，验证有效性、无干扰性与可部署性。
 
 \textbf{有效性：}
-策略部署后，触发对恶意 RBAC 绑定的同步请求被准入控制拒绝；执行 \texttt{kubectl auth can-i '*' '*' --as bob} 返回 \texttt{no}，权限提升路径关闭。Kubernetes RBAC 收敛后 bob 对 \texttt{AppProject} 的写入同样被拒绝，进而限制了通过修改项目策略绕过准入规则的路径。Falco 在攻击尝试时产生 CRITICAL 级别告警，记录了创建 ClusterRoleBinding 的用户与目标资源信息，为事件溯源提供了实时证据。
+RBAC 收敛后，低权身份对 \texttt{ClusterProvision} 的 \texttt{get/list} 请求被拒绝，无法再导出 YAML。供应完成后再次复查对象，\texttt{status} 字段中不再保留明文 vCenter 凭据，凭据旁路路径被阻断。
 
 \textbf{无干扰性：}
-策略收紧范围限于高危操作(\texttt{override}、\texttt{exec} 等)及 AppProject 写入，项目内合规同步操作未受影响。准入控制规则先以审计模式运行，确认无合规清单误拦截后切换至强制模式。
+RBAC 收紧后，高权限访问改为按需、限时、可审计授权，正常供应流程未受影响。自动清理任务在预生产环境验证后确认不影响 Hive 对账流程，再推广至生产。审计与告警不影响业务主链路。
 
 \textbf{可部署性：}
-RBAC 策略与 Argo CD 配置均以 YAML 形式纳入 Git 基线，通过 \texttt{kubectl apply} 一步部署，实验集群中无冲突落地。Gatekeeper 规则可模板化复用于多集群场景。
+RBAC 为平台原生能力，可模板化发布至多集群。自动清理任务可通过 GitOps 流水线或定时任务实现，无需人工介入。
 
-综合来看，RBAC 收敛与准入控制协同后，低权用户诱导控制平面创建集群级高权限绑定的路径被关闭，三维验证均通过。该方案可作为版本升级窗口期的补充缓解措施，最终仍需升级至官方补丁版本 2.1.14、2.2.8 或 2.3.2。
+三维验证均通过。RBAC 收敛与对象清理协同后，敏感凭据的可读窗口显著缩短，旁路路径被有效阻断。该方案可纳入平台防御基线持续管理，最终修复仍依赖厂商补丁，根因在于 Hive 控制器将凭据写入 CR 状态字段的设计缺陷。
