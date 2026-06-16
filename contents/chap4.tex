@@ -88,13 +88,13 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 \textbf{阶段一：会话创建。}安全工程师选定目标 CVE 后提交创建请求，服务层在数据持久层初始化会话目录结构并返回 \texttt{session\_id}，后续所有操作均绑定至该会话上下文。
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/chap4/pipeline_sequence_a}
+    \includegraphics[width=0.9\textwidth]{images/chap4/pipeline_sequence_a}
     \bicaption{会话创建与候选策略生成时序图}{Sequence Diagram of Session Creation and Candidate Strategy Generation}
     \label{fig:pipeline_sequence_a}
 \end{figure}
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/chap4/pipeline_sequence_b}
+    \includegraphics[width=0.9\textwidth]{images/chap4/pipeline_sequence_b}
     \bicaption{评审反馈优化与质量排序确认时序}{Sequence Diagram of Review-Feedback-Driven Optimization and Quality Ranking Confirmation}
     \label{fig:pipeline_sequence_b}
 \end{figure}
