@@ -1,17 +1,17 @@
 ﻿%% 中文摘要页
 \begin{ChineseAbstract}
     
-Kubernetes（简称 K8s）是由云原生计算基金会托管的容器集群编排系统，广泛用于微服务系统的大规模容器化部署与运维。K8s 中的第三方云原生应用可能存在导致权限提升的高危漏洞，在该类漏洞披露至补丁部署期间，权限提升攻击可能突破原有权限边界，并威胁集群内节点与工作负载的安全。现有研究多基于历史风险归纳规则，对应用配置进行静态风险检测，难以及时针对新披露的权限提升漏洞生成有效的监控与防护策略；现有动态安全防控工具的策略制定依赖专家经验编写领域特定语言代码，使用成本较高。
+Kubernetes（简称 K8s）是一种开源的容器集群编排系统，广泛用于大规模微服务系统的容器化部署与运维。与其他开源软件一样，K8s 中集成的大量第三方云原生应用存在权限提升的安全漏洞。相关的漏洞可能被用来突破系统组件的原有权限边界，威胁集群内节点与工作负载的安全。现有研究主要采用基于历史风险归纳的规则对应用配置进行静态检测，难以有效监控与防护新披露的权限提升应用；另一方面，现有动态安全防控工具的策略制定主要依赖专家经验和领域特定语言，缺乏通用性。
 
-本文基于大语言模型漏洞分析与代码生成能力，提出一种针对权限提升漏洞的智能化安全策略生成方法。该方法通过对运行时监控、策略准入引擎、网络策略等多种安全工具的领域特定语言自动化生成与管理，对云原生应用权限提升漏洞攻击链条中的关键节点实施动态监控与防护。主要工作如下。
+针对上述不足，本文提出一种针对权限提升漏洞的智能化安全策略生成方法。利用大语言模型生成运行时监控与防护策略代码，对第三方应用权限提升漏洞攻击链条中关键节点实施动态监控与防护。主要工作如下。
 
-\textbf{(1)提出一种智能化漏洞防控安全策略生成方法(KPEDefense)}：首先，根据历史权限提升漏洞成因系统归纳并提出了一种权限提升漏洞成因分类框架，并基于漏洞来源的开源代码仓库中的多源信息构建安全知识库。然后，在安全知识库检索信息基础上，构建由安全上下文构建、思维链推理、反馈优化等步骤组成的多智能体工作流，生成用于防护和监控特定权限提升漏洞攻击的安全策略代码。最后，设计了针对安全策略的多源模型质量量化评估方法，覆盖有效性、无干扰性与可部署性三个不同维度。
+\textbf{(1)提出一种智能化漏洞防控安全策略生成方法(KPEDefense)}：首先，在系统归纳了历史权限提升漏洞成因的基础上，提出了一种权限提升漏洞分类框架；然后，基于开源代码仓库中的多源漏洞信息构建安全知识库；其次，构建由安全上下文构建、思维链推理、反馈优化等步骤的多智能体工作流，生成监控与防护权限提升漏洞攻击的策略代码；最后，从有效性、无干扰性、可部署性三个维度，设计面向安全策略的多源模型质量量化评估方法。
 
-\textbf{(2)开发支持工具}：设计并开发 KPEDefense 方法支持工具，集成知识库管理、策略生成工作流、专家评审排序与策略部署验证等功能模块，实现面向云原生权限提升漏洞的智能化自动防控流程。
+\textbf{(2)开发支持KPEDefense 的工具}：主要功能包括权限提升漏洞知识库管理、策略生成工作流、专家评审排序与策略部署验证等，实现面向云原生权限提升漏洞的智能化防控。
 
-\textbf{(3)实验评估}：以近 5 年权限提升漏洞样本作为实验对象，对 KPEDefense 方法生成安全策略的质量和效率进行评估并进行案例分析。实验结果表明，相较现有的规则化风险扫描方法，KPEDefense 能够针对真实云原生权限提升漏洞提出更实际的防控方案，方法不同部分对安全策略有效性均有正向贡献，且时间与经济成本开销较低。
+\textbf{(3)实验评估}：以近 5 年权限提升漏洞样本作为实验对象，对 KPEDefense 方法生成安全策略的质量和效率进行评估。实验结果表明， KPEDefense 能够生成针对真实云原生权限提升漏洞的监控与防护方案，且时间与经济成本开销较低。
 
-KPEDefense 通过生成智能化漏洞防控安全策略，能够有效缓解 K8s 第三方开源应用带来的权限提升等高危风险，从而保障 K8s 集群的安全性。
+本文提出的KPEDefense方法提供了一种智能化生成权限提升漏洞监控与防护安全策略的手段，能够有效缓解 K8s 第三方开源应用带来的权限提升等安全风险，对于 K8s 集群的安全性保障有重要的应用价值。
 
 \ChineseKeywords{云原生安全；权限提升漏洞；策略代码生成；补丁窗口期防控；多智能体协同}
 \end{ChineseAbstract}
@@ -19,17 +19,17 @@ KPEDefense 通过生成智能化漏洞防控安全策略，能够有效缓解 K8
 %% 英文摘要页
 \begin{EnglishAbstract}
     
-Kubernetes (K8s) is a container cluster orchestration system hosted by the Cloud Native Computing Foundation and is widely used for large-scale containerized deployment and operation of microservice systems. Third-party cloud-native applications in K8s may contain high-risk vulnerabilities that can lead to privilege escalation. During the window period between vulnerability disclosure and patch deployment, privilege escalation attacks may break existing privilege boundaries and threaten the security of nodes and workloads in a cluster. Existing K8s risk-scanning methods mostly derive rules from historical risks and perform static configuration checks, making it difficult to generate effective monitoring and protection strategies for newly disclosed privilege escalation vulnerabilities in a timely manner. In addition, strategy design in existing dynamic security monitoring tools depends heavily on expert experience, making precise monitoring and protection for specific vulnerabilities difficult.
+Kubernetes (K8s) is an open-source container cluster orchestration system widely used for large-scale containerized deployment and operation of microservice systems. Third-party cloud-native applications integrated in K8s may contain privilege escalation vulnerabilities that can break the original privilege boundaries of system components and threaten the security of nodes and workloads within a cluster. Existing research primarily employs rules derived from historical risk analysis to perform static configuration checks on application configurations, making it difficult to effectively monitor and protect against newly disclosed privilege escalation vulnerabilities. In addition, strategy design in existing dynamic security monitoring tools relies heavily on expert experience and domain-specific languages, limiting their generality.
 
-This thesis proposes an intelligent security strategy generation method for privilege escalation vulnerabilities based on the vulnerability analysis and code generation capabilities of large language models. The method automatically generates and manages domain-specific language configurations for multiple security tools, including runtime monitoring, policy admission engines, and network policies, so as to implement dynamic monitoring and protection of key attack-chain nodes in privilege escalation vulnerabilities of cloud-native applications. The main contributions are as follows.
+This thesis proposes an intelligent security strategy generation technique for privilege escalation vulnerabilities. It leverages large language models to generate runtime monitoring and protection strategy code, enabling dynamic monitoring and protection of key nodes in the attack chain of privilege escalation vulnerabilities in third-party applications. The main contributions are as follows.
 
-\textbf{(1) An intelligent security strategy generation method for vulnerability monitoring and protection (KPEDefense):} First, based on the root causes of historical privilege escalation vulnerabilities, this work systematically summarizes and proposes a root-cause classification framework, and constructs a security knowledge base from multi-source information in the open-source repositories where vulnerabilities originate. Then, on the basis of knowledge retrieval, a multi-agent workflow is built, including security context construction, chain-of-thought reasoning, and feedback optimization, to generate security strategy code for monitoring and protection against specific privilege escalation attacks. Finally, a multi-source quantitative quality evaluation method is designed for generated strategies, covering three dimensions: effectiveness, non-interference, and deployability.
+\textbf{(1) An intelligent security strategy generation technique for vulnerability monitoring and protection (KPEDefense):} First, based on a systematic analysis of the root causes of historical privilege escalation vulnerabilities, a privilege escalation vulnerability classification framework is proposed, and a security knowledge base is constructed from multi-source vulnerability information in open-source repositories. Then, a multi-agent workflow comprising security context construction, chain-of-thought reasoning, and feedback optimization is built to generate strategy code for monitoring and protecting against privilege escalation attacks. Finally, a multi-source quantitative quality evaluation method is designed for the generated strategies across three dimensions: effectiveness, non-interference, and deployability.
 
-\textbf{(2) Supporting tool development:} A supporting tool for KPEDefense is designed and implemented. It integrates functional modules including knowledge-base management, strategy-generation workflow, expert review and ranking, and strategy deployment validation, thereby realizing an intelligent and automated monitoring-and-protection process for cloud-native privilege escalation vulnerabilities.
+\textbf{(2) Supporting tool development:} A supporting tool for KPEDefense is designed and implemented, integrating functional modules including privilege escalation vulnerability knowledge-base management, strategy-generation workflow, expert review and ranking, and strategy deployment validation, thereby realizing intelligent monitoring and protection for cloud-native privilege escalation vulnerabilities.
 
-\textbf{(3) Experimental evaluation:} Using privilege escalation vulnerability samples from the past five years, this thesis evaluates the quality and efficiency of strategies generated by KPEDefense and conducts case studies. Experimental results show that, compared with existing rule-based risk-scanning methods, KPEDefense can provide more practical monitoring and protection strategies for real cloud-native privilege escalation vulnerabilities. Different components of the method all make positive contributions to strategy effectiveness, while the time and economic costs remain low.
+\textbf{(3) Experimental evaluation:} Using privilege escalation vulnerability samples from the past five years, this thesis evaluates the quality and efficiency of strategies generated by KPEDefense. Experimental results demonstrate that KPEDefense can generate effective monitoring and protection solutions for real-world cloud-native privilege escalation vulnerabilities, with low time and economic costs.
 
-By generating intelligent security strategies for vulnerability monitoring and protection, KPEDefense can effectively mitigate high-risk threats such as privilege escalation introduced by third-party open-source applications in K8s, thereby improving the security of K8s clusters.
+The KPEDefense method proposed in this thesis provides an intelligent means of generating security strategies for monitoring and protecting against privilege escalation vulnerabilities, effectively mitigating security risks such as privilege escalation introduced by third-party open-source applications in K8s, and holds significant practical value for ensuring the security of K8s clusters.
 
 \EnglishKeywords{Cloud-native security; Privilege escalation vulnerabilities; Strategy code generation; Patch-window mitigation; Multi-agent collaboration}
 \end{EnglishAbstract}

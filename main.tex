@@ -41,18 +41,44 @@
 	coltitle=black,
 	#1
 }
-\DefineVerbatimEnvironment{AppendixCode}{Verbatim}{
-	breaklines,
-	breakanywhere,
-	fontsize=\scriptsize,
-	baselinestretch=0.72,
-	tabsize=2,
-	xleftmargin=3mm,
-	xrightmargin=3mm,
-	frame=single,
-	framerule=0.4pt,
-	rulecolor=\color{gray!60},
-	bgcolor=gray!5
+\newtcblisting{AppendixCode}{
+	enhanced,
+	breakable,
+	listing engine=listings,
+	listing only,
+	colback=gray!5,
+	colframe=gray!60,
+	frame hidden,
+	interior hidden,
+	boxrule=0pt,
+	sharp corners=all,
+	arc=0pt,
+	outer arc=0pt,
+	left=1.2mm,
+	right=1.2mm,
+	top=0.8mm,
+	bottom=0.8mm,
+	boxsep=0.8mm,
+	before skip=6pt,
+	after skip=6pt,
+	break at=0pt,
+	pad at break=0.8mm,
+	underlay={
+		\fill[tcbcolback] (frame.south west) rectangle (frame.north east);
+	},
+	overlay={
+		\draw[tcbcolframe,line width=0.4pt]
+			(frame.south west) rectangle (frame.north east);
+	},
+	listing options={
+		basicstyle=\ttfamily\scriptsize\linespread{0.72}\selectfont,
+		breaklines=true,
+		breakatwhitespace=false,
+		columns=fullflexible,
+		keepspaces=true,
+		showstringspaces=false,
+		tabsize=2
+	}
 }
 \newcommand{\figref}[1]{~\ref{#1}~}
 \newcommand{\tabref}[1]{~\ref{#1}~}
@@ -73,7 +99,7 @@
 \Author{韩晓阳}
 \EnglishAuthor{Han Xiaoyang}
 \Title{面向云原生应用权限提升\mbox{漏洞的}\allowbreak\mbox{智能化防控技术研究}}
-\EnglishTitle{Research on Intelligent Monitoring and Protection Technologies for Privilege Escalation Vulnerabilities in Cloud-Native Applications}
+\EnglishTitle{Research on Intelligent Monitoring and Protection Techniques for Privilege Escalation Vulnerabilities in Third Cloud-Native Applications}
 \Date{2026 年 06 月 01 日}
 \EnglishDate{June, 2026}
 \College{计算机与通信工程学院}
@@ -141,7 +167,7 @@
 \cleardoublepage
 \phantomsection
 \addcontentsline{toc}{chapter}{参考文献}
-\bibliographystyle{gbt7714-numerical}
+\bibliographystyle{gbt7714-numerical-no-uppercase}
 \bibliography{refs}
 
 %% 附录

@@ -120,14 +120,14 @@ $\rho\in[-1,1]$，$\rho=1$ 表示两位评审主体排序完全吻合，$\rho=-1
 	\centering\bicaption{实验环境软硬件配置与软件组件版本汇总}{Summary of Hardware, Software Environment, and Component Versions}\label{tab:chap5-env}
 	\renewcommand{\arraystretch}{0.9}
     \small
-    \begin{tabularx}{0.95\textwidth}{C{3.0cm} X}
+	\begin{tabularx}{0.95\textwidth}{C{3.5cm} X}
         \toprule
         项目 & 配置 \\
         \midrule
         计算资源 & 本地虚拟机，96核CPU，96GB内存，200GB存储 \\
 		集群组件与版本 & Minikube v1.18.1；K8s v1.18.3\\
         节点规模与规格 & 1个控制节点与2个工作节点；每节点4核CPU/8GB内存 \\
-		CNI/NetworkPolicy & Calico v3.28.2, K8s-Network-Policy v1.5.5 \\
+		网络插件 & Calico v3.28.2, K8s-Network-Policy v1.5.5 \\
         准入控制 & OPA/Gatekeeper v3.14.0；Kyverno v1.11.0\\
         运行时安全监控 & Falco v0.38.1\\
 		包管理组件 & Helm v3\\

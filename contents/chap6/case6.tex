@@ -39,19 +39,19 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
-	name: sourcegraph-site-config
-	namespace: sourcegraph
+  name: sourcegraph-site-config
+  namespace: sourcegraph
 data:
-	site.json: |
-		{
-			"externalServices": [
-				// 移除所有 kind: "GITOLITE" 的条目，从根源切断 callsignCommand 执行路径
-				// 若需保留仓库同步，改用不含 callsignCommand 的 GIT 类型
-			],
-			"experimentalFeatures": {
-				"enableGitoliteCallsignLookup": false  // 显式关闭元数据处理功能
-			}
-		}
+  site.json: |
+    {
+      "externalServices": [
+        // 移除所有 kind: "GITOLITE" 的条目，从根源切断 callsignCommand 执行路径
+        // 若需保留仓库同步，改用不含 callsignCommand 的 GIT 类型
+      ],
+      "experimentalFeatures": {
+        "enableGitoliteCallsignLookup": false  // 显式关闭元数据处理功能
+      }
+    }
 EOF
 
 # 重启相关组件使配置生效
@@ -71,21 +71,21 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-	name: grafana-ingress-restrict
-	namespace: sourcegraph
+  name: grafana-ingress-restrict
+  namespace: sourcegraph
 spec:
-	podSelector:
-		matchLabels:
-			app: grafana
-	policyTypes: ["Ingress"]
-	ingress:
-	- from:
-		- podSelector:
-				matchLabels:
-					app: sourcegraph-frontend
-		ports:
-		- protocol: TCP
-			port: 3000
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes: ["Ingress"]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: sourcegraph-frontend
+    ports:
+    - protocol: TCP
+      port: 3000
 EOF
 
 # 同时通过 Grafana 配置收紧默认管理员权限
@@ -93,20 +93,20 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
-	name: grafana-config
-	namespace: sourcegraph
+  name: grafana-config
+  namespace: sourcegraph
 data:
-	grafana.ini: |
-		[security]
-		admin_user = admin
-		disable_gravatar = true
+  grafana.ini: |
+    [security]
+    admin_user = admin
+    disable_gravatar = true
 
-		[users]
-		default_theme = dark
-		auto_assign_org_role = Viewer
+    [users]
+    default_theme = dark
+    auto_assign_org_role = Viewer
 
-		[auth]
-		disable_login_form = false
+    [auth]
+    disable_login_form = false
 EOF
 
 kubectl -n sourcegraph rollout restart deploy/grafana
@@ -122,24 +122,24 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-	name: gitserver-ingress-allow-internal
-	namespace: sourcegraph
+  name: gitserver-ingress-allow-internal
+  namespace: sourcegraph
 spec:
-	podSelector:
-		matchLabels:
-			app: gitserver
-	policyTypes: ["Ingress"]
-	ingress:
-	- from:
-		- podSelector:
-				matchLabels:
-					app: sourcegraph-frontend
-		- podSelector:
-				matchLabels:
-					app: repo-updater
-		ports:
-		- protocol: TCP
-			port: 3178
+  podSelector:
+    matchLabels:
+      app: gitserver
+  policyTypes: ["Ingress"]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: sourcegraph-frontend
+    - podSelector:
+        matchLabels:
+          app: repo-updater
+    ports:
+    - protocol: TCP
+      port: 3178
 EOF
 
 # 2) 出站收敛：仅放通 DNS；代码托管出口按需另行放通
@@ -148,26 +148,26 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-	name: gitserver-egress-dns-only
-	namespace: sourcegraph
+  name: gitserver-egress-dns-only
+  namespace: sourcegraph
 spec:
-	podSelector:
-		matchLabels:
-			app: gitserver
-	policyTypes: ["Egress"]
-	egress:
-	- to:
-		- namespaceSelector:
-				matchLabels:
-					kubernetes.io/metadata.name: kube-system
-			podSelector:
-				matchLabels:
-					k8s-app: kube-dns
-		ports:
-		- protocol: UDP
-			port: 53
-		- protocol: TCP
-			port: 53
+  podSelector:
+    matchLabels:
+      app: gitserver
+  policyTypes: ["Egress"]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 EOF
 
 # 验证：策略已创建，且 gitserver 的出站/入站符合预期

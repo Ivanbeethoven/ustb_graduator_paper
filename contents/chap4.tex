@@ -85,16 +85,16 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 安全策略生成涉及证据检索、结构化分析、候选组织与反馈修订等多轮处理，单次任务耗时较长，因此系统采用异步交互时序。完整链路分为四个阶段，前两个阶段见图~\ref{fig:pipeline_sequence_a}，后两个阶段见图~\ref{fig:pipeline_sequence_b}。
 
-\textbf{阶段一：会话创建。}安全工程师选定目标 CVE 后提交创建请求，服务层在数据持久层初始化会话目录结构并返回 \texttt{session\_id}，后续所有操作均绑定至该会话上下文。
+\textbf{阶段一：会话创建。}安全工程师选定目标 CVE 后提交创建请求，服务层在数据持久层初始化会话目录结构并返回会话上下文。
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/chap4/pipeline_sequence_a}
+    \includegraphics[width=1\textwidth]{images/chap4/pipeline_sequence_a}
     \bicaption{会话创建与候选策略生成时序图}{Sequence Diagram of Session Creation and Candidate Strategy Generation}
     \label{fig:pipeline_sequence_a}
 \end{figure}
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/chap4/pipeline_sequence_b}
+    \includegraphics[width=1\textwidth]{images/chap4/pipeline_sequence_b}
     \bicaption{评审反馈优化与质量排序确认时序}{Sequence Diagram of Review-Feedback-Driven Optimization and Quality Ranking Confirmation}
     \label{fig:pipeline_sequence_b}
 \end{figure}
@@ -115,7 +115,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 知识库管理模块承担权限提升相关漏洞条目的存储，是安全上下文构建的入口环节。该模块对应服务层的 CVE 知识库组件，直接影响 CVE 实体的 \texttt{status} 字段及后续会话流程。如图~\ref{fig:ui_cve_list}所示，系统主界面以列表视图展示已录入的 CVE 条目，核心字段包括 CVE 编号、漏洞摘要、CVSS 风险评分和当前处置状态。支持安全工程师依据漏洞编号、漏洞类型或关键描述快速定位目标记录。
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.86\textwidth,height=0.85\textheight,keepaspectratio]{images/ui/cve库查看功能}
+    \includegraphics[width=1\textwidth]{images/ui/cve库查看功能}
     \bicaption{CVE 知识库查看与管理界面}{Interface for Browsing and Managing the CVE Knowledge Base}
     \label{fig:ui_cve_list}
 \end{figure}
@@ -127,7 +127,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/策略生成-开始}
+    \includegraphics[width=0.95\textwidth]{images/ui/策略生成-开始}
     \bicaption{会话创建与工作流开始界面}{Session Creation and Workflow Initiation Interface}
     \label{fig:ui_session_start}
 \end{figure}
@@ -135,7 +135,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 证据检索阶段如图~\ref{fig:ui_rag}。会话创建完成后，系统依据漏洞编号、漏洞描述与知识库范围生成检索请求，并在后台异步执行证据召回。从漏洞实例抽取语义特征，在知识库中召回相关片段，界面同时展示来源文档与相关度得分，供人工核验。
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/策略生成-rag模块}
+    \includegraphics[width=0.95\textwidth]{images/ui/策略生成-rag模块}
     \bicaption{安全上下文检索结果展示}{Display of Security Context Retrieval Results}
     \label{fig:ui_rag}
 \end{figure}
@@ -144,7 +144,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.85\textwidth]{images/ui/策略生成-cot模块}
+    \includegraphics[width=0.83\textwidth]{images/ui/策略生成-cot模块}
     \bicaption{CoT 推理模型选择与启动界面}{Interface for CoT Reasoning Model Selection and Execution}
     \label{fig:ui_cot_module}
 \end{figure}
@@ -152,7 +152,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 完成思维链推理后系统进入候选策略生成阶段，如图~\ref{fig:ui_strategy_generated}所示。该阶段以前序检索结果与结构化分析结论为输入，生成可供后续评审的候选安全策略集合。每个安全策略条目以描述摘要和具体工具代码的形式展示。
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/策略生成-生成1}
+    \includegraphics[width=0.95\textwidth,height=0.4721\textwidth]{images/ui/策略生成-生成1}
     \bicaption{候选策略生成完成后进入评审阶段}{Transition to the Review Stage After Candidate Strategy Generation}
     \label{fig:ui_strategy_generated}
 \end{figure}
@@ -162,7 +162,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/review详情}
+    \includegraphics[width=0.95\textwidth,height=0.3178\textwidth]{images/ui/review详情}
     \bicaption{评审智能体结构化评审输出}{Structured Review Output of the Review Agent}
     \label{fig:ui_review_detail}
 \end{figure}
@@ -170,7 +170,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 完成评审与迭代优化后，系统输出候选策略集合的最终展示结果如图~\ref{fig:ui_strategy_final}。安全工程师可在界面查看各候选的完整控制条目并发起部署。最终展示阶段不仅呈现候选内容本身，还保留了候选来源、评审意见与版本演化信息，从而为后续人工确认与策略落地提供完整依据。
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/策略优化的最终生成}
+    \includegraphics[width=0.95\textwidth,height=0.5573\textwidth]{images/ui/策略优化的最终生成}
     \bicaption{候选策略集合最终生成结果展示}{Final Display of the Candidate Strategy Set}
     \label{fig:ui_strategy_final}
 \end{figure}
@@ -181,7 +181,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/人工排序}
+    \includegraphics[width=1\textwidth]{images/ui/人工排序}
     \bicaption{策略拖拽排序主界面}{Main Interface for Drag-and-Drop Strategy Ranking}
     \label{fig:ui_ranking}
 \end{figure}
@@ -190,7 +190,7 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth,height=0.5\textheight,keepaspectratio]{images/ui/人工排序-提交保存}
+    \includegraphics[width=1\textwidth,height=0.9\textheight,keepaspectratio]{images/ui/人工排序-提交保存}
     \bicaption{排序提交页面}{Ranking Submission Page with Rationale Input and Review History}
     \label{fig:ui_ranking_submit}
 \end{figure}
@@ -201,14 +201,14 @@ KPEDefense 系统采用分层架构，前端服务为界面层，后端服务包
 
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/策略部署-部署目标设置}
+    \includegraphics[width=1\textwidth]{images/ui/策略部署-部署目标设置}
     \bicaption{部署目标连接配置页面}{Deployment Target Connection Configuration Page}
     \label{fig:ui_deploy_target}
 \end{figure}
 
 \begin{figure}[htb!]
     \centering
-    \includegraphics[width=0.86\textwidth]{images/ui/策略部署-部署管理}
+    \includegraphics[width=1\textwidth]{images/ui/策略部署-部署管理}
     \bicaption{策略部署管理面板}{Strategy Deployment Management Panel}
     \label{fig:ui_deploy_manage}
 \end{figure}

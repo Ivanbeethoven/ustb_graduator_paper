@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  policy.default: role:readonly  # 未命中规则时默认只读
+  policy.csv: |
+    # 管理员：允许所有资源的全量操作
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, projects, *, *, allow
+    p, role:admin, repositories, *, *, allow
+    p, role:admin, clusters, *, *, allow
+
+    # 只读角色：广泛赋予普通用户，局限于 get
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, projects, get, *, allow
+    p, role:readonly, repositories, get, *, allow
+
+    # 投递角色：仅允许指定项目内的 get/sync，禁止任意 action 效果范围包含同步和 hook 等操作
+    p, role:deployer, applications, get, my-project/*, allow
+    p, role:deployer, applications, sync, my-project/*, allow
+    p, role:deployer, applications, action/*, my-project/*, deny

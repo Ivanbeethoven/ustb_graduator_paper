@@ -109,3 +109,123 @@ uv run python images\analysis\plot.py
 
 
 
+
+## Redis Diagnostics
+
+| Tool | Top commandstats | Details |
+| --- | --- | --- |
+| dirperf | evalsha: calls=22119, usec/call=27.00<br>hset: calls=22002, usec/call=1.27<br>hexists: calls=11002, usec/call=1.60<br>set: calls=44006, usec/call=0.30<br>get: calls=33137, usec/call=0.29 | diagnostics/redis-dirperf-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| stat | 981843.5 | 1 |
+| readdir | 67752.7 | 15 |
+| rename | 2152.3 | 465 |
+
+## Redis Diagnostics
+
+| Tool | Top commandstats | Details |
+| --- | --- | --- |
+| dirperf | evalsha: calls=22119, usec/call=27.00<br>hset: calls=22002, usec/call=1.27<br>hexists: calls=11002, usec/call=1.60<br>set: calls=44006, usec/call=0.30<br>get: calls=33137, usec/call=0.29 | diagnostics/redis-dirperf-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| stat | 981843.5 | 1 |
+| readdir | 67752.7 | 15 |
+| rename | 2152.3 | 465 |
+
+## Redis Diagnostics
+
+| Tool | Top commandstats | Details |
+| --- | --- | --- |
+| dirperf | evalsha: calls=22119, usec/call=27.00<br>hset: calls=22002, usec/call=1.27<br>hexists: calls=11002, usec/call=1.60<br>set: calls=44006, usec/call=0.30<br>get: calls=33137, usec/call=0.29 | diagnostics/redis-dirperf-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| fio-bigwrite | evalsha: calls=244, usec/call=29.77<br>set: calls=249, usec/call=5.43<br>incrby: calls=236, usec/call=4.99<br>rpush: calls=236, usec/call=2.16<br>get: calls=277, usec/call=0.88 | diagnostics/redis-fio-bigwrite-after.txt |
+| fio-randread | evalsha: calls=12, usec/call=60.50<br>lrange: calls=39, usec/call=11.56<br>config|resetstat: calls=1,| readdir | 67752.7 | 15 |
+| rename | 2152.3 | 465 |
+
+## Redis Diagnostics
+
+| Tool | Top commandstats | Details |
+| --- | --- | --- |
+| dirperf | evalsha: calls=22119, usec/call=27.00<br>hset: calls=22002, usec/call=1.27<br>hexists: calls=11002, usec/call=1.60<br>set: calls=44006, usec/call=0.30<br>get: calls=33137, usec/call=0.29 | diagnostics/redis-dirperf-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| fio-bigwrite | evalsha: calls=244, usec/call=29.77<br>set: calls=249, usec/call=5.43<br>incrby: calls=236, usec/call=4.99<br>rpush: calls=236, usec/call=2.16<br>get: calls=277, usec/call=0.88 | diagnostics/redis-fio-bigwrite-after.txt |
+| fio-randread | evalsha: calls=12, usec/call=60.50<br>lrange: calls=39, usec/call=11.56<br>config|resetstat: calls=1, usec/call=129.00<br>hget: calls=17, usec/call=5.88<br>ping: calls=30, usec/call=1.93 | diagnostics/redis-fio-randread-after.txt |
+
+## Redis Diagnostics
+
+| Tool | Top commandstats | Details |
+## Redis Diagnostics
+
+| Tool | Top commandstats | Details |
+| --- | --- | --- |
+| dirperf | evalsha: calls=22119, usec/call=27.00<br>hset: calls=22002, usec/call=1.27<br>hexists: calls=11002, usec/call=1.60<br>set: calls=44006, usec/call=0.30<br>get: calls=33137, usec/call=0.29 | diagnostics/redis-dirperf-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| fio-bigwrite | evalsha: calls=244, usec/call=29.77<br>set: calls=249, usec/call=5.43<br>incrby: calls=236, usec/call=4.99<br>rpush: calls=236, usec/call=2.16<br>get: calls=277, usec/call=0.88 | diagnostics/redis-fio-bigwrite-after.txt |
+| fio-randread | evalsha: calls=12, usec/call=60.50<br>lrange: calls=39, usec/call=11.56<br>config|resetstat: calls=1, usec/call=129.00<br>hget: calls=17, usec/call=5.88<br>ping: calls=30, usec/call=1.93 | diagnostics/redis-fio-randread-after.txt |
+| dirperf | evalsha: calls=22119, usec/call=27.00<br>hset: calls=22002, usec/call=1.27<br>hexists: calls=11002, usec/call=1.60<br>set: calls=44006, usec/call=0.30<br>get: calls=33137, usec/call=0.29 | diagnostics/redis-dirperf-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| fio-bigwrite | evalsha: calls=244, usec/call=29.77<br>set: calls=249, usec/call=5.43<br>incrby: calls=236, usec/call=4.99<br>rpush: calls=236, usec/call=2.16<br>get: calls=277, usec/call=0.88 | diagnostics/redis-fio-bigwrite-after.txt |
+| fio-randread | evalsha: calls=12, usec/call=60.50<br>lrange: calls=39, usec/call=11.56<br>config|resetstat: calls=1, usec/call=129.00<br>hget: calls=17, usec/call=5.88<br>ping: calls=30, usec/call=1.93 | diagnostics/redis-fio-randread-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| fio-bigwrite | evalsha: calls=244, usec/call=29.77<br>set: calls=249, usec/call=5.43<br>incrby: calls=236, usec/call=4.99<br>rpush: calls=236, usec/call=2.16<br>get: calls=277, usec/call=0.88 | diagnostics/redis-fio-bigwrite-after.txt |
+| fio-randread | evalsha: calls=12, usec/call=60.50<br>lrange: calls=39, usec/call=11.56<br>config|resetstat: calls=1, usec/call=129.00<br>hget: calls=17, usec/call=5.88<br>ping: calls=30, usec/call=1.93 | diagnostics/redis-fio-randread-after.txt |
+lls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| fio-bigwrite | evalsha: calls=244, usec/call=29.77<br>set: calls=249, usec/call=5.43<br>incrby: calls=236, usec/call=4.99<br>rpush: calls=236, usec/call=2.16<br>get: calls=277, usec/call=0.88 | diagnostics/redis-fio-bigwrite-after.txt |
+| fio-randread | evalsha: calls=12, usec/call=60.50<br>lrange: calls=39, usec/call=11.56<br>config|resetstat: calls=1, usec/call=129.00<br>hget: calls=17, usse:l||||| stat | 981843.5 | | | stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| stat | 981843.5 | 1 |
+| readdir | 67752.7 | 15 |
+| rename | 2152.3 | 465 |
+
+## Redis Diagnostics
+
+| Tool | Top commandstats | Details |
+| --- | --- | --- |
+| dirperf | evalsha: calls=22119, usec/call=27.00<br>hset: calls=22002, usec/call=1.27<br>hexists: calls=11002, usec/call=1.60<br>set: calls=44006, usec/call=0.30<br>get: calls=33137, usec/call=0.29 | diagnostics/redis-dirperf-after.txt |
+| dirstress | evalsha: calls=875, usec/call=34.25<br>hget: calls=2571, usec/call=0.95<br>hset: calls=751, usec/call=1.32<br>set: calls=2010, usec/call=0.41<br>get: calls=1600, usec/call=0.33 | diagnostics/redis-dirstress-after.txt |
+| fio-bigread | lrange: calls=28, usec/call=254.07<br>evalsha: calls=2, usec/call=67.00<br>config|resetstat: calls=1, usec/call=35.00<br>hget: calls=11, usec/call=2.36<br>get: calls=1, usec/call=5.00 | diagnostics/redis-fio-bigread-after.txt |
+| fio-bigwrite | evalsha: calls=244, usec/call=29.77<br>set: calls=249, usec/call=5.43<br>incrby: calls=236, usec/call=4.99<br>rpush: calls=236, usec/call=2.16<br>get: calls=277, usec/call=0.88 | diagnostics/redis-fio-bigwrite-after.txt |
+| fio-randread | evalsha: calls=12, usec/call=60.50<br>lrange: calls=39, usec/call=11.56<br>config|resetstat: calls=1, usec/call=129.00<br>hget: calls=17, usec/call=5.88<br>ping: calls=30, usec/call=1.93 | diagnostics/redis-fio-randread-after.txt |
+| fio-randrw | evalsha: calls=1187, usec/call=58.72<br>set: calls=799, usec/call=10.46<br>incrby: calls=1297, usec/call=5.72<br>rpush: calls=1175, usec/call=4.74<br>get: calls=1331, usec/call=1.79 | diagnostics/redis-fio-randrw-after.txt |
+| fio-randwrite | evalsha: calls=1909, usec/call=30.59<br>incrby: calls=1891, usec/call=2.55<br>rpush: calls=1891, usec/call=2.23<br>set: calls=923, usec/call=3.63<br>get: calls=2137, usec/call=0.89 | diagnostics/redis-fio-randwrite-after.txt |
+| fio-seqread | evalsha: calls=12, usec/call=54.42<br>lrange: calls=64, usec/call=8.80<br>hget: calls=14, usec/call=8.21<br>ping: calls=29, usec/call=1.93<br>zadd: calls=2, usec/call=18.00 | diagnostics/redis-fio-seqread-after.txt |
+| fio-seqwrite | evalsha: calls=1132, usec/call=29.22<br>incrby: calls=1117, usec/call=4.38<br>set: calls=679, usec/call=5.96<br>rpush: calls=1117, usec/call=2.09<br>get: calls=1143, usec/call=0.60 | diagnostics/redis-fio-seqwrite-after.txt |
+| looptest | set: calls=495, usec/call=0.29<br>evalsha: calls=1, usec/call=95.00<br>config|resetstat: calls=1, usec/call=62.00<br>hset: calls=1, usec/call=4.00<br>get: calls=1, usec/call=2.00 | diagnostics/redis-looptest-after.txt |
+| metaperf | evalsha: calls=106386, usec/call=26.35<br>get: calls=347734, usec/call=0.24<br>hget: calls=371820, usec/call=0.20<br>set: calls=282363, usec/call=0.26<br>hset: calls=169492, usec/call=0.43 | diagnostics/redis-metaperf-after.txt |
+
+## BrewFS Stats
+
+| Tool | Cache hit | FUSE read | FUSE write | Dirty | Read buffer | S3 ops | Details |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| dirperf | 100.0% (2474228/2474318) | 134687.6 MiB | 17580.0 MiB | 0.0 MiB | 0.0 MiB | GET=29, PUT=7931 | diagnostics/stats-dirperf-after.txt |
+| dirstress | 100.0% (2474228/2474318) | 134687.6 MiB | 17580.0 MiB | 230.4 MiB | 0.0 MiB | GET=29, PUT=7890 | diagnostics/stats-dirstress-after.txt |
+| fio-bigread | 100.0% (14713/14713) | 1024.0 MiB | 2048.0 MiB | 0.0 MiB | 0.0 MiB | GET=0, PUT=754 | diagnostics/stats-fio-bigread-after.txt |
+| fio-bigwrite | 0.0% (0/0) | 0.0 MiB | 1024.0 MiB | 37.0 MiB | 0.0 MiB | GET=0, PUT=356 | diagnostics/stats-fio-bigwrite-after.txt |
+| fio-randread | 100.0% (2258803/2258882) | 127400.2 MiB | 9244.0 MiB | 0.0 MiB | 0.0 MiB | GET=25, PUT=3700 | diagnostics/stats-fio-randread-after.txt |
+| fio-randrw | 100.0% (2474228/2474318) | 134687.6 MiB | 17580.0 MiB | 233.4 MiB | 0.0 MiB | GET=29, PUT=7887 | diagnostics/stats-fio-randrw-after.txt |
+| fio-randwrite | 100.0% (2258803/2258882) | 127400.2 MiB | 13180.0 MiB | 43.6 MiB | 0.0 MiB | GET=25, PUT=5668 | diagnostics/stats-fio-randwrite-after.txt |
+| fio-seqread | 100.0% (1428596/1428596) | 100356.2 MiB | 3072.0 MiB | 0.0 MiB | 0.0 MiB | GET=0, PUT=1141 | diagnostics/stats-fio-seqread-after.txt |
+| fio-seqwrite | 100.0% (1428596/1428596) | 100356.2 MiB | 7196.0 MiB | 26.6 MiB | 0.0 MiB | GET=0, PUT=2706 | diagnostics/stats-fio-seqwrite-after.txt |
+| looptest | 100.0% (2478412/2478618) | 134687.6 MiB | 17608.9 MiB | 0.0 MiB | 0.0 MiB | GET=145, PUT=16611 | diagnostics/stats-looptest-after.txt |
+| metaperf | 100.0% (2478412/2478618) | 134687.6 MiB | 17608.9 MiB | 0.0 MiB | 0.0 MiB | GET=145, PUT=16611 | diagnostics/stats-metaperf-after.txt |
+
+## Bottleneck Analysis
+
+- **fio-bigread**: Read tail latency p99/p50=5.9x (25.6ms→152ms). Likely S3 retry or cache miss.
+- **fio-bigwrite**: Write P99=1200ms > 500ms — consider increasing write buffer or S3 concurrency.
+- **fio-randread**: Read tail latency p99/p50=8.7x (20.1ms→175ms). Likely S3 retry or cache miss.
+- **fio-randrw**: Read tail latency p99/p50=16.0x (49.0ms→784ms). Likely S3 retry or cache miss.
+- **fio-randrw**: Write stall p50=2.8ms p99=1569ms — auto_flush/buffer-limit triggers S3 upload backpressure.
+- **fio-randwrite**: Write P99=5536ms > 500ms — consider increasing write buffer or S3 concurrency.
+- **fio-seqwrite**: Write stall p50=2.2ms p99=279ms — auto_flush/buffer-limit triggers S3 upload backpressure.

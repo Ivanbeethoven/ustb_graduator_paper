@@ -64,13 +64,13 @@ spec:                    # 期望状态声明(字段因 kind 而异)
 图~\ref{fig:k8s-rbac-yaml} 右侧给出了一个典型的 RBAC 授权流程示例：首先创建名为 “kada” 的 “ServiceAccount”；随后定义名为 “basic-operation” 的 “Role”，并在其 “rules” 字段中授予对 “pods” 与 “secrets” 的 “get”、“list”、“create” 权限；最后通过 “RoleBinding” 将该 “Role” 绑定至 “kada” 账户。这类配置在接入第三方应用时较为常见，但若授予的权限范围超出实际需要，就可能引发权限提升风险。
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=0.95\textwidth]{images/yaml.png}
+    \includegraphics[width=1\textwidth,height=0.25\textheight]{images/yaml.png}
   \bicaption{K8s RBAC 权限配置YAML文件示意\cite{kubeguard_icws2025}}{Example of K8s RBAC Permission Configuration in YAML\cite{kubeguard_icws2025}}\label{fig:k8s-rbac-yaml}
 \end{figure}
 
 \subsection{K8s 权限提升漏洞}
 
-权限提升是指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置将自身权限提升到更高等级的过程\cite{bishop2003computersecurity}。
+权限提升是指攻击者在仅具备受限权限或初始执行能力的情况下，借助漏洞或错误配置将自身权限提升到更高等级的过程。
 
 在 K8s 场景下，权限提升表现为授权范围扩大或横向获取，或节点侧系统权限提升，从而影响更大范围的资源与工作负载。一方面，单个节点往往承载多个 Pod，一旦节点侧权限提升成功，攻击者便可能对同节点上的多个工作负载实施敏感信息窃取、运行环境篡改或恶意组件注入。另一方面，K8s 的资源对象与运维动作高度集中且自动化，控制平面授权不当也会显著放大攻击后果。结合图~\ref{fig:k8s-rbac-yaml}中的示例，若主体被授予针对 “Secret” 的 “get”/“list” 权限，攻击者即可读取服务账户令牌、数据库口令或 API 密钥等敏感信息；若被授予针对 “Pod” 的 “create” 权限，则可能进一步创建携带恶意镜像、特权配置或宿主机挂载的工作负载，作为横向移动、凭据窃取乃至后续节点侧利用的跳板。
 

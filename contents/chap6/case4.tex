@@ -21,9 +21,9 @@ Conjur OSS 是云原生场景下常用的机密管理系统，属于 Secrets Man
 实验在支持 NetworkPolicy 的 K8s 集群中部署受影响版本的 Conjur OSS Helm Chart，并确认 Postgres Service 已在目标命名空间暴露 5432 端口。检查该命名空间中的 NetworkPolicy 配置后，未发现针对 Postgres 入站访问的限制规则。在非 Conjur 组件工作负载中对 Postgres 5432 端口发起受控 TCP 连通性探测，探测结果为可达，表明数据库在集群内对普通 Pod 暴露。部署默认拒绝且仅允许 Conjur Server 访问 Postgres 的 NetworkPolicy 后，对同一路径重新探测，结果变为不可达，业务 Pod 直连数据库的路径被阻断。完整复现步骤如下。
 \textbf{前提条件}
 \begin{itemize}
-	\item 集群 CNI 支持 NetworkPolicy，例如 Calico。
-	\item Helm v3 可用。
-	\item 受影响的 Conjur OSS Helm Chart 版本为 \texttt{< 2.0.0}。
+  \item 集群 CNI 支持 NetworkPolicy，例如 Calico。
+  \item Helm v3 可用。
+  \item 受影响的 Conjur OSS Helm Chart 版本为 \texttt{< 2.0.0}。
 \end{itemize}
 
 \textbf{步骤 1：在隔离命名空间部署旧版 Chart，并进行必要的兼容性适配}
@@ -33,9 +33,9 @@ helm repo update
 helm search repo cyberark/conjur-oss --versions
 
 helm install conjur-oss cyberark/conjur-oss \
-	--namespace $NAMESPACE \
-	--create-namespace \
-	--version <2.0.0>
+  --namespace $NAMESPACE \
+  --create-namespace \
+  --version <2.0.0>
 
 kubectl -n $NAMESPACE get pods
 \end{AppendixCode}
@@ -59,9 +59,9 @@ kubectl -n $NAMESPACE get networkpolicy
 \textbf{步骤 4：连通性验证}
 \begin{AppendixCode}
 kubectl -n $NAMESPACE run netcheck \
-	--image=busybox:1.36 \
-	--restart=Never \
-	--rm -i -- sh -c "nc -vz $POSTGRES_SVC 5432"
+  --image=busybox:1.36 \
+  --restart=Never \
+  --rm -i -- sh -c "nc -vz $POSTGRES_SVC 5432"
 \end{AppendixCode}
 
 
@@ -78,15 +78,15 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-	name: conjur-postgres-default-deny
-	namespace: conjur-vuln
+  name: conjur-postgres-default-deny
+  namespace: conjur-vuln
 spec:
-	podSelector:
-		matchLabels:
-			app: conjur-oss-postgres
-	policyTypes:
-	- Ingress
-	ingress: []  # 空列表表示拒绝所有入站，还没有任何流量被放通
+  podSelector:
+    matchLabels:
+      app: conjur-oss-postgres
+  policyTypes:
+  - Ingress
+  ingress: []  # 空列表表示拒绝所有入站，还没有任何流量被放通
 EOF
 
 # 第二条：仅允许 Conjur Server -> Postgres 5432 的必要内部流量
@@ -94,22 +94,22 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-	name: conjur-postgres-allow-conjur
-	namespace: conjur-vuln
+  name: conjur-postgres-allow-conjur
+  namespace: conjur-vuln
 spec:
-	podSelector:
-		matchLabels:
-			app: conjur-oss-postgres
-	policyTypes:
-	- Ingress
-	ingress:
-	- from:
-		- podSelector:
-			matchLabels:
-				app: conjur-oss  # 仅允许 Conjur Server 组件访问
-		ports:
-		- protocol: TCP
-			port: 5432  # 只放开数据库监听端口
+  podSelector:
+    matchLabels:
+      app: conjur-oss-postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+      matchLabels:
+        app: conjur-oss  # 仅允许 Conjur Server 组件访问
+    ports:
+    - protocol: TCP
+      port: 5432  # 只放开数据库监听端口
 EOF
 \end{AppendixCode}
 \subsubsection{安全策略验证}

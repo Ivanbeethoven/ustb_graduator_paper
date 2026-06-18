@@ -2,22 +2,24 @@
   "theme": "base",
   "themeVariables": {
     "fontFamily": "Microsoft YaHei, PingFang SC, Noto Sans SC, sans-serif",
-    "fontSize": "20px",
+    "fontSize": "26px",
     "lineColor": "#64748b",
     "primaryTextColor": "#1f2937"
   },
   "sequence": {
-    "actorFontSize": 20,
-    "messageFontSize": 20,
-    "noteFontSize": 20,
+    "actorFontSize": 26,
+    "messageFontSize": 26,
+    "noteFontSize": 26,
     "actorMargin": 95,
-    "messageMargin": 48
+    "messageMargin": 62,
+    "mirrorActors": false,
+    "showSequenceNumbers": false,
+    "bottomMarginAdj": 4
   },
-  "themeCSS": ".messageText { font-size: 20px !important; } .actor { font-size: 20px !important; } .noteText { font-size: 20px !important; } .loopText, .labelText { font-size: 18px !important; }"
+  "themeCSS": ".messageText { font-size: 26px !important; } .actor { font-size: 26px !important; } .noteText { font-size: 26px !important; } .loopText, .labelText { font-size: 24px !important; }"
 }}%%
 
 sequenceDiagram
-    autonumber
     actor User as 安全工程师
     participant UI as 前端界面
     participant API as 后端 API

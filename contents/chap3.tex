@@ -466,11 +466,6 @@ t3: "节点加固：find /opt/cni/bin -perm -4000 定期检查 SUID 文件..."
     \bicaption{漏洞实例 $v$ 与安全上下文 $c$ 示例}{Example of Vulnerability Instance $v$ and Corresponding Security Context $c$}
     \label{fig:chap3-v-context}
 \end{figure}
-
-漏洞分析智能体结合 $c$ 识别出三条主要威胁成因或攻击路径，其中直接根因是 SUID 位权限滥用，针对 CNI 目录可疑写入是潜在的横向攻击，而宿主机路径暴露则是可能转为持久化高风险。策略代码生成智能体针对各路径生成一个安全策略 $\pi_1$，其中防护条目 $e_1$ 通过 DaemonSet 批量移除 SUID 位的配置，监控条目 $e_2$ 覆盖指定目录异常写入与可疑执行，防护条目 $e_3$ 限制普通工作负载挂载高风险宿主机目录。
-
-策略评审智能体从三个维度考察 $\pi_1$，并输出一个简单的评审报告，报告指出 $e_1$ 的阻断作用直接但缺乏持续观测，$e_2$ 可补充运行时告警但不直接阻断攻击，$e_3$ 可收缩宿主机路径暴露面但需与前两项配合。策略优化智能体据此对其进行了进一步优化，最终的安全策略代码展示如图~\ref{fig:chap3-falco-kyverno}。
-
 \begin{figure}[htb]
     \centering
     \setlength{\abovecaptionskip}{3pt}
@@ -515,6 +510,11 @@ spec:
     \end{tcolorbox}
     \bicaption{针对 CVE-2024-33522 漏洞生成的安全策略代码}{Security Strategy Code Generated for CVE-2024-33522}\label{fig:chap3-falco-kyverno}
 \end{figure}
+
+漏洞分析智能体结合 $c$ 识别出三条主要威胁成因或攻击路径，其中直接根因是 SUID 位权限滥用，针对 CNI 目录可疑写入是潜在的横向攻击，而宿主机路径暴露则是可能转为持久化高风险。策略代码生成智能体针对各路径生成一个安全策略 $\pi_1$，其中防护条目 $e_1$ 通过 DaemonSet 批量移除 SUID 位的配置，监控条目 $e_2$ 覆盖指定目录异常写入与可疑执行，防护条目 $e_3$ 限制普通工作负载挂载高风险宿主机目录。
+
+策略评审智能体从三个维度考察 $\pi_1$，并输出一个简单的评审报告，报告指出 $e_1$ 的阻断作用直接但缺乏持续观测，$e_2$ 可补充运行时告警但不直接阻断攻击，$e_3$ 可收缩宿主机路径暴露面但需与前两项配合。策略优化智能体据此对其进行了进一步优化，最终的安全策略代码展示如图~\ref{fig:chap3-falco-kyverno}。
+
 
 \noindent\textbf{(3)安全策略评审}
 

@@ -33,10 +33,10 @@ kubectl -n $ARGO_NS logs deploy/argocd-server --since=10m | findstr /i "oidc tok
 在受影响版本中，将签名有效但 aud 不匹配的令牌提交至 Argo CD 接口后，系统仍返回受 RBAC 控制的资源内容，说明该令牌已被错误接受。切换至修复版本或在前置入口增加受众校验后，同类请求在校验阶段被拒绝，跨受众令牌复用风险得到验证。
 
 \begin{figure}[htb]
-	\centering
-	\includegraphics[width=0.8\textwidth]{images/cve7/image.png}
-	\bicaption{CVE-2023-22482：漏洞复现结果示意}{CVE-2023-22482: Results of Vulnerability Reproduction}
-	\label{fig:cve-2023-22482-evidence}
+  \centering
+  \includegraphics[width=0.8\textwidth]{images/cve7/image.png}
+  \bicaption{CVE-2023-22482：漏洞复现结果示意}{CVE-2023-22482: Results of Vulnerability Reproduction}
+  \label{fig:cve-2023-22482-evidence}
 \end{figure}
 
 \subsubsection{安全策略生成}
@@ -52,23 +52,23 @@ KPEDefense 筛选出的最优策略从令牌签发、入口校验与授权收敛
 apiVersion: v1
 kind: ConfigMap
 metadata:
-	name: argocd-cm
-	namespace: argocd
+  name: argocd-cm
+  namespace: argocd
 data:
-	url: https://argocd.example.com
-	oidc.config: |
-		name: SSO
-		issuer: https://idp.example.com/realms/my-org
-		clientID: argocd-dedicated          # 独立客户端 ID，仅限此 Argo CD 实例使用
-		clientSecret: $oidc.clientSecret
-		requestedScopes:
-		- openid
-		- profile
-		- email
-		- groups
-		requestedIDTokenClaims:
-			groups:
-				essential: true  # 要求令牌必须包含 groups 声明
+  url: https://argocd.example.com
+  oidc.config: |
+    name: SSO
+    issuer: https://idp.example.com/realms/my-org
+    clientID: argocd-dedicated          # 独立客户端 ID，仅限此 Argo CD 实例使用
+    clientSecret: $oidc.clientSecret
+    requestedScopes:
+    - openid
+    - profile
+    - email
+    - groups
+    requestedIDTokenClaims:
+      groups:
+        essential: true  # 要求令牌必须包含 groups 声明
 \end{AppendixCode}
 
 \textbf{2)前置入口 \texttt{aud} 强制校验：在网关层拦截受众不匹配的令牌}
@@ -80,33 +80,33 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-	name: oauth2-proxy
-	namespace: argocd
+  name: oauth2-proxy
+  namespace: argocd
 spec:
-	replicas: 1
-	selector:
-		matchLabels:
-			app: oauth2-proxy
-	template:
-		metadata:
-			labels:
-				app: oauth2-proxy
-		spec:
-			containers:
-			- name: oauth2-proxy
-				image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
-				args:
-				- --provider=oidc
-				- --oidc-issuer-url=https://idp.example.com/realms/my-org
-				- --client-id=argocd-dedicated
-				- --client-secret-file=/etc/oauth2-proxy/client-secret
-				- --email-domain=*
-				- --upstream=http://argocd-server.argocd.svc:80
-				- --http-address=0.0.0.0:4180
-				- --oidc-audience-claim=aud  # 关键参数：强制校验令牌的 aud 字段，拦截跨受众令牌
-				- --allowed-group=argo:admin,argo:readonly
-				ports:
-				- containerPort: 4180
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+        args:
+        - --provider=oidc
+        - --oidc-issuer-url=https://idp.example.com/realms/my-org
+        - --client-id=argocd-dedicated
+        - --client-secret-file=/etc/oauth2-proxy/client-secret
+        - --email-domain=*
+        - --upstream=http://argocd-server.argocd.svc:80
+        - --http-address=0.0.0.0:4180
+        - --oidc-audience-claim=aud  # 关键参数：强制校验令牌的 aud 字段，拦截跨受众令牌
+        - --allowed-group=argo:admin,argo:readonly
+        ports:
+        - containerPort: 4180
 \end{AppendixCode}
 
 \begin{AppendixCode}
@@ -114,23 +114,23 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-	name: argocd-server
-	namespace: argocd
-	annotations:
-		nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.argocd.svc:4180/oauth2/auth"
-		nginx.ingress.kubernetes.io/auth-signin: "https://argocd.example.com/oauth2/start?rd=$escaped_request_uri"
+  name: argocd-server
+  namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "http://oauth2-proxy.argocd.svc:4180/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://argocd.example.com/oauth2/start?rd=$escaped_request_uri"
 spec:
-	rules:
-	- host: argocd.example.com
-		http:
-			paths:
-			- path: /
-				pathType: Prefix
-				backend:
-					service:
-						name: argocd-server
-						port:
-							number: 80
+  rules:
+  - host: argocd.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
 \end{AppendixCode}
 
 \textbf{3)权限收敛：RBAC 最小化与项目边界约束}
@@ -138,26 +138,26 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-	name: argocd-rbac-cm
-	namespace: argocd
+  name: argocd-rbac-cm
+  namespace: argocd
 data:
-	policy.default: role:readonly  # 未命中规则时默认只读
-	policy.csv: |
-		# 管理员：允许所有资源的全量操作
-		p, role:admin, applications, *, */*, allow
-		p, role:admin, projects, *, *, allow
-		p, role:admin, repositories, *, *, allow
-		p, role:admin, clusters, *, *, allow
+  policy.default: role:readonly  # 未命中规则时默认只读
+  policy.csv: |
+    # 管理员：允许所有资源的全量操作
+    p, role:admin, applications, *, */*, allow
+    p, role:admin, projects, *, *, allow
+    p, role:admin, repositories, *, *, allow
+    p, role:admin, clusters, *, *, allow
 
-		# 只读角色：广泛赋予普通用户，局限于 get
-		p, role:readonly, applications, get, */*, allow
-		p, role:readonly, projects, get, *, allow
-		p, role:readonly, repositories, get, *, allow
+    # 只读角色：广泛赋予普通用户，局限于 get
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, projects, get, *, allow
+    p, role:readonly, repositories, get, *, allow
 
-		# 投递角色：仅允许指定项目内的 get/sync，禁止任意 action 效果范围包含同步和 hook 等操作
-		p, role:deployer, applications, get, my-project/*, allow
-		p, role:deployer, applications, sync, my-project/*, allow
-		p, role:deployer, applications, action/*, my-project/*, deny
+    # 投递角色：仅允许指定项目内的 get/sync，禁止任意 action 效果范围包含同步和 hook 等操作
+    p, role:deployer, applications, get, my-project/*, allow
+    p, role:deployer, applications, sync, my-project/*, allow
+    p, role:deployer, applications, action/*, my-project/*, deny
 \end{AppendixCode}
 
 

@@ -10,17 +10,17 @@ CubeFS 是面向云原生场景的分布式存储系统，常通过 CSI 插件�
 
 \textbf{攻击链条描述}：攻击链可概括为系统组件身份被过度授权，且在被攻陷后可枚举集群秘密：
 \begin{enumerate}
-	\item \textbf{身份前置阶段}：CSI 组件使用默认或被误配置的 ServiceAccount 运行；
-	\item \textbf{权限放大阶段}：ServiceAccount 被绑定到含 \texttt{secrets} 读取能力的 ClusterRole；
-	\item \textbf{控制获取阶段}：攻击者控制某节点上的 CSI Pod，例如 \texttt{cfs-csi-node}，并获得其运行时上下文；
-	\item \textbf{数据获取阶段}：攻击者以该 ServiceAccount 身份读取集群 Secret，从而获取高价值凭据，如管理员 Token、云凭据等，实现从节点或 Pod 控制向集群控制的升级。
+  \item \textbf{身份前置阶段}：CSI 组件使用默认或被误配置的 ServiceAccount 运行；
+  \item \textbf{权限放大阶段}：ServiceAccount 被绑定到含 \texttt{secrets} 读取能力的 ClusterRole；
+  \item \textbf{控制获取阶段}：攻击者控制某节点上的 CSI Pod，例如 \texttt{cfs-csi-node}，并获得其运行时上下文；
+  \item \textbf{数据获取阶段}：攻击者以该 ServiceAccount 身份读取集群 Secret，从而获取高价值凭据，如管理员 Token、云凭据等，实现从节点或 Pod 控制向集群控制的升级。
 \end{enumerate}
 
 \begin{figure}[htb]
-	\centering
-	\includegraphics[width=0.95\textwidth]{images/cve3/image.png}
-	\bicaption{CVE-2023-30512：漏洞复现结果示意(一)}{CVE-2023-30512: Results of Vulnerability Reproduction (I)}
-	\label{fig:cve-2023-30512-overview}
+  \centering
+  \includegraphics[width=0.95\textwidth]{images/cve3/image.png}
+  \bicaption{CVE-2023-30512：漏洞复现结果示意(一)}{CVE-2023-30512: Results of Vulnerability Reproduction (I)}
+  \label{fig:cve-2023-30512-overview}
 \end{figure}
 
 实验在 K8s 测试集群中部署受影响版本的 CubeFS CSI，明确节点插件与控制器组件使用的 \texttt{cfs-csi-service-account}，并导出其对应的 ClusterRole 与 ClusterRoleBinding。权限证据显示，该服务账号关联的 ClusterRole 含有 \texttt{secrets} 资源的 \texttt{get/list/watch} 动词。以 \texttt{cfs-csi-service-account} 身份执行 \texttt{kubectl auth can-i list secrets --all-namespaces}，结果返回 \texttt{yes}，表明该账号具备跨命名空间读取 \texttt{Secret} 的能力。攻击者一旦控制 CSI Pod 运行时上下文，即可沿该权限路径继续获取高价值凭据。完整命令与策略清单如下。
@@ -56,30 +56,30 @@ kubectl auth can-i watch secrets --as=system:serviceaccount:$NAMESPACE:$SA --all
 \textbf{权限提升路径}
 \begin{AppendixCode}
 CubeFS CSI 安装环境
-	|
-	+--> DaemonSet: cfs-csi-node  (节点插件)
-	|
-	+--> Deployment: cfs-csi-controller (控制器)
-					|
-					v
+  |
+  +--> DaemonSet: cfs-csi-node  (节点插件)
+  |
+  +--> Deployment: cfs-csi-controller (控制器)
+          |
+          v
 ServiceAccount: cfs-csi-service-account
-					|
-					v
+          |
+          v
 ClusterRole: cfs-csi-cluster-role
-	(误包含 secrets 的 get/list/watch)
-					|
-					v
+  (误包含 secrets 的 get/list/watch)
+          |
+          v
 一旦攻击者控制节点或 CSI Pod => 可滥用该 SA 的身份边界
-	(风险：读取高价值凭据 -> 演化为集群级权限提升)
+  (风险：读取高价值凭据 -> 演化为集群级权限提升)
 \end{AppendixCode}
 
 
 
 \begin{figure}[htb]
-	\centering
-	\includegraphics[width=0.95\textwidth]{images/cve3/image2.png}
-	\bicaption{CVE-2023-30512：漏洞复现结果示意(二)}{CVE-2023-30512: Results of Vulnerability Reproduction (II)}
-	\label{fig:cve-2023-30512-verify}
+  \centering
+  \includegraphics[width=0.95\textwidth]{images/cve3/image2.png}
+  \bicaption{CVE-2023-30512：漏洞复现结果示意(二)}{CVE-2023-30512: Results of Vulnerability Reproduction (II)}
+  \label{fig:cve-2023-30512-verify}
 \end{figure}
 
 
@@ -94,16 +94,16 @@ cat <<'EOF' | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-	name: cfs-csi-cluster-role
-	labels:
-		app.kubernetes.io/name: cfs-csi
+  name: cfs-csi-cluster-role
+  labels:
+    app.kubernetes.io/name: cfs-csi
 rules:
 - apiGroups: [""]
-	resources: ["nodes","persistentvolumes","pods"]
-	verbs: ["get","list","watch"]
+  resources: ["nodes","persistentvolumes","pods"]
+  verbs: ["get","list","watch"]
 - apiGroups: ["storage.k8s.io"]
-	resources: ["volumeattachments","csinodes"]
-	verbs: ["get","list","watch"]
+  resources: ["volumeattachments","csinodes"]
+  verbs: ["get","list","watch"]
 # 注意：不应包含 resources:["secrets"]
 EOF
 
@@ -115,39 +115,39 @@ kubectl auth can-i list secrets --as=system:serviceaccount:$NAMESPACE:$SA --all-
 \begin{AppendixCode}
 # Rego 辅助谓词：匹配 rules 中包含 secrets 资源且带有读取动词的条目
 has_secrets_rule(rule) {
-				rule.resources[_] == "secrets"
-				rule.verbs[_] == "get"
-			}
-			has_secrets_rule(rule) {
-				rule.resources[_] == "secrets"
-				rule.verbs[_] == "list"
-			}
-			has_secrets_rule(rule) {
-				rule.resources[_] == "secrets"
-				rule.verbs[_] == "watch"
-			}
+        rule.resources[_] == "secrets"
+        rule.verbs[_] == "get"
+      }
+      has_secrets_rule(rule) {
+        rule.resources[_] == "secrets"
+        rule.verbs[_] == "list"
+      }
+      has_secrets_rule(rule) {
+        rule.resources[_] == "secrets"
+        rule.verbs[_] == "watch"
+      }
 
-			# 违规判断：ClusterRole 中包含任意 secrets 读取条目即触发违规
-			violation[{"msg": msg}] {
-				input.review.kind.kind == "ClusterRole"
-				some i
-				rule := input.review.object.rules[i]
-				has_secrets_rule(rule)
-				msg := "ClusterRole must not grant get/list/watch on secrets"
-			}
+      # 违规判断：ClusterRole 中包含任意 secrets 读取条目即触发违规
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "ClusterRole"
+        some i
+        rule := input.review.object.rules[i]
+        has_secrets_rule(rule)
+        msg := "ClusterRole must not grant get/list/watch on secrets"
+      }
 EOF
 
 cat <<'EOF' | kubectl apply -f -
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sDenySecretsRBAC
 metadata:
-	name: deny-clusterrole-secrets-read
+  name: deny-clusterrole-secrets-read
 spec:
-	enforcementAction: dryrun  # 先以审计模式运行，确认无误拦截后再切换至 enforce
-	match:
-		kinds:
-		- apiGroups: ["rbac.authorization.k8s.io"]
-			kinds: ["ClusterRole"]
+  enforcementAction: dryrun  # 先以审计模式运行，确认无误拦截后再切换至 enforce
+  match:
+    kinds:
+    - apiGroups: ["rbac.authorization.k8s.io"]
+      kinds: ["ClusterRole"]
 EOF
 \end{AppendixCode}
 
@@ -158,11 +158,11 @@ kind: Policy
 rules:
 # 记录所有对 secrets 的读取操作，Metadata 级别可避免指密内容写入日志
 - level: Metadata
-	verbs: ["get","list","watch"]
-	resources:
-	- group: ""
-		resources: ["secrets"]
-	omitStages: ["RequestReceived"]
+  verbs: ["get","list","watch"]
+  resources:
+  - group: ""
+    resources: ["secrets"]
+  omitStages: ["RequestReceived"]
 \end{AppendixCode}
 
 

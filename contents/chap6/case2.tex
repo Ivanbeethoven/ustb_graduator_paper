@@ -1,4 +1,4 @@
-﻿
+
 \subsubsection{漏洞复现}
 
 Hive 是 Red Hat Multicluster Engine(MCE)与 Advanced Cluster Management(ACM)中的集群生命周期管理组件，常用于在多集群场景下自动化创建与托管 OpenShift/Kubernetes 集群。在 vSphere 场景中，Hive 需要使用 vCenter 凭据完成集群的基础设施供应与后续管理。
@@ -9,17 +9,17 @@ Hive 是 Red Hat Multicluster Engine(MCE)与 Advanced Cluster Management(ACM)中
 
 \textbf{攻击链条描述}：攻击链可概括为 \texttt{Secret} 隔离被 CR 可读性绕过：
 \begin{enumerate}
-	\item \textbf{权限前置阶段}：攻击者拥有对 \texttt{ClusterProvision} 的 \texttt{get/list/watch} 权限，通常来自聚合角色 \texttt{view/edit} 或错误的绑定；
-	\item \textbf{数据旁路阶段}：Hive 将 vCenter 凭据写入 \texttt{ClusterProvision}，位于 \texttt{status} 字段；
-	\item \textbf{凭据提取阶段}：攻击者通过读取 CR YAML/JSON 直接获得凭据；
-	\item \textbf{后续风险阶段}：利用 vCenter 凭据对虚拟化平台执行未授权操作，进而影响集群节点与工作负载，造成横向移动或权限提升。
+  \item \textbf{权限前置阶段}：攻击者拥有对 \texttt{ClusterProvision} 的 \texttt{get/list/watch} 权限，通常来自聚合角色 \texttt{view/edit} 或错误的绑定；
+  \item \textbf{数据旁路阶段}：Hive 将 vCenter 凭据写入 \texttt{ClusterProvision}，位于 \texttt{status} 字段；
+  \item \textbf{凭据提取阶段}：攻击者通过读取 CR YAML/JSON 直接获得凭据；
+  \item \textbf{后续风险阶段}：利用 vCenter 凭据对虚拟化平台执行未授权操作，进而影响集群节点与工作负载，造成横向移动或权限提升。
 \end{enumerate}
 
 \begin{figure}[htb]
-	\centering
-	\includegraphics[width=0.95\textwidth]{images/cve2/image.png}
-	\bicaption{CVE-2025-2241：漏洞复现结果示意}{CVE-2025-2241: results of vulnerability reproduction}
-	\label{fig:cve-2025-2241-overview}
+  \centering
+  \includegraphics[width=0.95\textwidth]{images/cve2/image.png}
+  \bicaption{CVE-2025-2241：漏洞复现结果示意}{CVE-2025-2241: results of vulnerability reproduction}
+  \label{fig:cve-2025-2241-overview}
 \end{figure}
 
 
@@ -27,8 +27,8 @@ Hive 是 Red Hat Multicluster Engine(MCE)与 Advanced Cluster Management(ACM)中
 实验在部署 ACM/MCE 与 Hive 的 OpenShift 测试集群中进行，以具备 \texttt{ClusterProvision} 读取权限、但无 \texttt{Secret} 访问权限的低权身份接入。vSphere 测试专用 vCenter 账号采用最小权限配置，详细 YAML 与命令序列如下。触发 \texttt{ClusterDeployment} 供应流程后，以该低权身份读取 \texttt{ClusterProvision} 对象 YAML，可在 \texttt{status} 字段中直接定位明文 vCenter 用户名与密码。由于同一身份无法读取任何 \texttt{Secret} 对象，凭据暴露构成了对 \texttt{Secret} 隔离边界的旁路。
 \textbf{前提条件}
 \begin{itemize}
-		\item 已部署 ACM/MCE 与 Hive，并启用 vSphere 集群供应能力(具体版本与安装方式依赖环境，以厂商公告与实验环境为准)；
-		\item 至少存在一个"只读身份"。该身份\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions\allowbreak.\allowbreak hive\allowbreak.\allowbreak openshift\allowbreak.\allowbreak io} 的 \texttt{get/list/watch} 权限(该条件用于验证旁路泄露)。
+    \item 已部署 ACM/MCE 与 Hive，并启用 vSphere 集群供应能力(具体版本与安装方式依赖环境，以厂商公告与实验环境为准)；
+    \item 至少存在一个"只读身份"。该身份\textbf{不具备} \texttt{secrets} 读取权限，但\textbf{具备} \texttt{clusterprovisions\allowbreak.\allowbreak hive\allowbreak.\allowbreak openshift\allowbreak.\allowbreak io} 的 \texttt{get/list/watch} 权限(该条件用于验证旁路泄露)。
 \end{itemize}
 \textbf{步骤 1：触发供应后，用低权身份读取 \texttt{ClusterProvision} 对象}
 \begin{AppendixCode}
@@ -62,11 +62,11 @@ rules:
 # 记录所有对 ClusterProvision 的读取操作；
 # Metadata 级别仅记录请求元数据，不存储请求体，降低日志容量
 - level: Metadata
-	verbs: ["get","list","watch"]
-	resources:
-	- group: "hive.openshift.io"
-		resources: ["clusterprovisions"]
-	omitStages: ["RequestReceived"]  # 跳过请求接收阶段，只在响应阶段记录
+  verbs: ["get","list","watch"]
+  resources:
+  - group: "hive.openshift.io"
+    resources: ["clusterprovisions"]
+  omitStages: ["RequestReceived"]  # 跳过请求接收阶段，只在响应阶段记录
 \end{AppendixCode}
 
 \textbf{3)缩短暴露窗口：供应完成后清理 \texttt{ClusterProvision}}
@@ -80,69 +80,69 @@ oc delete clusterprovision -n <ns> <name>
 # 辅助谓词：匹配包含敏感关键词的字段名
 # 匹配 password / token / secret / credential 四类敏感名称
 sensitive_key(k) {
-				lk := lower(k)
-				contains(lk, "password")
-			}
-			sensitive_key(k) {
-				lk := lower(k)
-				contains(lk, "token")
-			}
-			sensitive_key(k) {
-				lk := lower(k)
-				contains(lk, "secret")
-			}
-			sensitive_key(k) {
-				lk := lower(k)
-				contains(lk, "credential")
-			}
+        lk := lower(k)
+        contains(lk, "password")
+      }
+      sensitive_key(k) {
+        lk := lower(k)
+        contains(lk, "token")
+      }
+      sensitive_key(k) {
+        lk := lower(k)
+        contains(lk, "secret")
+      }
+      sensitive_key(k) {
+        lk := lower(k)
+        contains(lk, "credential")
+      }
 
-			walk(obj, path, val) {
-				is_object(obj)
-				some k
-				v := obj[k]
-				walk(v, array.concat(path, [k]), val)
-			}
-			walk(obj, path, val) {
-				is_array(obj)
-				some i
-				v := obj[i]
-				walk(v, array.concat(path, [sprintf("%v", [i])]), val)
-			}
-			walk(obj, path, obj) {
-				not is_object(obj)
-				not is_array(obj)
-			}
+      walk(obj, path, val) {
+        is_object(obj)
+        some k
+        v := obj[k]
+        walk(v, array.concat(path, [k]), val)
+      }
+      walk(obj, path, val) {
+        is_array(obj)
+        some i
+        v := obj[i]
+        walk(v, array.concat(path, [sprintf("%v", [i])]), val)
+      }
+      walk(obj, path, obj) {
+        not is_object(obj)
+        not is_array(obj)
+      }
 
-			deny[msg] {
-				input.review.kind.group == "hive.openshift.io"
-				input.review.kind.kind == "ClusterProvision"
-				walk(input.review.object, [], _)
-				some k
-				_ = input.review.object[k]
-				sensitive_key(k)
-				msg := sprintf("ClusterProvision contains sensitive key at top-level: %s", [k])
-			}
+      deny[msg] {
+        input.review.kind.group == "hive.openshift.io"
+        input.review.kind.kind == "ClusterProvision"
+        walk(input.review.object, [], _)
+        some k
+        _ = input.review.object[k]
+        sensitive_key(k)
+        msg := sprintf("ClusterProvision contains sensitive key at top-level: %s", [k])
+      }
 
-			deny[msg] {
-				input.review.kind.group == "hive.openshift.io"
-				input.review.kind.kind == "ClusterProvision"
-				walk(input.review.object, path, _)
-				some i
-				k := path[i]
-				sensitive_key(k)
-				msg := sprintf("ClusterProvision contains sensitive key on path %v", [path])
-			}
+      deny[msg] {
+        input.review.kind.group == "hive.openshift.io"
+        input.review.kind.kind == "ClusterProvision"
+        walk(input.review.object, path, _)
+        some i
+        k := path[i]
+        sensitive_key(k)
+        msg := sprintf("ClusterProvision contains sensitive key on path %v", [path])
+      }
 ---
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sClustProvKeySensitive
 metadata:
-	name: audit-clusterprovision-sensitive-keys
+  name: audit-clusterprovision-sensitive-keys
 spec:
-	enforcementAction: dryrun
-	match:
-		kinds:
-		- apiGroups: ["hive.openshift.io"]
-			kinds: ["ClusterProvision"]
+  enforcementAction: dryrun
+  match:
+    kinds:
+    - apiGroups: ["hive.openshift.io"]
+      kinds: ["ClusterProvision"]
 \end{AppendixCode}
 
 
